@@ -31,9 +31,15 @@
 ;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Commentary:
+;; Installation
 
-;;; Code:
+;; Add the following to your .emacs or your prefered customizations file
+
+;; (require 'identica-mode)
+;; (setq identica-username "yourusername")
+;; (setq identica-password "yourpassword")
+
+;; Start using with M-x identica-mode
 
 (require 'cl)
 (require 'xml)
@@ -779,7 +785,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	     source)
 	    ))
 
-;; Last update Wed Aug 20 13:39:27 2008 Gabriel Saldana
+;; Last update Wed Aug 20 15:58:47 2008 Gabriel Saldana
       (setq identica-friends-timeline-last-update created-at)
 
       (mapcar
