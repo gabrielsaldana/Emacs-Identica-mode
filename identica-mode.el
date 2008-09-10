@@ -39,6 +39,11 @@
 ;; (setq identica-username "yourusername")
 ;; (setq identica-password "yourpassword")
 
+;; If you want to connect to a custom laconica server add this and change
+;; identi.ca with your server's doman name.  
+
+;; (setq laconica-server "identi.ca")
+
 ;; Start using with M-x identica-mode
 
 (require 'cl)
@@ -787,7 +792,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	     source)
 	    ))
 
-;; Last update Wed Sep 10 11:33:15 2008 Gabriel Saldana
+;; Last update Wed Sep 10 13:15:48 2008 Gabriel Saldana
       (setq identica-friends-timeline-last-update created-at)
 
       (mapcar
