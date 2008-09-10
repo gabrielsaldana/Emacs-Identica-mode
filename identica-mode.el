@@ -785,7 +785,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	     source)
 	    ))
 
-;; Last update Wed Aug 20 15:58:47 2008 Gabriel Saldana
+;; Last update Wed Sep 10 11:19:19 2008 Gabriel Saldana
       (setq identica-friends-timeline-last-update created-at)
 
       (mapcar
