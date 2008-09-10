@@ -68,6 +68,8 @@
 
 (defvar identica-password nil)
 
+(defvar laconica-server "identi.ca")
+
 (defvar identica-scroll-mode nil)
 (make-variable-buffer-local 'identica-scroll-mode)
 
@@ -348,7 +350,7 @@
 		    port (if (integerp identica-proxy-port)
 			     (int-to-string identica-proxy-port)
 			   identica-proxy-port))
-	    (setq server "identi.ca"
+	    (setq server laconica-server
 		  port "80"))
 	  (setq proc
 		(open-network-stream
@@ -360,7 +362,7 @@
 	   (let ((nl "\r\n")
 		 request)
 	     (setq request
-		   (concat "GET http://identi.ca/api/" method-class "/" method
+		   (concat "GET http://" laconica-server "/api/" method-class "/" method
 			   ".xml?"
 			   (when parameters
 			     (concat "?"
@@ -372,7 +374,7 @@
 				      parameters
 				      "&")))
 			   " HTTP/1.1" nl
-			   "Host: identi.ca" nl
+			   (concat "Host: " laconica-server) nl
 			   "User-Agent: " (identica-user-agent) nl
 			   "Authorization: Basic "
 			   (base64-encode-string
@@ -565,7 +567,7 @@
 
 (defun identica-http-post
   (method-class method &optional parameters contents sentinel)
-  "Send HTTP POST request to identi.ca
+  "Send HTTP POST request to laconica server
 
 METHOD-CLASS must be one of Identica API method classes(statuses, users or direct_messages).
 METHOD must be one of Identica API method which belongs to METHOD-CLASS.
@@ -586,7 +588,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 		port (if (integerp identica-proxy-port)
 			 (int-to-string identica-proxy-port)
 		       identica-proxy-port))
-	(setq server "identi.ca"
+	(setq server laconica-server
 	      port "80"))
       (setq proc
 	    (open-network-stream
@@ -598,7 +600,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
        (let ((nl "\r\n")
 	     request)
 	 (setq  request
-		(concat "POST http://identi.ca/api/" method-class "/" method ".xml"
+		(concat "POST http://" laconica-server "/api/" method-class "/" method ".xml"
 			(when parameters
 			  (concat "?"
 				  (mapconcat
@@ -609,7 +611,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 				   parameters
 				   "&")))
 			" HTTP/1.1" nl
-			"Host: identi.ca" nl
+			(concat "Host: " laconica-server) nl
 			"User-Agent: " (identica-user-agent) nl
 			"Authorization: Basic "
 			(base64-encode-string
@@ -730,7 +732,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (add-text-properties
        0 (length user-name)
        `(mouse-face highlight
-		    uri ,(concat "http://identi.ca/api/" user-screen-name)
+		    uri ,(concat "http://" laconica-server "/api/" user-screen-name)
 		    face identica-username-face)
        user-name)
 
@@ -739,7 +741,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
        0 (length user-screen-name)
        `(mouse-face highlight
 		    face identica-username-face
-		    uri ,(concat "http://identi.ca/api/" user-screen-name)
+		    uri ,(concat "http://" laconica-server "/api/" user-screen-name)
 		    face identica-username-face)
        user-screen-name)
 
@@ -763,7 +765,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		 `(mouse-face
 		   highlight
 		   face identica-uri-face
-		   uri ,(concat "http://identi.ca/api/" screen-name))
+		   uri ,(concat "http://" laconica-server "/api/" screen-name))
 	       `(mouse-face highlight
 			    face identica-uri-face
 			    uri ,uri))
@@ -785,7 +787,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	     source)
 	    ))
 
-;; Last update Wed Sep 10 11:19:19 2008 Gabriel Saldana
+;; Last update Wed Sep 10 11:33:15 2008 Gabriel Saldana
       (setq identica-friends-timeline-last-update created-at)
 
       (mapcar
@@ -1083,7 +1085,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 (defun identica-get-status-url (username id)
   "Generate status URL."
-  (format "http://identi.ca/api/%s/statuses/%d" username id))
+  (format "http://" laconica-server "/api/%s/statuses/%d" username id))
 
 ;;;###autoload
 (defun identica ()
