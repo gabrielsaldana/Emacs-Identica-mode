@@ -662,7 +662,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
   (save-excursion
     (set-buffer buffer)
     (let ((content (buffer-string)))
-      (substring content 0 (string-match "\r?\n\r?\n" content)))))
+      (substring  content 0 (string-match "\r?\n\r?\n" content)))))
 
 (defun identica-get-response-body (&optional buffer)
   "Exract HTTP response body from HTTP response, parse it as XML, and return a XML tree as list.
@@ -672,12 +672,13 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
   (if (null buffer) (setq buffer (identica-http-buffer)))
   (save-excursion
     (set-buffer buffer)
-    (let ((content (buffer-string)))
-      (let ((content (buffer-string)))
+    (let (cleanbuffer (replace-regexp-in-string "\?\n[0-9a-z]*\\n?\n?" "" (buffer-string)))
+    (let ((content cleanbuffer))
+      (let ((content cleanbuffer))
 	(xml-parse-region (+ (string-match "\r?\n\r?\n" content)
 			     (length (match-string 0 content)))
 			  (point-max)))
-      )))
+      ))))
 
 (defun identica-cache-status-datum (status-datum &optional data-var)
   "Cache status datum into data-var(default identica-friends-timeline-data)
@@ -792,7 +793,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	     source)
 	    ))
 
-;; Last update Wed Sep 10 13:15:48 2008 Gabriel Saldana
+;; Last update Thu Sep 11 01:43:31 2008 Gabriel Saldana
       (setq identica-friends-timeline-last-update created-at)
 
       (mapcar
