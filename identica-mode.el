@@ -1,13 +1,13 @@
 ;;; identica-mode.el --- Major mode for Identica
 
 
-;; Copyright (C) 2008 Gabriel Saldana 
+;; Copyright (C) 2008 Gabriel Saldana
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
 ;; Created: Aug 20
 ;; Version: 0.1
 ;; Keywords: identica web
-;; URL: 
+;; URL:
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
@@ -28,8 +28,8 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth floor,
+;; Boston, MA 02110-1301, USA.
 
 ;; Installation
 
@@ -40,7 +40,7 @@
 ;; (setq identica-password "yourpassword")
 
 ;; If you want to connect to a custom laconica server add this and change
-;; identi.ca with your server's doman name.  
+;; identi.ca with your server's doman name.
 
 ;; (setq laconica-server "identi.ca")
 
@@ -580,7 +580,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
   (if (null sentinel) (setq sentinel 'identica-http-post-default-sentinel))
 
   ;; clear the buffer
-  (save-excursion
+  (save-excursino
     (set-buffer (identica-http-buffer))
     (erase-buffer))
 
@@ -670,15 +670,29 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
  If `buffer' is omitted, the value of `identica-http-buffer' is used as `buffer'."
   (if (stringp buffer) (setq buffer (get-buffer buffer)))
   (if (null buffer) (setq buffer (identica-http-buffer)))
+;;  (identica-clean-weird-chars)
   (save-excursion
     (set-buffer buffer)
-    (let (cleanbuffer (replace-regexp-in-string "\?\n[0-9a-z]*\\n?\n?" "" (buffer-string)))
-    (let ((content cleanbuffer))
-      (let ((content cleanbuffer))
+      (let ((content (identica-clean-weird-chars)))
 	(xml-parse-region (+ (string-match "\r?\n\r?\n" content)
 			     (length (match-string 0 content)))
 			  (point-max)))
-      ))))
+      ))
+
+(defun identica-clean-weird-chars (&optional buffer)
+;;(if (null buffer) (setq buffer (identica-http-buffer)))
+(with-current-buffer (identica-http-buffer)
+  (goto-char (point-min))
+  (while (re-search-forward "\
+
+?
+[0-9a-z]*\
+
+?
+?" nil t)
+(replace-match ""))
+(buffer-string))
+)
 
 (defun identica-cache-status-datum (status-datum &optional data-var)
   "Cache status datum into data-var(default identica-friends-timeline-data)
@@ -793,7 +807,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	     source)
 	    ))
 
-;; Last update Thu Sep 11 01:43:31 2008 Gabriel Saldana
+;; Last update Thu Oct  2 19:03:12 2008 Gabriel Saldana
       (setq identica-friends-timeline-last-update created-at)
 
       (mapcar
