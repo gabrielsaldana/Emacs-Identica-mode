@@ -64,6 +64,34 @@
 ;;;;;;;;;;;;;;;;;;;
 ;; Customizations
 ;;;;;;;;;;;;;;;;;;;
+(defgroup twit nil
+  "twit.el customizations."
+  :version "0.1"
+  :group 'twit)
+
+(defcustom twit-user
+  ""
+  "Your twitter username."
+  :group 'twit
+  :type 'string
+  :set 'twit-set-user-pass)
+
+(defcustom twit-pass
+  ""
+  "Your twitter password."
+  :group 'twit
+  :type 'string
+  :set 'twit-set-user-pass)
+
+(defcustom twit-follow-idle-interval
+  90
+  "How long in time to wait before checking for new tweets.
+Right now it will check every 90 seconds, Which will generate a maximum of 40 requests, leaving you another 30 per hour to play with.
+
+The variable name is a bit of a misnomer, because it is not actually based on idle time (anymore)."
+  :type 'integer
+  :group 'twit)
+
 
 ;;;###autoload
 (define-minor-mode laconica-mode
