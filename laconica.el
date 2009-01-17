@@ -47,6 +47,7 @@
   (require 'cl))
 
 (defconst laconica-mode-version "0.1")
+
 ;;;;;;;;;;;;;;;;
 ;; Variables
 ;;;;;;;;;;;;;;;;
@@ -55,62 +56,43 @@
 (defvar laconica-password nil)
 
 ; Uses identi.ca by default
-(defvar laconica-server-url "http://identi.ca")
+(defvar laconica-server-url "http://identi.ca/api/")
 
-(defvar laconica-mode-map (make-sparse-keymap))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Twitter-compatible API actions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Get friends timeline
+;; url: /statuses/public_timeline.xml
+;; params: none
+(defun laconica_get_friends_timeline ()
+  "Get friends timeline"
+  (send_request (concat laconica-server-url "statuses/public_timeline.xml") "GET" ))
 
+;; Update status
+;; url: /statuses/update.xml
+;; params: status The text of the status update
+(defun laconica_update_status ()
+  "Send a message to update your status"
+  (interactive "P"))
 
-;;;;;;;;;;;;;;;;;;;
-;; Customizations
-;;;;;;;;;;;;;;;;;;;
-(defgroup twit nil
-  "twit.el customizations."
-  :version "0.1"
-  :group 'twit)
-
-(defcustom twit-user
-  ""
-  "Your twitter username."
-  :group 'twit
-  :type 'string
-  :set 'twit-set-user-pass)
-
-(defcustom twit-pass
-  ""
-  "Your twitter password."
-  :group 'twit
-  :type 'string
-  :set 'twit-set-user-pass)
-
-(defcustom twit-follow-idle-interval
-  90
-  "How long in time to wait before checking for new tweets.
-Right now it will check every 90 seconds, Which will generate a maximum of 40 requests, leaving you another 30 per hour to play with.
-
-The variable name is a bit of a misnomer, because it is not actually based on idle time (anymore)."
-  :type 'integer
-  :group 'twit)
+;; Add as favorite
+;; url: /favorites/create/id.xml
+;; params: id of the status to fave
 
 
-;;;###autoload
-(define-minor-mode laconica-mode
-  "Toggle laconica-mode.
-Globally binds some keys to Laconica's interactive functions.
+(defun laconica_send_request (serverurl method action &optional params)
+  "Sends the request to the specified server"
+  (let ((url-request-method 'method)
+	(if params (url-request-data
+		    (mapconcat (lambda (arg)
+                          (concat (url-hexify-string (car arg))
+                                  "="
+                                  (url-hexify-string (cdr arg))))
+                        args
+                        "&")))
+	)
+    (url-retrieve serverurl 'laconica-update-buffer)))
 
-With no argument, this command toggles the mode.
-Non-null prefix argument turns on the mode.
-Null prefix argument turns off the mode.
-
-\\{laconica-mode-map}" nil
-" Laconica"
-'(("\C-c\C-tp" . laconica-post)
-  ("\C-c\C-tr" . laconica-post-region)
-  ("\C-c\C-tb" . laconica-post-buffer)
-  ("\C-c\C-tf" . laconica-list-followers)
-  ("\C-c\C-ts" . laconica-show-recent-tweets))
- :global t
- :group 'laconica
- :version laconica-mode-version)
-
-(provide 'laconica)
+(defun laconica-update-buffer ()
+  "Update laconica buffer")
