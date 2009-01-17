@@ -580,7 +580,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
   (if (null sentinel) (setq sentinel 'identica-http-post-default-sentinel))
 
   ;; clear the buffer
-  (save-excursino
+  (save-excursion
     (set-buffer (identica-http-buffer))
     (erase-buffer))
 
