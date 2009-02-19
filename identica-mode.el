@@ -5,9 +5,11 @@
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
 ;; Created: Aug 20
-;; Version: 0.1
+;; Version: 0.2
 ;; Keywords: identica web
-;; URL:
+;; URL: http://blog.nethazard.net/2008/08/20/identica-mode-for-emacs/
+;; Contributors:
+;;     Jason McBrayer <jmcbray@carcosa.net> (minor updates for working under Emacs 23)
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
@@ -412,7 +414,7 @@
 	(body (identica-get-response-body))
 	(status nil)
 	)
-    (if (string-match "HTTP/1\.[01] \\([a-z0-9 ]+\\)\r?\n" header)
+    (if (string-match "HTTP/1\.[01] \\([A-Za-z0-9 ]+\\)\r" header)
 	(progn
 	  (setq status (match-string-no-properties 1 header))
 	  (case-string
@@ -465,11 +467,7 @@
 
 		  (when (and icon-string identica-icon-mode)
 		    (set-text-properties
-		     1 2 `(display
-			   (image :type ,(identica-image-type filename)
-				  :file ,(concat identica-tmp-dir
-						 "/"
-						 filename)))
+		     1 2 `(display ,(create-image (concat identica-tmp-dir "/" filename)))
 		     icon-string)
 		    icon-string)
 		  )))))
@@ -538,7 +536,7 @@
 			   ((< secs 84600) (format "about %d hours ago"
 						   (/ (+ secs 1800) 3600)))
 			   (t (format-time-string "%I:%M %p %B %d, %Y" created-at))))
-	       (setq url (identica-get-status-url (attr 'user-screen-name) (attr 'id)))
+	       (setq url (identica-get-status-url (attr 'id)))
 	       ;; make status url clickable
 	       (add-text-properties
 		0 (length time-string)
@@ -674,8 +672,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
   (save-excursion
     (set-buffer buffer)
       (let ((content (identica-clean-weird-chars)))
-	(xml-parse-region (+ (string-match "\r?\n\r?\n" content)
-			     (length (match-string 0 content)))
+	(xml-parse-region (string-match "\r\r" content)
 			  (point-max)))
       ))
 
@@ -752,7 +749,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (add-text-properties
        0 (length user-name)
        `(mouse-face highlight
-		    uri ,(concat "http://" laconica-server "/api/" user-screen-name)
+		    uri ,(concat "http://" laconica-server "/" user-screen-name)
 		    face identica-username-face)
        user-name)
 
@@ -761,7 +758,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
        0 (length user-screen-name)
        `(mouse-face highlight
 		    face identica-username-face
-		    uri ,(concat "http://" laconica-server "/api/" user-screen-name)
+		    uri ,(concat "http://" laconica-server "/" user-screen-name)
 		    face identica-username-face)
        user-screen-name)
 
@@ -785,7 +782,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		 `(mouse-face
 		   highlight
 		   face identica-uri-face
-		   uri ,(concat "http://" laconica-server "/api/" screen-name))
+		   uri ,(concat "http://" laconica-server "/" screen-name))
 	       `(mouse-face highlight
 			    face identica-uri-face
 			    uri ,uri))
@@ -1103,9 +1100,9 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (setq end-pos (next-single-property-change pos 'face))
       (buffer-substring start-pos end-pos))))
 
-(defun identica-get-status-url (username id)
+(defun identica-get-status-url (id)
   "Generate status URL."
-  (format "http://" laconica-server "/api/%s/statuses/%d" username id))
+  (format "http://%s/notice/%d" laconica-server id))
 
 ;;;###autoload
 (defun identica ()
