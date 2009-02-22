@@ -4,8 +4,8 @@
 ;; Copyright (C) 2008 Gabriel Saldana
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
-;; Created: Aug 20
-;; Version: 0.2.1
+;; Last update: 2009-02-21
+;; Version: 0.3
 ;; Keywords: identica web
 ;; URL: http://blog.nethazard.net/2008/08/20/identica-mode-for-emacs/
 ;; Contributors:
