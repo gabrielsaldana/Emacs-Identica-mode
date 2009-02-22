@@ -5,11 +5,12 @@
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
 ;; Created: Aug 20
-;; Version: 0.2
+;; Version: 0.2.1
 ;; Keywords: identica web
 ;; URL: http://blog.nethazard.net/2008/08/20/identica-mode-for-emacs/
 ;; Contributors:
 ;;     Jason McBrayer <jmcbray@carcosa.net> (minor updates for working under Emacs 23)
+;;     Alex Schröder <kensanata@gmail.com> (mode map patches)
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
@@ -253,6 +254,7 @@
       (define-key km "\C-c\C-v" 'identica-view-user-page)
       ;; (define-key km "j" 'next-line)
       ;; (define-key km "k" 'previous-line)
+      (define-key km "q" 'bury-buffer)
       (define-key km "j" 'identica-goto-next-status)
       (define-key km "k" 'identica-goto-previous-status)
       (define-key km "l" 'forward-char)
@@ -321,7 +323,8 @@
   "Identica-mode hook.")
 
 (defun identica-mode ()
-  "Major mode for Identica"
+  "Major mode for Identica
+\\{identica-mode-map}"
   (interactive)
   (switch-to-buffer (identica-buffer))
   (kill-all-local-variables)
@@ -766,23 +769,31 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (setq regex-index 0)
       (while regex-index
 	(setq regex-index
-	      (string-match "@\\([_a-zA-Z0-9]+\\)\\|\\(https?://[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+\\)"
+	      (string-match "@\\([_a-zA-Z0-9]+\\)\\|!\\([_a-zA-Z0-9]+\\)\\|#\\([_a-zA-Z0-9]+\\)\\|\\(https?://[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+\\)"
+;;	      (string-match "@\\([_a-zA-Z0-9]+\\)\\|\\(https?://[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+\\)"
 			    text
 			    regex-index))
 	(when regex-index
 	  (let* ((matched-string (match-string-no-properties 0 text))
 		 (screen-name (match-string-no-properties 1 text))
-		 (uri (match-string-no-properties 2 text)))
+		 (group-name (match-string-no-properties 2 text))
+		 (tag-name (match-string-no-properties 3 text))
+		 (uri (match-string-no-properties 4 text)))
 	    (add-text-properties
-	     (if screen-name
+	     (if (or screen-name group-name tag-name)
 		 (+ 1 (match-beginning 0))
 	       (match-beginning 0))
 	     (match-end 0)
-	     (if screen-name
+	     (if (or screen-name group-name tag-name)
 		 `(mouse-face
 		   highlight
 		   face identica-uri-face
-		   uri ,(concat "http://" laconica-server "/" screen-name))
+		   uri ,(if screen-name
+			    (concat "http://" laconica-server "/" screen-name)
+			  (if group-name
+			      (concat "http://" laconica-server "/group/" group-name)
+			    (concat "http://" laconica-server "/tag/" tag-name)
+			    )))
 	       `(mouse-face highlight
 			    face identica-uri-face
 			    uri ,uri))
