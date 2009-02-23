@@ -42,6 +42,9 @@
 ;; (setq identica-username "yourusername")
 ;; (setq identica-password "yourpassword")
 
+;; If you want to post from the minibufer without having identica buffer active, add the following global keybinding.
+;; (global-set-key "\C-cip" 'identica-update-status-interactive)
+
 ;; If you want to connect to a custom laconica server add this and change
 ;; identi.ca with your server's doman name.
 
