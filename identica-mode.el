@@ -912,16 +912,26 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       nil
     (identica-http-post "statuses" "update"
 			  `(("status" . ,status)
-			    ("source" . "identicamode")))
+			    ("source" . "emacs-identicamode")))
     t))
 
 (defun identica-update-status-from-minibuffer (&optional init-str)
   (if (null init-str) (setq init-str ""))
   (let ((status init-str) (not-posted-p t))
     (while not-posted-p
-      (setq status (read-from-minibuffer "status: " status nil nil nil nil t))
+      (setq status (read-from-minibuffer "Status (140): " status nil nil nil nil t))
+      (while (< 140 (length status))
+        (setq status (read-from-minibuffer (format "Status (%d): "
+                                                   (- 140 (length status)))
+                                           status nil nil nil nil t)))
       (setq not-posted-p
 	    (not (identica-update-status-if-not-blank status))))))
+
+(defun identica-update-status-from-region (beg end)
+  (interactive "r")
+  (if (> (- end beg) 140) (setq end (+ beg 140)))
+  (if (< (- end beg) -140) (setq beg (+ end 140)))
+  (identica-update-status-if-not-blank (buffer-substring beg end)))
 
 (defun identica-update-lambda ()
   (interactive)
