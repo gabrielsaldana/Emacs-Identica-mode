@@ -5,12 +5,14 @@
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
 ;; Last update: 2009-02-21
-;; Version: 0.3
+;; Version: 0.4
 ;; Keywords: identica web
 ;; URL: http://blog.nethazard.net/2008/08/20/identica-mode-for-emacs/
 ;; Contributors:
 ;;     Jason McBrayer <jmcbray@carcosa.net> (minor updates for working under Emacs 23)
 ;;     Alex Schröder <kensanata@gmail.com> (mode map patches)
+;;     Christian Cheng (fixed long standing xml parsing bug)
+;;     Carlos A. Perilla from denting-mode
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
@@ -56,7 +58,7 @@
 (require 'xml)
 (require 'parse-time)
 
-(defconst identica-mode-version "0.1")
+(defconst identica-mode-version "0.4")
 
 (defun identica-mode-version ()
   "Display a message for identica-mode version."
