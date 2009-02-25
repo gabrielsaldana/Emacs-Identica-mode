@@ -674,10 +674,12 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
   (if (null buffer) (setq buffer (identica-http-buffer)))
   (save-excursion
     (set-buffer buffer)
-      (let ((content (identica-clean-weird-chars)))
-	(xml-parse-region (string-match "\r\r" content)
-			  (point-max)))
-      ))
+    (identica-clean-response-body)
+    (let ((content (buffer-string)))
+      (xml-parse-region (+ (string-match "<\\?xml" content)
+			     (length (match-string 0 content)))
+                        (point-max))
+      )))
 
 (defun identica-clean-weird-chars (&optional buffer)
 ;;(if (null buffer) (setq buffer (identica-http-buffer)))
@@ -693,6 +695,14 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 (replace-match ""))
 (buffer-string))
 )
+
+(defun identica-clean-response-body ()
+  "Removes weird strings (e.g., 1afc, a or 0) from within the
+response body.  Known Laconica issue.  Mostly harmless except if
+in tags."
+  (goto-char (point-min))
+  (while (re-search-forward "\r?\n[0-9a-z]+\r?\n" nil t)
+    (replace-match "")))
 
 (defun identica-cache-status-datum (status-datum &optional data-var)
   "Cache status datum into data-var(default identica-friends-timeline-data)
