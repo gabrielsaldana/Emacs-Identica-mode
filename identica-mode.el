@@ -255,8 +255,6 @@
       (define-key km "\C-c\C-l" 'identica-update-lambda)
       (define-key km [mouse-1] 'identica-click)
       (define-key km "\C-c\C-v" 'identica-view-user-page)
-      ;; (define-key km "j" 'next-line)
-      ;; (define-key km "k" 'previous-line)
       (define-key km "q" 'bury-buffer)
       (define-key km "j" 'identica-goto-next-status)
       (define-key km "k" 'identica-goto-previous-status)
@@ -420,7 +418,7 @@
 	(body (identica-get-response-body))
 	(status nil)
 	)
-    (if (string-match "HTTP/1\.[01] \\([A-Za-z0-9 ]+\\)\r" header)
+    (if (string-match "HTTP/1\.[01] \\([A-Za-z0-9 ]+\\)\r?\n" header)
 	(progn
 	  (setq status (match-string-no-properties 1 header))
 	  (case-string
@@ -674,7 +672,6 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
  If `buffer' is omitted, the value of `identica-http-buffer' is used as `buffer'."
   (if (stringp buffer) (setq buffer (get-buffer buffer)))
   (if (null buffer) (setq buffer (identica-http-buffer)))
-;;  (identica-clean-weird-chars)
   (save-excursion
     (set-buffer buffer)
       (let ((content (identica-clean-weird-chars)))
