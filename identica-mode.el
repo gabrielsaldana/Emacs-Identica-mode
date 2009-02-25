@@ -779,7 +779,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (setq regex-index 0)
       (while regex-index
 	(setq regex-index
-	      (string-match "@\\([_a-zA-Z0-9]+\\)\\|!\\([_a-zA-Z0-9]+\\)\\|#\\([_a-zA-Z0-9]+\\)\\|\\(https?://[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+\\)"
+	      (string-match "@\\([_a-zA-Z0-9]+\\)\\|!\\([_a-zA-Z0-9\-]+\\)\\|#\\([_a-zA-Z0-9\-]+\\)\\|\\(https?://[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+\\)"
 ;;	      (string-match "@\\([_a-zA-Z0-9]+\\)\\|\\(https?://[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+\\)"
 			    text
 			    regex-index))
