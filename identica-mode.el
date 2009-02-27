@@ -919,8 +919,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (if (null init-str) (setq init-str ""))
   (let ((status init-str) (not-posted-p t))
     (while not-posted-p
-      (setq status (read-from-minibuffer "Status (140): " status nil nil nil nil t))
-      (while (< 140 (length status))
+      (setq status (read-from-minibuffer "Status: " status nil nil nil nil t))
+      (while (<= 140 (length status))
         (setq status (read-from-minibuffer (format "Status (%d): "
                                                    (- 140 (length status)))
                                            status nil nil nil nil t)))
