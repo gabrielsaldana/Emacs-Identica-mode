@@ -121,6 +121,7 @@
 
 (defvar identica-username-face 'identica-username-face)
 (defvar identica-uri-face 'identica-uri-face)
+(defvar identica-reply-face 'identica-reply-face)
 
 (defun identica-get-or-generate-buffer (buffer)
   (if (bufferp buffer)
@@ -293,8 +294,13 @@
     `((t nil)) "" :group 'faces)
   (copy-face 'font-lock-string-face 'identica-username-face)
   (set-face-attribute 'identica-username-face nil :underline t)
+  (defface identica-reply-face
+    `((t nil)) "" :group 'faces)
+  (copy-face 'font-lock-string-face 'identica-reply-face)
+  (set-face-attribute 'identica-reply-face nil :foreground "green")
   (defface identica-uri-face
     `((t nil)) "" :group 'faces)
+
   (set-face-attribute 'identica-uri-face nil :underline t)
   (add-to-list 'minor-mode-alist '(identica-icon-mode " id-icon"))
   (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll"))
