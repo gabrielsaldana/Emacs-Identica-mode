@@ -297,7 +297,7 @@
   (defface identica-reply-face
     `((t nil)) "" :group 'faces)
   (copy-face 'font-lock-string-face 'identica-reply-face)
-  (set-face-attribute 'identica-reply-face nil :foreground "green")
+  (set-face-attribute 'identica-reply-face nil :foreground "SpringGreen1")
   (defface identica-uri-face
     `((t nil)) "" :group 'faces)
 
@@ -827,7 +827,6 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	    (add-text-properties
 	     0 (length source)
 	     `(mouse-face highlight
-			  uri ,uri
 			  face identica-uri-face
 			  source ,source)
 	     source)
@@ -836,6 +835,10 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 ;; Last update Thu Oct  2 19:03:12 2008 Gabriel Saldana
       (setq identica-friends-timeline-last-update created-at)
 
+      ;; highlight replies
+      (if (string-match (concat "@" identica-username) text)
+	  (add-text-properties 0 (length text)
+			       `(face identica-reply-face) text))
       (mapcar
        (lambda (sym)
 	 `(,sym . ,(symbol-value sym)))
