@@ -297,7 +297,8 @@
   (defface identica-reply-face
     `((t nil)) "" :group 'faces)
   (copy-face 'font-lock-string-face 'identica-reply-face)
-  (set-face-attribute 'identica-reply-face nil :foreground "SpringGreen1")
+  (set-face-attribute 'identica-reply-face nil :foreground "white")
+  (set-face-attribute 'identica-reply-face nil :background "DarkSlateGray")
   (defface identica-uri-face
     `((t nil)) "" :group 'faces)
 
