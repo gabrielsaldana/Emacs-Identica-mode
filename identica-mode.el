@@ -5,9 +5,9 @@
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
 ;; Last update: 2009-02-21
-;; Version: 0.4
+;; Version: 0.5
 ;; Keywords: identica web
-;; URL: http://blog.nethazard.net/2008/08/20/identica-mode-for-emacs/
+;; URL: http://blog.nethazard.net/identica-mode-for-emacs/
 ;; Contributors:
 ;;     Jason McBrayer <jmcbray@carcosa.net> (minor updates for working under Emacs 23)
 ;;     Alex Schröder <kensanata@gmail.com> (mode map patches)
@@ -58,7 +58,7 @@
 (require 'xml)
 (require 'parse-time)
 
-(defconst identica-mode-version "0.4")
+(defconst identica-mode-version "0.5")
 
 (defun identica-mode-version ()
   "Display a message for identica-mode version."
