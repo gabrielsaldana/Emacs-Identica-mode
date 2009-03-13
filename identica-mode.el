@@ -977,7 +977,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (identica-http-post
    "statuses" "update"
    `(("status" . "\xd34b\xd22b\xd26f\xd224\xd224\xd268\xd34b")
-     ("source" . "identicamode"))))
+     ("source" . "emacs-identicamode"))))
 
 (defun identica-update-jojo (usr msg)
   (if (string-match "\xde21\xd24b\\(\xd22a\xe0b0\\|\xdaae\xe6cd\\)\xd24f\xd0d6\\([^\xd0d7]+\\)\xd0d7\xd248\xdc40\xd226"
