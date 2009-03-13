@@ -38,7 +38,8 @@
 
 ;; Installation
 
-;; Add the following to your .emacs or your prefered customizations file
+;; You can use M-x customize-group identica-mode to setup all settings or simply
+;; add the following to your .emacs or your prefered customizations file
 
 ;; (require 'identica-mode)
 ;; (setq identica-username "yourusername")
@@ -62,6 +63,7 @@
 
 (defgroup identica-mode nil "Customize Identica Mode"
   :tag "Microblogging"
+  :link '(url-link http://blog.nethazard.net/identica-mode-for-emacs/)
   :group 'applications
 )
 (defun identica-mode-version ()
@@ -102,7 +104,11 @@
   :type 'string
   :group 'identica-mode)
 
-(defvar identica-method "friends_timeline")
+(defcustom identica-method "friends_timeline"
+  "Default timeline to retrieve"
+  :type 'string
+  :options '(("friends_timeline" "public_timeline" "replies"))
+  :group 'identica-mode)
 
 (defvar identica-scroll-mode nil)
 (make-variable-buffer-local 'identica-scroll-mode)
