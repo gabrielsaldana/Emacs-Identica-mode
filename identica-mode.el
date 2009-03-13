@@ -137,7 +137,7 @@
 ;; %f - source
 ;; %# - id
 
-(defvar identica-buffer "*identica*")
+(defvar identica-buffer (concat "*identica-" identica-method "*"))
 (defun identica-buffer ()
   (identica-get-or-generate-buffer identica-buffer))
 
@@ -259,7 +259,7 @@
 
 
 (defvar identica-debug-mode nil)
-(defvar identica-debug-buffer "*debug*")
+(defvar identica-debug-buffer "*identica-debug*")
 (defun identica-debug-buffer ()
   (identica-get-or-generate-buffer identica-debug-buffer))
 (defmacro debug-print (obj)
