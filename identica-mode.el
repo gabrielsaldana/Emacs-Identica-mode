@@ -93,7 +93,7 @@
   :group 'identica-mode)
 
 (defcustom identica-password nil
-  "Username"
+  "Password"
   :type 'string
   :group 'identica-mode)
 
