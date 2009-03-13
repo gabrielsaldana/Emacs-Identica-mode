@@ -60,6 +60,10 @@
 
 (defconst identica-mode-version "0.5")
 
+(defgroup identica-mode nil "Customize Identica Mode"
+  :tag "Microblogging"
+  :group 'applications
+)
 (defun identica-mode-version ()
   "Display a message for identica-mode version."
   (interactive)
@@ -73,15 +77,30 @@
 
 (defvar identica-timer nil "Timer object for timeline refreshing will be stored here. DO NOT SET VALUE MANUALLY.")
 
-(defvar identica-idle-time 20)
+(defcustom identica-idle-time 20
+  "Idle time"
+  :type 'integer
+  :group 'identica-mode)
 
-(defvar identica-timer-interval 90)
+(defcustom identica-timer-interval 90
+  "Timer interval to refresh the timeline"
+  :type 'integer
+  :group 'identica-mode)
 
-(defvar identica-username nil)
+(defcustom identica-username nil
+  "Username"
+  :type 'string
+  :group 'identica-mode)
 
-(defvar identica-password nil)
+(defcustom identica-password nil
+  "Username"
+  :type 'string
+  :group 'identica-mode)
 
-(defvar laconica-server "identi.ca")
+(defcustom laconica-server "identi.ca"
+  "Laconica instance url"
+  :type 'string
+  :group 'identica-mode)
 
 (defvar identica-scroll-mode nil)
 (make-variable-buffer-local 'identica-scroll-mode)
@@ -89,8 +108,10 @@
 (defvar identica-jojo-mode nil)
 (make-variable-buffer-local 'identica-jojo-mode)
 
-(defvar identica-status-format nil)
-(setq identica-status-format "%i %s,  %@:\n  %t // from %f%L")
+(defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L"
+  "The format used to display the status updates"
+  :type 'string
+  :group 'identica-mode)
 ;; %s - screen_name
 ;; %S - name
 ;; %i - profile_image
