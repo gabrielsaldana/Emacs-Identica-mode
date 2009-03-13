@@ -102,6 +102,8 @@
   :type 'string
   :group 'identica-mode)
 
+(defvar identica-method "friends_timeline")
+
 (defvar identica-scroll-mode nil)
 (make-variable-buffer-local 'identica-scroll-mode)
 
@@ -980,7 +982,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		       "@" usr " "
 		       (match-string-no-properties 2 msg)
 		       "\xd0a1\xd24f\xd243!?"))
-	 ("source" . "identicamode")))))
+	 ("source" . "emacs-identicamode")))))
 
 ;;;
 ;;; Commands
@@ -1008,13 +1010,13 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
     (if (not buf)
 	(identica-stop)
        (if (not identica-friends-timeline-last-update)
-	   (identica-http-get "statuses" "friends_timeline")
+	   (identica-http-get "statuses" identica-method)
 	 (let* ((system-time-locale "C")
 		(since
 		  (identica-global-strftime
 		   "%a, %d %b %Y %H:%M:%S GMT"
 		   identica-friends-timeline-last-update)))
-	   (identica-http-get "statuses" "friends_timeline"
+	   (identica-http-get "statuses" identica-method
 			       `(("since" . ,since))
 				)))))
 
@@ -1046,13 +1048,13 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (interactive)
   (setq identica-friends-timeline-data nil)
   (if (not identica-friends-timeline-last-update)
-      (identica-http-get "statuses" "friends_timeline")
+      (identica-http-get "statuses" identica-method)
     (let* ((system-time-locale "C")
 	   (since
 	     (identica-global-strftime
 	      "%a, %d %b %Y %H:%M:%S GMT"
 	      identica-friends-timeline-last-update)))
-      (identica-http-get "statuses" "friends_timeline"
+      (identica-http-get "statuses" identica-method
 			    `(("since" . ,since))
 			   ))))
 
@@ -1085,7 +1087,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 (defun identica-get-password ()
   (or identica-password
-      (setq identica-password (read-passwd "identica-mode: "))))
+      (setq identica-password (read-passwd "password: "))))
 
 (defun identica-goto-next-status ()
   "Go to next status."
