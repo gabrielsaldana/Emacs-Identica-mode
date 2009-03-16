@@ -138,7 +138,9 @@
 ;; %# - id
 
 (defvar identica-buffer (concat "*identica-" identica-method "*"))
-(defun identica-buffer ()
+(defun identica-buffer (&optional method)
+  (unless method
+    (setq method "friends_timeline"))
   (identica-get-or-generate-buffer identica-buffer))
 
 (defvar identica-http-buffer "*identica-http-buffer*")
@@ -151,6 +153,13 @@
 (defvar identica-username-face 'identica-username-face)
 (defvar identica-uri-face 'identica-uri-face)
 (defvar identica-reply-face 'identica-reply-face)
+
+(defun identica-set-method ()
+  (interactive)
+  (setq identica-method (read-from-minibuffer "Timeline to retrieve:" nil nil nil nil nil "friends_timeline"))
+  (identica-buffer identica-method)
+  (identica-erase-old-statuses)
+  (identica-friends-timeline))
 
 (defun identica-get-or-generate-buffer (buffer)
   (if (bufferp buffer)
