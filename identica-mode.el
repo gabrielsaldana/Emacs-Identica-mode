@@ -955,31 +955,34 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (funcall func)
       )))
 
-(defun identica-update-status-if-not-blank (status)
+(defun identica-update-status-if-not-blank (method-class method status &optional parameters)
   (if (string-match "^\\s-*\\(?:@[-_a-z0-9]+\\)?\\s-*$" status)
       nil
-    (identica-http-post "statuses" "update"
+    (identica-http-post method-class method
 			  `(("status" . ,status)
 			    ("source" . "emacs-identicamode")))
     t))
 
-(defun identica-update-status-from-minibuffer (&optional init-str)
+(defun identica-update-status-from-minibuffer (&optional init-str method-class method)
   (if (null init-str) (setq init-str ""))
   (let ((status init-str) (not-posted-p t))
     (while not-posted-p
-      (setq status (read-from-minibuffer "Status: " status nil nil nil nil t))
+      (if (null method-class)
+	  (setq msgtype "Status:")
+	  (setq msgtype "Direct message"))
+      (setq status (read-from-minibuffer (concat msgtype ": ") status nil nil nil nil t))
       (while (<= 140 (length status))
-        (setq status (read-from-minibuffer (format "Status (%d): "
+        (setq status (read-from-minibuffer (format (concat msgtype "(%d): ")
                                                    (- 140 (length status)))
                                            status nil nil nil nil t)))
       (setq not-posted-p
-	    (not (identica-update-status-if-not-blank status))))))
+	    (not (identica-update-status-if-not-blank method-class method status))))))
 
 (defun identica-update-status-from-region (beg end)
   (interactive "r")
   (if (> (- end beg) 140) (setq end (+ beg 140)))
   (if (< (- end beg) -140) (setq beg (+ end 140)))
-  (identica-update-status-if-not-blank (buffer-substring beg end)))
+  (identica-update-status-if-not-blank ("statuses" "update" buffer-substring beg end)))
 
 (defun identica-update-lambda ()
   (interactive)
@@ -1058,6 +1061,10 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 (defun identica-update-status-interactive ()
   (interactive)
   (identica-update-status-from-minibuffer))
+
+(defun identica-direct-message-interactive ()
+  (interactive)
+  (identica-update-status-from-minibuffer nil "direct_messages/new"))
 
 (defun identica-erase-old-statuses ()
   (interactive)
