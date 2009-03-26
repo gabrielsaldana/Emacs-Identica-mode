@@ -46,7 +46,11 @@
 ;; (setq identica-password "yourpassword")
 
 ;; If you want to post from the minibufer without having identica buffer active, add the following global keybinding.
+;; Add this to send status updates
 ;; (global-set-key "\C-cip" 'identica-update-status-interactive)
+;; Add this to send direct messages
+;; (global-set-key "\C-cid" 'identica-direct-message-interactive)
+
 
 ;; If you want to connect to a custom laconica server add this and change
 ;; identi.ca with your server's doman name.
@@ -157,6 +161,7 @@
 (defun identica-set-method ()
   (interactive)
   (setq identica-method (read-from-minibuffer "Timeline to retrieve:" nil nil nil nil nil "friends_timeline"))
+  (kill-buffer identica-buffer)
   (identica-buffer identica-method)
   (identica-erase-old-statuses)
   (identica-friends-timeline))
@@ -291,6 +296,7 @@
     (let ((km identica-mode-map))
       (define-key km "\C-c\C-f" 'identica-friends-timeline)
       (define-key km "\C-c\C-s" 'identica-update-status-interactive)
+      (define-key km "\C-c\C-d" 'identica-direct-message-interactive)
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
       (define-key km "\C-m" 'identica-enter)
       (define-key km "\C-c\C-l" 'identica-update-lambda)
@@ -381,7 +387,7 @@
   (setq major-mode 'identica-mode)
   (setq mode-name identica-mode-string)
   (set-syntax-table identica-mode-syntax-table)
-  (run-hooks 'identica-mode-hook)
+  (run-mode-hooks 'identica-mode-hook)
   (font-lock-mode -1)
   (identica-start)
   )
@@ -958,25 +964,36 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 (defun identica-update-status-if-not-blank (method-class method status &optional parameters)
   (if (string-match "^\\s-*\\(?:@[-_a-z0-9]+\\)?\\s-*$" status)
       nil
-    (identica-http-post method-class method
-			  `(("status" . ,status)
-			    ("source" . "emacs-identicamode")))
+    (if (equal method-class "statuses")
+	(identica-http-post method-class method
+			    `(("status" . ,status)
+			      ("source" . "emacs-identicamode")))
+      (identica-http-post method-class method
+			  `(("text" . ,status)
+			    ("user" . ,parameters) ;must change this to parse parameters as list
+			    ("source" . "emacs-identicamode"))))
+
     t))
 
-(defun identica-update-status-from-minibuffer (&optional init-str method-class method)
+(defun identica-update-status-from-minibuffer (&optional init-str method-class method parameters)
   (if (null init-str) (setq init-str ""))
-  (let ((status init-str) (not-posted-p t))
+  (let ((status init-str) (not-posted-p t) (user nil))
     (while not-posted-p
       (if (null method-class)
-	  (setq msgtype "Status:")
-	  (setq msgtype "Direct message"))
+	  (progn (setq msgtype "Status")
+	   (setq method-class "statuses")
+	   (setq method "update"))
+	  (progn (setq msgtype "Direct message")
+	   (setq method-class "direct_messages")
+	   (setq parameters (read-from-minibuffer "To user: " user nil nil nil nil t))
+	   (setq method "new")))
       (setq status (read-from-minibuffer (concat msgtype ": ") status nil nil nil nil t))
       (while (<= 140 (length status))
         (setq status (read-from-minibuffer (format (concat msgtype "(%d): ")
                                                    (- 140 (length status)))
                                            status nil nil nil nil t)))
       (setq not-posted-p
-	    (not (identica-update-status-if-not-blank method-class method status))))))
+	    (not (identica-update-status-if-not-blank method-class method status parameters))))))
 
 (defun identica-update-status-from-region (beg end)
   (interactive "r")
@@ -1064,7 +1081,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 (defun identica-direct-message-interactive ()
   (interactive)
-  (identica-update-status-from-minibuffer nil "direct_messages/new"))
+  (identica-update-status-from-minibuffer nil "direct_messages" "new"))
 
 (defun identica-erase-old-statuses ()
   (interactive)
