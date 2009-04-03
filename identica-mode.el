@@ -82,6 +82,7 @@
 (defvar identica-mode-map (make-sparse-keymap))
 
 (defvar identica-timer nil "Timer object for timeline refreshing will be stored here. DO NOT SET VALUE MANUALLY.")
+(defvar identica-last-timeline-retrieved nil)
 
 (defcustom identica-idle-time 20
   "Idle time"
@@ -151,8 +152,8 @@
 (defun identica-http-buffer ()
   (identica-get-or-generate-buffer identica-http-buffer))
 
-(defvar identica-friends-timeline-data nil)
-(defvar identica-friends-timeline-last-update nil)
+(defvar identica-timeline-data nil)
+(defvar identica-timeline-last-update nil)
 
 (defvar identica-username-face 'identica-username-face)
 (defvar identica-uri-face 'identica-uri-face)
@@ -499,7 +500,7 @@
 	      (fill-region-as-paragraph
 	       (save-excursion (beginning-of-line) (point)) (point))
 	      (insert "\n"))
-	    identica-friends-timeline-data)
+	    identica-timeline-data)
       (if identica-image-stack
 	  (clear-image-cache))
       (setq buffer-read-only t)
@@ -758,10 +759,10 @@ in tags."
     (replace-match "")))
 
 (defun identica-cache-status-datum (status-datum &optional data-var)
-  "Cache status datum into data-var(default identica-friends-timeline-data)
+  "Cache status datum into data-var(default identica-timeline-data)
 If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (if (null data-var)
-      (setf data-var 'identica-friends-timeline-data))
+      (setf data-var 'identica-timeline-data))
   (let ((id (cdr (assq 'id status-datum))))
     (if (or (null (symbol-value data-var))
 	    (not (find-if
@@ -1085,7 +1086,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 (defun identica-erase-old-statuses ()
   (interactive)
-  (setq identica-friends-timeline-data nil)
+  (setq identica-timeline-data nil)
   (if (not identica-friends-timeline-last-update)
       (identica-http-get "statuses" identica-method)
     (let* ((system-time-locale "C")
