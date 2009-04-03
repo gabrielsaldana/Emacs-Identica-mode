@@ -13,6 +13,7 @@
 ;;     Alex Schröder <kensanata@gmail.com> (mode map patches)
 ;;     Christian Cheng (fixed long standing xml parsing bug)
 ;;     Carlos A. Perilla from denting-mode
+;;     Alberto Garcia <agarcia@igalia.com> (integrated patch from twittering-mode for retrieving multiplemethods)
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
@@ -159,14 +160,6 @@
 (defvar identica-uri-face 'identica-uri-face)
 (defvar identica-reply-face 'identica-reply-face)
 
-(defun identica-set-method ()
-  (interactive)
-  (setq identica-method (read-from-minibuffer "Timeline to retrieve:" nil nil nil nil nil "friends_timeline"))
-  (kill-buffer identica-buffer)
-  (identica-buffer identica-method)
-  (identica-erase-old-statuses)
-  (identica-friends-timeline))
-
 (defun identica-get-or-generate-buffer (buffer)
   (if (bufferp buffer)
       (if (buffer-live-p buffer)
@@ -238,7 +231,7 @@
 		(if (not (file-directory-p identica-tmp-dir))
 		    (make-directory identica-tmp-dir))
 		t)))))
-  (identica-render-friends-timeline))
+  (identica-render-timeline))
 
 (defun identica-scroll-mode (&optional arg)
   (interactive)
@@ -296,6 +289,9 @@
 (if identica-mode-map
     (let ((km identica-mode-map))
       (define-key km "\C-c\C-f" 'identica-friends-timeline)
+      (define-key km "\C-c\C-r" 'identica-replies-timeline)
+      (define-key km "\C-c\C-g" 'identica-public-timeline)
+      (define-key km "\C-c\C-u" 'identica-user-timeline)
       (define-key km "\C-c\C-s" 'identica-update-status-interactive)
       (define-key km "\C-c\C-d" 'identica-direct-message-interactive)
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
@@ -315,6 +311,7 @@
       (define-key km "p" 'identica-goto-previous-status-of-user)
       (define-key km [backspace] 'backward-char)
       (define-key km "G" 'end-of-buffer)
+      (define-key km "g" 'identica-current-timeline)
       (define-key km "H" 'beginning-of-buffer)
       (define-key km "i" 'identica-icon-mode)
       (define-key km "s" 'identica-scroll-mode)
@@ -482,13 +479,13 @@
 	     #'identica-cache-status-datum
 	     (reverse (identica-xmltree-to-status
 		       body)))
-	    (identica-render-friends-timeline)
+	    (identica-render-timeline)
 	    (message (if suc-msg suc-msg "Success: Get.")))
 	   (t (message status))))
       (message "Failure: Bad http response.")))
   )
 
-(defun identica-render-friends-timeline ()
+(defun identica-render-timeline ()
   (with-current-buffer (identica-buffer)
     (let ((point (point))
 	  (end (point-max)))
@@ -879,7 +876,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	    ))
 
 ;; Last update Thu Oct  2 19:03:12 2008 Gabriel Saldana
-      (setq identica-friends-timeline-last-update created-at)
+      (setq identica-timeline-last-update created-at)
 
       ;; highlight replies
       (if (string-match (concat "@" identica-username) text)
@@ -1027,7 +1024,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 (defun identica-start (&optional action)
   (interactive)
   (if (null action)
-      (setq action #'identica-friends-timeline))
+      (setq action #'identica-current-timeline))
   (if identica-timer
       nil
     (setq identica-timer
@@ -1040,18 +1037,21 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (cancel-timer identica-timer)
   (setq identica-timer nil))
 
-(defun identica-friends-timeline ()
-  (interactive)
-  (let ((buf (get-buffer identica-buffer)))
+(defun identica-get-timeline ()
+  (if (not (eq identica-last-timeline-retrieved identica-method))
+      (setq identica-timeline-last-update nil
+	    identica-timeline-data nil))
+  (setq identica-last-timeline-retrieved identica-method)
+  (let ((buf (get-buffer (identica-buffer identica-method))))
     (if (not buf)
 	(identica-stop)
-       (if (not identica-friends-timeline-last-update)
+       (if (not identica-timeline-last-update)
 	   (identica-http-get "statuses" identica-method)
 	 (let* ((system-time-locale "C")
 		(since
 		  (identica-global-strftime
 		   "%a, %d %b %Y %H:%M:%S GMT"
-		   identica-friends-timeline-last-update)))
+		   identica-timeline-last-update)))
 	   (identica-http-get "statuses" identica-method
 			       `(("since" . ,since))
 				)))))
@@ -1075,6 +1075,29 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	       (save-excursion
 		 (set-buffer (identica-wget-buffer))
 		 )))))))
+(defun identica-friends-timeline ()
+  (interactive)
+  (setq identica-method "friends_timeline")
+  (identica-get-timeline))
+
+(defun identica-replies-timeline ()
+  (interactive)
+  (setq identica-method "replies")
+  (identica-get-timeline))
+
+(defun identica-public-timeline ()
+  (interactive)
+  (setq identica-method "public_timeline")
+  (identica-get-timeline))
+
+(defun identica-user-timeline ()
+  (interactive)
+  (setq identica-method "user_timeline")
+  (identica-get-timeline))
+
+(defun identica-current-timeline ()
+  (interactive)
+  (identica-get-timeline))
 
 (defun identica-update-status-interactive ()
   (interactive)
@@ -1087,14 +1110,16 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 (defun identica-erase-old-statuses ()
   (interactive)
   (setq identica-timeline-data nil)
-  (if (not identica-friends-timeline-last-update)
-      (identica-http-get "statuses" identica-method)
+  (if (not identica-last-timeline-retrieved)
+      (setq identica-last-timeline-retrieved identica-method))
+  (if (not identica-timeline-last-update)
+      (identica-http-get "statuses" identica-last-timeline-retrieved)
     (let* ((system-time-locale "C")
 	   (since
 	     (identica-global-strftime
 	      "%a, %d %b %Y %H:%M:%S GMT"
-	      identica-friends-timeline-last-update)))
-      (identica-http-get "statuses" identica-method
+	      identica-timeline-last-update)))
+      (identica-http-get "statuses" identica-last-timeline-retrieved
 			    `(("since" . ,since))
 			   ))))
 
