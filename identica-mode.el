@@ -110,11 +110,14 @@
   :type 'string
   :group 'identica-mode)
 
-(defcustom identica-method "friends_timeline"
+(defcustom identica-default-timeline "friends_timeline"
   "Default timeline to retrieve"
   :type 'string
   :options '(("friends_timeline" "public_timeline" "replies"))
   :group 'identica-mode)
+
+;; Initialize with default timeline
+(defvar identica-method identica-default-timeline)
 
 (defvar identica-scroll-mode nil)
 (make-variable-buffer-local 'identica-scroll-mode)
@@ -1042,7 +1045,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (setq identica-timeline-last-update nil
 	    identica-timeline-data nil))
   (setq identica-last-timeline-retrieved identica-method)
-  (let ((buf (get-buffer (identica-buffer identica-method))))
+  (let ((buf (get-buffer identica-buffer)))
     (if (not buf)
 	(identica-stop)
        (if (not identica-timeline-last-update)
