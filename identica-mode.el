@@ -113,7 +113,7 @@
 (defcustom identica-default-timeline "friends_timeline"
   "Default timeline to retrieve"
   :type 'string
-  :options '(("friends_timeline" "public_timeline" "replies"))
+  :options '("friends_timeline" "public_timeline" "replies")
   :group 'identica-mode)
 
 ;; Initialize with default timeline
