@@ -427,7 +427,7 @@
 	   (let ((nl "\r\n")
 		 request)
 	     (setq request
-		   (concat "GET http://" laconica-server "/api/" method-class "/" method
+		   (concat "GET https://" laconica-server "/api/" method-class "/" method
 			   ".xml?"
 			   (when parameters
 			     (concat "?"
@@ -661,7 +661,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
        (let ((nl "\r\n")
 	     request)
 	 (setq  request
-		(concat "POST http://" laconica-server "/api/" method-class "/" method ".xml"
+		(concat "POST https://" laconica-server "/api/" method-class "/" method ".xml"
 			(when parameters
 			  (concat "?"
 				  (mapconcat
@@ -816,7 +816,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (add-text-properties
        0 (length user-name)
        `(mouse-face highlight
-		    uri ,(concat "http://" laconica-server "/" user-screen-name)
+		    uri ,(concat "https://" laconica-server "/" user-screen-name)
 		    face identica-username-face)
        user-name)
 
@@ -825,7 +825,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
        0 (length user-screen-name)
        `(mouse-face highlight
 		    face identica-username-face
-		    uri ,(concat "http://" laconica-server "/" user-screen-name)
+		    uri ,(concat "https://" laconica-server "/" user-screen-name)
 		    face identica-username-face)
        user-screen-name)
 
@@ -853,10 +853,10 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		   highlight
 		   face identica-uri-face
 		   uri ,(if screen-name
-			    (concat "http://" laconica-server "/" screen-name)
+			    (concat "https://" laconica-server "/" screen-name)
 			  (if group-name
-			      (concat "http://" laconica-server "/group/" group-name)
-			    (concat "http://" laconica-server "/tag/" tag-name)
+			      (concat "https://" laconica-server "/group/" group-name)
+			    (concat "https://" laconica-server "/tag/" tag-name)
 			    )))
 	       `(mouse-face highlight
 			    face identica-uri-face
@@ -1236,7 +1236,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 (defun identica-get-status-url (id)
   "Generate status URL."
-  (format "http://%s/notice/%d" laconica-server id))
+  (format "https://%s/notice/%d" laconica-server id))
 
 ;;;###autoload
 (defun identica ()
