@@ -146,7 +146,7 @@
 ;; %f - source
 ;; %# - id
 
-(defvar identica-buffer (concat "*identica-" identica-method "*"))
+(defvar identica-buffer "*identica*")
 (defun identica-buffer (&optional method)
   (unless method
     (setq method "friends_timeline"))
@@ -372,8 +372,11 @@
       `(ucs-to-char ,num)
     `(decode-char 'ucs ,num)))
 
-(defvar identica-mode-string "Identica mode")
+(defvar identica-mode-string (concat"Identica mode " identica-method))
 
+(defun identica-set-mode-string ()
+  (setq mode-name (concat "Identica mode " identica-method))
+)
 (defvar identica-mode-hook nil
   "Identica-mode hook.")
 
@@ -506,6 +509,7 @@
       (setq buffer-read-only t)
       (debug-print (current-buffer))
       (goto-char (+ point (if identica-scroll-mode (- (point-max) end) 0))))
+      (identica-set-mode-string)
     ))
 
 (defun identica-format-status (status format-str)
