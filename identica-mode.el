@@ -5,7 +5,7 @@
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
 ;; Last update: 2009-02-21
-;; Version: 0.5
+;; Version: 0.6
 ;; Keywords: identica web
 ;; URL: http://blog.nethazard.net/identica-mode-for-emacs/
 ;; Contributors:
@@ -64,7 +64,7 @@
 (require 'xml)
 (require 'parse-time)
 
-(defconst identica-mode-version "0.5")
+(defconst identica-mode-version "0.6")
 
 (defgroup identica-mode nil "Customize Identica Mode"
   :tag "Microblogging"
