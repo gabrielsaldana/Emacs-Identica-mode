@@ -80,10 +80,23 @@
 	(message "%s" version-string)
       version-string)))
 
-(defvar identica-mode-map (make-sparse-keymap))
-
+(defvar identica-mode-map (make-sparse-keymap "Identi.ca"))
+(defvar menu-bar-identica-mode-menu nil)
 (defvar identica-timer nil "Timer object for timeline refreshing will be stored here. DO NOT SET VALUE MANUALLY.")
 (defvar identica-last-timeline-retrieved nil)
+
+;; Menu
+(unless menu-bar-identica-mode-menu
+  (easy-menu-define
+    menu-bar-identica-mode-menu identica-mode-map ""
+    '("Identi.ca"
+      ["Send an update" identica-update-status-interactive t]
+      ["Send a direct message" identica-direct-message-interactive t]
+      ["--" nil nil]
+      ["Friends timeline" identica-friends-timeline t]
+      ["Public timeline" identica-public-timeline t]
+      ["Replies timeline" identica-replies-timeline t]
+      ["User timeline" identica-user-timeline t])))
 
 (defcustom identica-idle-time 20
   "Idle time"
@@ -372,7 +385,7 @@
       `(ucs-to-char ,num)
     `(decode-char 'ucs ,num)))
 
-(defvar identica-mode-string (concat"Identica mode " identica-method))
+(defvar identica-mode-string (concat "Identica mode " identica-method))
 
 (defun identica-set-mode-string ()
   (setq mode-name (concat "Identica mode " identica-method))
