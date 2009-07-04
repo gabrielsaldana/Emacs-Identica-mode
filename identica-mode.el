@@ -1,6 +1,5 @@
 ;;; identica-mode.el --- Major mode for Identica
 
-
 ;; Copyright (C) 2008 Gabriel Saldana
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
@@ -92,6 +91,7 @@
     '("Identi.ca"
       ["Send an update" identica-update-status-interactive t]
       ["Send a direct message" identica-direct-message-interactive t]
+      ["Re-dent someone's update" identica-redent t]
       ["--" nil nil]
       ["Friends timeline" identica-friends-timeline t]
       ["Public timeline" identica-public-timeline t]
@@ -315,6 +315,7 @@
       (define-key km "\C-c\C-u" 'identica-user-timeline)
       (define-key km "\C-c\C-s" 'identica-update-status-interactive)
       (define-key km "\C-c\C-d" 'identica-direct-message-interactive)
+      (define-key km "\C-c\C-m" 'identica-redent)
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
       (define-key km "\C-m" 'identica-enter)
       (define-key km "\C-c\C-l" 'identica-update-lambda)
@@ -644,7 +645,8 @@
       (list-push (substring format-str cursor) result)
       (let ((formatted-status (apply 'concat (nreverse result))))
 	(add-text-properties 0 (length formatted-status)
-			     `(username ,(attr 'user-screen-name))
+			     `(username ,(attr 'user-screen-name)
+					text ,(attr 'text))
 			     formatted-status)
 	formatted-status)
       )))
@@ -1173,6 +1175,14 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (let ((uri (get-text-property (point) 'uri)))
     (if uri
 	(browse-url uri))))
+
+(defun identica-redent ()
+  (interactive)
+  (let ((username (get-text-property (point) 'username))
+       (text (get-text-property (point) 'text)))
+    (when username
+       (identica-update-status-from-minibuffer
+        (concat "♻ @" username ": " text)))))
 
 (defun identica-reply-to-user ()
   (interactive)
