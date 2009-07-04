@@ -129,6 +129,11 @@
   :options '("friends_timeline" "public_timeline" "replies")
   :group 'identica-mode)
 
+(defcustom identica-display-success-messages nil
+  "Display messages when the timeline is successfully retrieved"
+  :type 'boolean
+  :group 'identica-mode)
+
 ;; Initialize with default timeline
 (defvar identica-method identica-default-timeline)
 
@@ -499,7 +504,8 @@
 	     (reverse (identica-xmltree-to-status
 		       body)))
 	    (identica-render-timeline)
-	    (message (if suc-msg suc-msg "Success: Get.")))
+	    (when identica-display-success-messages
+	    (message (if suc-msg suc-msg "Success: Get."))))
 	   (t (message status))))
       (message "Failure: Bad http response.")))
   )
@@ -720,7 +726,8 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 	(setq status (match-string-no-properties 1 header))
 	(case-string status
 		     (("200 OK")
-		      (message (if suc-msg suc-msg "Success: Post")))
+		      (when identica-display-success-messages
+		      (message (if suc-msg suc-msg "Success: Post"))))
 		     (t (message status)))
 	)
     (error (message (prin1-to-string err-signal))))
