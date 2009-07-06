@@ -65,11 +65,13 @@
 
 (defconst identica-mode-version "0.6")
 
-(defgroup identica-mode nil "Customize Identica Mode"
+(defgroup identica-mode nil
+  "Identica Mode for microblogging"
   :tag "Microblogging"
   :link '(url-link http://blog.nethazard.net/identica-mode-for-emacs/)
   :group 'applications
 )
+
 (defun identica-mode-version ()
   "Display a message for identica-mode version."
   (interactive)
@@ -399,7 +401,7 @@
 (defvar identica-mode-hook nil
   "Identica-mode hook.")
 
-(defun identica-mode ()
+(defun identica-mode-start ()
   "Major mode for Identica
 \\{identica-mode-map}"
   (interactive)
@@ -487,7 +489,8 @@
 	     (debug-print (concat "GET Request\n" request))
 	     request)))
       (error
-       (message "Failure: HTTP GET") nil))))
+       (message "Failure: HTTP GET") nil)))
+  (kill-buffer (identica-http-buffer)))
 
 (defun identica-http-get-default-sentinel (proc stat &optional suc-msg)
   (let ((header (identica-get-response-header))
@@ -716,7 +719,8 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 			     nl)))
 			nl))
 	 (debug-print (concat "POST Request\n" request))
-	 request)))))
+	 request))))
+  (kill-buffer (identica-http-buffer)))
 
 (defun identica-http-post-default-sentinel (proc stat &optional suc-msg)
 
@@ -1279,7 +1283,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 (defun identica ()
   "Start identica-mode."
   (interactive)
-  (identica-mode))
+  (identica-mode-start))
 
 (provide 'identica-mode)
 ;;; identica.el ends here
