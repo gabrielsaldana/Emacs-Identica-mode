@@ -524,7 +524,7 @@
 	       (save-excursion (beginning-of-line) (point)) (point))
 	      (insert "\n"))
 	    identica-timeline-data)
-      (if identica-image-stack
+      (if (and identica-image-stack window-system)
 	  (clear-image-cache))
       (setq buffer-read-only t)
       (debug-print (current-buffer))
@@ -1086,7 +1086,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 				)))))
 
   (if identica-icon-mode
-      (if identica-image-stack
+      (if (and identica-image-stack window-system)
 	  (let ((proc
 		 (apply
 		  #'start-process
