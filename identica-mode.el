@@ -145,6 +145,8 @@
 (defvar identica-jojo-mode nil)
 (make-variable-buffer-local 'identica-jojo-mode)
 
+(defvar identica-source "emacs-identicamode")
+
 (defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L"
   "The format used to display the status updates"
   :type 'string
@@ -287,7 +289,6 @@
   (identica-setftime fmt string nil))
 (defun identica-global-strftime (fmt string)
   (identica-setftime fmt string t))
-
 
 (defvar identica-debug-mode nil)
 (defvar identica-debug-buffer "*identica-debug*")
@@ -490,7 +491,7 @@
 	     request)))
       (error
        (message "Failure: HTTP GET") nil)))
-  (kill-buffer (identica-http-buffer)))
+  )
 
 (defun identica-http-get-default-sentinel (proc stat &optional suc-msg)
   (let ((header (identica-get-response-header))
@@ -720,7 +721,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 			nl))
 	 (debug-print (concat "POST Request\n" request))
 	 request))))
-  (kill-buffer (identica-http-buffer)))
+  )
 
 (defun identica-http-post-default-sentinel (proc stat &optional suc-msg)
 
@@ -998,11 +999,11 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
     (if (equal method-class "statuses")
 	(identica-http-post method-class method
 			    `(("status" . ,status)
-			      ("source" . "emacs-identicamode")))
+			      ("source" . ,identica-source)))
       (identica-http-post method-class method
 			  `(("text" . ,status)
 			    ("user" . ,parameters) ;must change this to parse parameters as list
-			    ("source" . "emacs-identicamode"))))
+			    ("source" . ,identica-source))))
 
     t))
 
