@@ -402,7 +402,7 @@
 (defvar identica-mode-hook nil
   "Identica-mode hook.")
 
-(defun identica-mode-start ()
+(defun identica-mode ()
   "Major mode for Identica
 \\{identica-mode-map}"
   (interactive)
@@ -1284,7 +1284,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 (defun identica ()
   "Start identica-mode."
   (interactive)
-  (identica-mode-start))
+  (identica-mode))
 
 (provide 'identica-mode)
 ;;; identica.el ends here
