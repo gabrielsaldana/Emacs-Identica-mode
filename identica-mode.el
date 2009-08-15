@@ -145,6 +145,16 @@
   :type 'boolean
   :group 'identica-mode)
 
+(defcustom identica-update-status-method 'minibuffer
+  "Method for performaing status updates.
+
+The available choices are:
+
+  'minibuffer  - edit the status update in the minibuffer.
+  'edit-buffer - edit the status update in an independent buffer."
+  :type '(choice (const :tag "Edit status in minibuffer" minibuffer)
+		 (const :tag "Edit status in independent buffer" edit-buffer))
+  :group 'identica-mode)
 
 ;; Initialize with default timeline
 (defvar identica-method identica-default-timeline)
@@ -1216,11 +1226,11 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 (defun identica-update-status-interactive ()
   (interactive)
-  (identica-update-status-from-minibuffer))
+  (identica-update-status identica-update-status-method))
 
 (defun identica-direct-message-interactive ()
   (interactive)
-  (identica-update-status-from-minibuffer nil "direct_messages" "new"))
+  (identica-update-status identica-update-status-method nil "direct_messages" "new"))
 
 (defun identica-erase-old-statuses ()
   (interactive)
@@ -1249,7 +1259,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (let ((username (get-text-property (point) 'username))
 	(uri (get-text-property (point) 'uri)))
     (if username
-	(identica-update-status-from-minibuffer (concat "@" username " "))
+	(identica-update-status identica-update-status-method (concat "@" username " "))
       (if uri
 	  (browse-url uri)))))
 
@@ -1264,14 +1274,14 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (let ((username (get-text-property (point) 'username))
        (text (get-text-property (point) 'text)))
     (when username
-       (identica-update-status-from-minibuffer
+       (identica-update-status identica-update-status-method
         (concat "♻ @" username ": " text)))))
 
 (defun identica-reply-to-user ()
   (interactive)
   (let ((username (get-text-property (point) 'username)))
     (if username
-	(identica-update-status-from-minibuffer (concat "@" username " ")))))
+	(identica-update-status identica-update-status-method (concat "@" username " ")))))
 
 (defun identica-get-password ()
   (or identica-password
