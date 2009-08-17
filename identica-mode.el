@@ -156,6 +156,11 @@ The available choices are:
 		 (const :tag "Edit status in independent buffer" edit-buffer))
   :group 'identica-mode)
 
+(defcustom identica-http-get-timeout 10
+  "Controls how long to wait for a response from the server."
+  :type 'integer
+  :group 'identica-mode)
+
 ;; Initialize with default timeline
 (defvar identica-method identica-default-timeline)
 
@@ -467,6 +472,7 @@ The available choices are:
 		 "network-connection-process" (identica-http-buffer)
 		 server (string-to-number port)))
 	  (set-process-sentinel proc sentinel)
+	  (with-timeout (identica-http-get-timeout (delete-process proc))
 	  (process-send-string
 	   proc
 	   (let ((nl "\r\n")
