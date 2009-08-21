@@ -514,7 +514,7 @@ The available choices are:
 				nl)))
 			   nl))
 	     (debug-print (concat "GET Request\n" request))
-	     request)))
+	     request))))
       (error
        (message "Failure: HTTP GET") nil)))
   )
