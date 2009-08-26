@@ -1079,7 +1079,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
     (cond ((eq update-input-method 'minibuffer)
            (while not-posted-p
              (setq status (read-from-minibuffer (concat msgtype ": ") status nil nil nil nil t))
-             (while (<= 140 (length status))
+             (while (< 141 (length status))
                (setq status (read-from-minibuffer (format (concat msgtype "(%d): ")
                                                           (- 140 (length status)))
                                                   status nil nil nil nil t)))
