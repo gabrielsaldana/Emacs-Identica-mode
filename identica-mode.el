@@ -1054,7 +1054,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 			      ("source" . ,identica-source)
 			      ,@(if reply-to-id
 				    `(("in_reply_to_status_id"
-				       . ,reply-to-id)))))
+				       . ,(number-to-string reply-to-id))))))
       (identica-http-post method-class method
 			  `(("text" . ,status)
 			    ("user" . ,parameters) ;must change this to parse parameters as list
