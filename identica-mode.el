@@ -345,6 +345,7 @@ The available choices are:
       (define-key km "\C-c\C-s" 'identica-update-status-interactive)
       (define-key km "\C-c\C-d" 'identica-direct-message-interactive)
       (define-key km "\C-c\C-m" 'identica-redent)
+      (define-key km "\C-c\C-o" 'identica-favorite)
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
       (define-key km "\C-m" 'identica-enter)
       (define-key km "\C-c\C-l" 'identica-update-lambda)
