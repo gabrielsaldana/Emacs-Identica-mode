@@ -172,7 +172,7 @@ The available choices are:
 
 (defvar identica-source "emacs-identicamode")
 
-(defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L"
+(defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r"
   "The format used to display the status updates"
   :type 'string
   :group 'identica-mode)
@@ -182,6 +182,7 @@ The available choices are:
 ;; %d - description
 ;; %l - location
 ;; %L - " [location]"
+;; %r - in reply to status
 ;; %u - url
 ;; %j - user.id
 ;; %p - protected?
@@ -615,6 +616,20 @@ The available choices are:
 	   (list-push (attr 'user-url) result))
 	  ((?j)                         ; %j - user.id
 	   (list-push (format "%d" (attr 'user-id)) result))
+	  ((?r)
+	   (let ((reply-id (attr 'in-reply-to-status-id))
+		 (reply-name (attr 'in-reply-to-screen-name)))
+	     (unless (or (null reply-id) (string= "" reply_id)
+			 (null reply-name) (string= "" reply_name))
+	       (let ((in-reply-to-string (format "in reply to %s" reply-name))
+		     (url (identica-get-status-url reply-name reply-id)))
+		 (add-text-properties
+		  0 (length in-reply-to-string)
+		  `(mouse-face highlight
+			       face identica-uri-face
+			       uri, url)
+		  in-reply-to-string)
+		 (list-push (concat " " in-reply-to-string) result)))))
 	  ((?p)                         ; %p - protected?
 	   (let ((protected (attr 'user-protected)))
 	     (when (string= "true" protected)
@@ -676,6 +691,7 @@ The available choices are:
       (let ((formatted-status (apply 'concat (nreverse result))))
 	(add-text-properties 0 (length formatted-status)
 			     `(username ,(attr 'user-screen-name)
+					id, (attr 'id)
 					text ,(attr 'text))
 			     formatted-status)
 	formatted-status)
@@ -839,6 +855,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		   (car (cddr (assq item seq)))))
     (let* ((status-data (cddr status))
 	   id text source created-at truncated
+	   in-reply-to-status-id
+	   in-reply-to-screen-name
 	   (user-data (cddr (assq 'user status-data)))
 	   user-id user-name
 	   user-screen-name
@@ -856,6 +874,12 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		    (assq-get 'source status-data)))
       (setq created-at (assq-get 'created_at status-data))
       (setq truncated (assq-get 'truncated status-data))
+      (setq in-reply-to-status-id
+	    (identica-decode-html-entities
+	     (assq-get 'in_reply_to_status_id status-data)))
+      (setq in-reply-to-screen-name
+	    (identica-decode-html-entities
+	     (assq-get 'in_reply_to_screen_name status-data)))
       (setq user-id (string-to-number (assq-get 'id user-data)))
       (setq user-name (identica-decode-html-entities
 		       (assq-get 'name user-data)))
@@ -1019,13 +1043,16 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (funcall func)
       )))
 
-(defun identica-update-status-if-not-blank (method-class method status &optional parameters)
+(defun identica-update-status-if-not-blank (method-class method status &optional parameters reply-to-id)
   (if (string-match "^\\s-*\\(?:@[-_a-z0-9]+\\)?\\s-*$" status)
       nil
     (if (equal method-class "statuses")
 	(identica-http-post method-class method
 			    `(("status" . ,status)
-			      ("source" . ,identica-source)))
+			      ("source" . ,identica-source)
+			      ,@(if reply-to-id
+				    `(("in_reply_to_status_id"
+				       . ,reply-to-id)))))
       (identica-http-post method-class method
 			  `(("text" . ,status)
 			    ("user" . ,parameters) ;must change this to parse parameters as list
@@ -1065,7 +1092,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
         t (setq mode-line-format (cons (format "%s (%%i/140) " msgtype) mode-line-format)))
       (message "Type C-c C-c to post status update (C-c C-k to cancel)."))))
 
-(defun identica-update-status (update-input-method &optional init-str method-class method parameters)
+(defun identica-update-status (update-input-method &optional init-str reply-to-id method-class method parameters)
   (if (null init-str) (setq init-str ""))
   (let ((msgtype "") (status init-str) (not-posted-p t) (user nil))
     (if (null method-class)
@@ -1084,9 +1111,9 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
                                                           (- 140 (length status)))
                                                   status nil nil nil nil t)))
              (setq not-posted-p
-                   (not (identica-update-status-if-not-blank method-class method status parameters)))))
+                   (not (identica-update-status-if-not-blank method-class method status parameters reply-to-id)))))
           ((eq update-input-method 'edit-buffer)
-           (identica-update-status-edit-in-edit-buffer init-str msgtype method-class method parameters))
+           (identica-update-status-edit-in-edit-buffer init-str msgtype method-class method parameters reply-to-id))
           (t (error "Unknown update-input-method in identica-update-status: %S" update-input-method)))))
 
 (defun identica-update-status-from-edit-buffer-send ()
@@ -1104,9 +1131,9 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
               (bury-buffer))
           (message "Update failed!"))))))
 
-(defun identica-update-status-from-minibuffer (&optional init-str method-class method parameters)
+(defun identica-update-status-from-minibuffer (&optional init-str method-class method parameters reply-to-id)
   (interactive)
-  (identica-update-status 'minibuffer init-str method-class method parameters))
+  (identica-update-status 'minibuffer init-str method-class method parameters reply-to-id))
 
 (defun identica-update-status-from-edit-buffer (&optional init-str method-class method parameters)
   (interactive)
@@ -1125,7 +1152,6 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (if (> (- end beg) 140) (setq end (+ beg 140)))
   (if (< (- end beg) -140) (setq beg (+ end 140)))
   (identica-update-status-if-not-blank ("statuses" "update" buffer-substring beg end)))
-
 
 (defun identica-update-lambda ()
   (interactive)
@@ -1236,7 +1262,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 (defun identica-direct-message-interactive ()
   (interactive)
-  (identica-update-status identica-update-status-method nil "direct_messages" "new"))
+  (identica-update-status identica-update-status-method nil nil "direct_messages" "new"))
 
 (defun identica-erase-old-statuses ()
   (interactive)
@@ -1263,9 +1289,10 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 (defun identica-enter ()
   (interactive)
   (let ((username (get-text-property (point) 'username))
+	(id (get-text-property (point) 'id))
 	(uri (get-text-property (point) 'uri)))
     (if username
-	(identica-update-status identica-update-status-method (concat "@" username " "))
+	(identica-update-status identica-update-status-method (concat "@" username " ") id)
       (if uri
 	  (browse-url uri)))))
 
@@ -1278,16 +1305,18 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 (defun identica-redent ()
   (interactive)
   (let ((username (get-text-property (point) 'username))
-       (text (get-text-property (point) 'text)))
+	(id (get-text-property (point) 'id))
+	(text (get-text-property (point) 'text)))
     (when username
        (identica-update-status identica-update-status-method
-        (concat "♻ @" username ": " text)))))
+        (concat "♻ @" username ": " text) id))))
 
 (defun identica-reply-to-user ()
   (interactive)
-  (let ((username (get-text-property (point) 'username)))
+  (let ((username (get-text-property (point) 'username))
+	(id (get-text-property (point) 'id)))
     (if username
-	(identica-update-status identica-update-status-method (concat "@" username " ")))))
+	(identica-update-status identica-update-status-method (concat "@" username " ") id))))
 
 (defun identica-get-password ()
   (or identica-password
