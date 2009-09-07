@@ -1296,6 +1296,11 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (if uri
 	  (browse-url uri)))))
 
+(defun identica-favorite ()
+  (interactive)
+  (let ((id (get-text-property (point) 'id)))
+    (identica-http-post "favorites/create" (number-to-string id))))
+
 (defun identica-view-user-page ()
   (interactive)
   (let ((uri (get-text-property (point) 'uri)))
