@@ -97,6 +97,7 @@
       ["Send an update" identica-update-status-interactive t]
       ["Send a direct message" identica-direct-message-interactive t]
       ["Re-dent someone's update" identica-redent t]
+      ["Add as favorite" identica-favorite t]
       ["--" nil nil]
       ["Friends timeline" identica-friends-timeline t]
       ["Public timeline" identica-public-timeline t]
