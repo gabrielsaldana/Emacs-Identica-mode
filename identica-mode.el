@@ -618,18 +618,18 @@ The available choices are:
 	   (list-push (attr 'user-url) result))
 	  ((?j)                         ; %j - user.id
 	   (list-push (format "%d" (attr 'user-id)) result))
-	  ((?r)
+	  ((?r)                         ; %r - in_reply_to_status_id
 	   (let ((reply-id (attr 'in-reply-to-status-id))
 		 (reply-name (attr 'in-reply-to-screen-name)))
-	     (unless (or (null reply-id) (string= "" reply_id)
-			 (null reply-name) (string= "" reply_name))
+	     (unless (or (null reply-id) (string= "" reply-id)
+			 (null reply-name) (string= "" reply-name))
 	       (let ((in-reply-to-string (format "in reply to %s" reply-name))
-		     (url (identica-get-status-url reply-name reply-id)))
+		     (url (identica-get-status-url reply-id)))
 		 (add-text-properties
 		  0 (length in-reply-to-string)
 		  `(mouse-face highlight
 			       face identica-uri-face
-			       uri, url)
+			       uri ,url)
 		  in-reply-to-string)
 		 (list-push (concat " " in-reply-to-string) result)))))
 	  ((?p)                         ; %p - protected?
@@ -961,7 +961,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	     source)
 	    ))
 
-;; Last update Thu Oct  2 19:03:12 2008 Gabriel Saldana
+      ;; save last update time
       (setq identica-timeline-last-update created-at)
 
       ;; highlight replies
@@ -972,6 +972,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
        (lambda (sym)
 	 `(,sym . ,(symbol-value sym)))
        '(id text source created-at truncated
+	    in-reply-to-status-id
+	    in-reply-to-screen-name
 	    user-id user-name user-screen-name user-location
 	    user-description
 	    user-profile-image-url
@@ -1408,7 +1410,11 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 (defun identica-get-status-url (id)
   "Generate status URL."
-  (format "https://%s/notice/%d" laconica-server id))
+  (format "https://%s/notice/%s" laconica-server id))
+
+(defun identica-get-context-url (id)
+  "Generate status URL."
+  (format "https://%s/conversation/%s" laconica-server id))
 
 ;;;###autoload
 (defun identica ()
