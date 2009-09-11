@@ -1076,8 +1076,9 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 (defvar identica-update-status-edit-method-class)
 (defvar identica-update-status-edit-method)
 (defvar identica-update-status-edit-parameters)
+(defvar identica-update-status-edit-reply-to-id)
 
-(defun identica-update-status-edit-in-edit-buffer (init-str msgtype method-class method parameters)
+(defun identica-update-status-edit-in-edit-buffer (init-str msgtype method-class method parameters &optional reply-to-id)
   (let ((buf (get-buffer-create "*identica-status-update-edit*")))
     (pop-to-buffer buf)
     (with-current-buffer buf
@@ -1086,9 +1087,11 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (make-local-variable 'identica-update-status-edit-method-class)
       (make-local-variable 'identica-update-status-edit-method)
       (make-local-variable 'identica-update-status-edit-parameters)
+      (make-local-variable 'identica-update-status-edit-reply-to-id)
       (setq identica-update-status-edit-method-class method-class)
       (setq identica-update-status-edit-method method)
       (setq identica-update-status-edit-parameters parameters)
+      (setq identica-update-status-edit-reply-to-id reply-to-id)
       (message identica-update-status-edit-method-class)
       (insert init-str)
       (if (> (length parameters) 0)
@@ -1129,7 +1132,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (if (< 140 status-len)
           (message (format "Beyond 140 chars.  Remove %d chars." (- status-len 140)))
         (if (identica-update-status-if-not-blank identica-update-status-edit-method-class
-              identica-update-status-edit-method status identica-update-status-edit-parameters)
+              identica-update-status-edit-method status identica-update-status-edit-parameters identica-update-status-edit-reply-to-id)
             (progn
               (erase-buffer)
               (bury-buffer))
