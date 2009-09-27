@@ -19,10 +19,10 @@
   @title Identica mode manual
   @subtitle v0.2 for identica-mode.el v0.8
   @author Chris Bryant (@email{chrisbryant@@ucla.edu})
-  @page 
+  @page
   @vskip 0pt plus 1filll
   @insertcopying
-@end titlepage  
+@end titlepage
 
 @contents
 
@@ -33,19 +33,19 @@ This manual is for identica-mode.el, version 0.8.
 @end ifnottex
 
 @menu
-* About Identica mode and obtaining it::  
-* Installation and configuration::  
-* Using identica-mode.el::      
-* Credits and contributing::    
-* GNU Free Documentation License::  
+* About Identica mode and obtaining it::
+* Installation and configuration::
+* Using identica-mode.el::
+* Credits and contributing::
+* GNU Free Documentation License::
 @end menu
 
 @node About Identica mode and obtaining it, Installation and configuration, Top, Top
 @chapter About Identica mode and obtaining it
 
 @menu
-* About identica-mode.el and this manual::  
-* Getting a copy::              
+* About identica-mode.el and this manual::
+* Getting a copy::
 @end menu
 
 @node About identica-mode.el and this manual, Getting a copy, About Identica mode and obtaining it, About Identica mode and obtaining it
@@ -82,8 +82,8 @@ This action will fetch the latest identica-mode.el file as well as the latest ma
 @chapter Installation and configuration
 
 @menu
-* Installing identica-mode.el::  
-* Configuring GNU Emacs::       
+* Installing identica-mode.el::
+* Configuring GNU Emacs::
 @end menu
 
 @node Installing identica-mode.el, Configuring GNU Emacs, Installation and configuration, Installation and configuration
@@ -99,8 +99,8 @@ Alternatively, you can create your own directory for this GNU Emacs mode file, a
 @section Configuring GNU Emacs
 
 @menu
-* identica-mode requirements::  
-* Configuring .emacs::          
+* identica-mode requirements::
+* Configuring .emacs::
 @end menu
 
 @node identica-mode requirements, Configuring .emacs, Configuring GNU Emacs, Configuring GNU Emacs
@@ -110,7 +110,7 @@ Alternatively, you can create your own directory for this GNU Emacs mode file, a
 The following GNU Emacs libraries are required by identica-mode.el.  A standard GNU Emacs installation should provide these, but if yours does not, fetch a copy of the @uref{http://www.gnu.org/software/emacs/, GNU Emacs} source.  The libraries are generally found under the @code{emacs-<version>/lisp/} directory.
 
 @itemize @bullet
-@item cl  
+@item cl
 @item xml
 @item parse-time
 @item longlines
@@ -163,22 +163,22 @@ For general usage, the defaults for each of these settings (excluding Username a
 @chapter Using identica-mode.el
 
 @menu
-* Basic usage::                 
-* Tips and tricks::             
+* Basic usage::
+* Tips and tricks::
 @end menu
 
 @node Basic usage, Tips and tricks, Using identica-mode.el, Using identica-mode.el
 @section Basic usage
 
 @menu
-* Introduction::                
-* Startup::                     
-* Icons::                       
-* Replies timeline::            
-* Public timeline::             
-* Personal timeline::           
-* Update status::               
-* Send notice::                 
+* Introduction::
+* Startup::
+* Icons::
+* Replies timeline::
+* Public timeline::
+* Personal timeline::
+* Update status::
+* Send notice::
 @end menu
 
 @node Introduction, Startup, Basic usage, Basic usage
@@ -203,7 +203,7 @@ If you are using GNU Emacs with a graphical interface, you can toggle the view o
 @subsection Replies timeline
 
 @firstparagraphindent none
-To view your Replies timeline execute: 
+To view your Replies timeline execute:
 @*
 @example
 C-c C-r
@@ -213,7 +213,7 @@ C-c C-r
 @subsection Public timeline
 
 @firstparagraphindent none
-To view the Public timeline execute: 
+To view the Public timeline execute:
 @*
 @example
 C-c C-g
@@ -243,7 +243,7 @@ C-c C-s
 At the @code{Status:} prompt, type the content of your status, up to 140 characters.  When done, hit the @command{Enter} key.  The message @code{Success: Post} will apper in the minibuffer.
 
 @node Send notice,  , Update status, Basic usage
-@subsection Send notice 
+@subsection Send notice
 
 @firstparagraphindent none
 To send a notice directly to a user execute:
@@ -259,21 +259,21 @@ At the @code{To user:} prompt type the exact user name and press the @command{En
 @section Tips and tricks
 
 @menu
-* Extending identica-mode::     
+* Extending identica-mode::
 @end menu
 
 @node Extending identica-mode,  , Tips and tricks, Tips and tricks
-@subsection Extending identica-node
+@subsection Extending identica-mode
 
 @firstparagraphindent none
-Because identica-mode.el is written in Emacs Lisp, there are many options to extend the mode to your liking.  As this is the first release of the Identica mode manual, this section will serve to simply encourage you to experiment with the code, and to see @ref{Contributing} for ways to let us know how you've extended identica-mode.el - maybe we'll add your extensions to the code, and this section, in further releases! 
+Because identica-mode.el is written in Emacs Lisp, there are many options to extend the mode to your liking.  As this is the first release of the Identica mode manual, this section will serve to simply encourage you to experiment with the code, and to see @ref{Contributing} for ways to let us know how you've extended identica-mode.el - maybe we'll add your extensions to the code, and this section, in further releases!
 
 @node Credits and contributing, GNU Free Documentation License, Using identica-mode.el, Top
 @chapter Credits and contributing
 
 @menu
-* Credits::                     
-* Contributing::                
+* Credits::
+* Contributing::
 @end menu
 
 @node Credits, Contributing, Credits and contributing, Credits and contributing
@@ -289,7 +289,7 @@ The following individuals have contributed to the Identica mode project.  See th
 @item  Jason McBrayer
 @item  Carlos A. Perilla
 @item  Alex Schröder
-@end itemize 
+@end itemize
 
 @node Contributing,  , Credits, Credits and contributing
 @section Contributing
