@@ -15,6 +15,7 @@
 ;;     Carlos A. Perilla from denting-mode
 ;;     Alberto Garcia <agarcia@igalia.com> (integrated patch from twittering-mode for retrieving multiplemethods)
 ;;     Bradley M. Kuhn <bkuhn@ebb.org> (editing status from edit-buffer rather than minibuffer)
+;;     Jason McBrayer <jmcbray@carcosa.net> (replace group tags with hashtags on redents)
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
@@ -1318,7 +1319,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (interactive)
   (let ((username (get-text-property (point) 'username))
 	(id (get-text-property (point) 'id))
-	(text (get-text-property (point) 'text)))
+	(text (replace-regexp-in-string "!\\(.\\)" "#\\1" (get-text-property (point) 'text))))
     (when username
        (identica-update-status identica-update-status-method
         (concat "♻ @" username ": " text) id))))
