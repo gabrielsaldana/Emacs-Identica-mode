@@ -15,7 +15,7 @@
 ;;     Carlos A. Perilla from denting-mode
 ;;     Alberto Garcia <agarcia@igalia.com> (integrated patch from twittering-mode for retrieving multiplemethods)
 ;;     Bradley M. Kuhn <bkuhn@ebb.org> (editing status from edit-buffer rather than minibuffer)
-;;     Jason McBrayer <jmcbray@carcosa.net> (replace group tags with hashtags on redents)
+;;     Jason McBrayer <jmcbray@carcosa.net> (replace group tags with hashtags on redents, longlines use)
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
