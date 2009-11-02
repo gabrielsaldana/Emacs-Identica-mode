@@ -147,6 +147,14 @@
   :type 'boolean
   :group 'identica-mode)
 
+(defcustom identica-soft-wrap-status nil
+  "If non-nil, don't fill status messages in the timeline as
+  paragraphs. Instead, use visual-line-mode or longlines-mode if
+  available to wrap messages.  This may work better for narrow
+  timeline windows."
+  :type 'boolean
+  :group 'identica-mode)
+
 (defcustom identica-update-status-method 'minibuffer
   "Method for performaing status updates.
 
@@ -444,8 +452,13 @@ The available choices are:
   (set-syntax-table identica-mode-syntax-table)
   (run-mode-hooks 'identica-mode-hook)
   (font-lock-mode -1)
-  (identica-start)
-  )
+  (if identica-soft-wrap-status
+      (if (fboundp 'visual-line-mode)
+          (visual-line-mode t)
+        (if (fboundp 'longlines-mode)
+            (longlines-mode t))))
+  (identica-start))
+
 
 ;;;
 ;;; Basic HTTP functions
@@ -554,8 +567,10 @@ The available choices are:
       (mapc (lambda (status)
 	      (insert (identica-format-status
 		       status identica-status-format))
-	      (fill-region-as-paragraph
-	       (save-excursion (beginning-of-line) (point)) (point))
+          (if (not identica-soft-wrap-status)
+              (progn
+                (fill-region-as-paragraph
+                 (save-excursion (beginning-of-line) (point)) (point))))
 	      (insert "\n"))
 	    identica-timeline-data)
       (if (and identica-image-stack window-system)
