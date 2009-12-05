@@ -142,7 +142,7 @@
   :group 'identica-mode)
 
 (defcustom identica-update-status-edit-confirm-cancellation nil
-  "If t, ask user if they are sure when aborting editing of a n
+  "If t, ask user if they are sure when aborting editing of an
   identica status update when using an edit-buffer"
   :type 'boolean
   :group 'identica-mode)
