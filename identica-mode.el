@@ -73,8 +73,7 @@
   "Identica Mode for microblogging"
   :tag "Microblogging"
   :link '(url-link http://blog.nethazard.net/identica-mode-for-emacs/)
-  :group 'applications
-)
+  :group 'applications )
 
 (defun identica-mode-version ()
   "Display a message for identica-mode version."
@@ -387,8 +386,7 @@ The available choices are:
     ()
   (setq identica-mode-syntax-table (make-syntax-table))
   ;; (modify-syntax-entry ?  "" identica-mode-syntax-table)
-  (modify-syntax-entry ?\" "w"  identica-mode-syntax-table)
-  )
+  (modify-syntax-entry ?\" "w"  identica-mode-syntax-table))
 
 (defun identica-mode-init-variables ()
   ;; (make-variable-buffer-local 'variable)
@@ -409,8 +407,7 @@ The available choices are:
   (set-face-attribute 'identica-uri-face nil :underline t)
   (add-to-list 'minor-mode-alist '(identica-icon-mode " id-icon"))
   (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll"))
-  (add-to-list 'minor-mode-alist '(identica-jojo-mode " id-jojo"))
-  )
+  (add-to-list 'minor-mode-alist '(identica-jojo-mode " id-jojo")))
 
 (defmacro case-string (str &rest clauses)
   `(cond
@@ -434,8 +431,8 @@ The available choices are:
 (defvar identica-mode-string (concat "Identica mode " identica-method))
 
 (defun identica-set-mode-string ()
-  (setq mode-name (concat "Identica mode " identica-method))
-)
+  (setq mode-name (concat "Identica mode " identica-method)))
+
 (defvar identica-mode-hook nil
   "Identica-mode hook.")
 
@@ -533,14 +530,12 @@ The available choices are:
 	     (debug-print (concat "GET Request\n" request))
 	     request))))
       (error
-       (message "Failure: HTTP GET") nil)))
-  )
+       (message "Failure: HTTP GET") nil))))
 
 (defun identica-http-get-default-sentinel (proc stat &optional suc-msg)
   (let ((header (identica-get-response-header))
 	(body (identica-get-response-body))
-	(status nil)
-	)
+	(status nil))
     (if (string-match "HTTP/1\.[01] \\([A-Za-z0-9 ]+\\)\r?\n" header)
 	(progn
 	  (setq status (match-string-no-properties 1 header))
@@ -555,8 +550,7 @@ The available choices are:
 	    (when identica-display-success-messages
 	    (message (if suc-msg suc-msg "Success: Get."))))
 	   (t (message status))))
-      (message "Failure: Bad http response.")))
-  )
+      (message "Failure: Bad http response."))))
 
 (defun identica-render-timeline ()
   (with-current-buffer (identica-buffer)
@@ -578,8 +572,7 @@ The available choices are:
       (setq buffer-read-only t)
       (debug-print (current-buffer))
       (goto-char (+ point (if identica-scroll-mode (- (point-max) end) 0))))
-      (identica-set-mode-string)
-    ))
+      (identica-set-mode-string)))
 
 (defun identica-format-status (status format-str)
   (flet ((attr (key)
@@ -600,8 +593,7 @@ The available choices are:
 		    (set-text-properties
 		     1 2 `(display ,(create-image (concat identica-tmp-dir "/" filename)))
 		     icon-string)
-		    icon-string)
-		  )))))
+		    icon-string))))))
     (let ((cursor 0)
 	  (result ())
 	  c
@@ -703,8 +695,7 @@ The available choices are:
 	  ((?#)                         ; %# - id
 	   (list-push (format "%d" (attr 'id)) result))
 	  (t
-	   (list-push (char-to-string c) result)))
-	)
+	   (list-push (char-to-string c) result))))
       (list-push (substring format-str cursor) result)
       (let ((formatted-status (apply 'concat (nreverse result))))
 	(add-text-properties 0 (length formatted-status)
@@ -712,8 +703,7 @@ The available choices are:
 					id, (attr 'id)
 					text ,(attr 'text))
 			     formatted-status)
-	formatted-status)
-      )))
+	formatted-status))))
 
 (defun identica-http-post
   (method-class method &optional parameters contents sentinel)
@@ -780,8 +770,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 			     nl)))
 			nl))
 	 (debug-print (concat "POST Request\n" request))
-	 request))))
-  )
+	 request)))))
 
 (defun identica-http-post-default-sentinel (proc stat &optional suc-msg)
 
@@ -795,10 +784,8 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 		     (("200 OK")
 		      (when identica-display-success-messages
 		      (message (if suc-msg suc-msg "Success: Post"))))
-		     (t (message status)))
-	)
-    (error (message (prin1-to-string err-signal))))
-  )
+		     (t (message status))))
+    (error (message (prin1-to-string err-signal)))))
 
 (defun identica-get-response-header (&optional buffer)
   "Exract HTTP response header from HTTP response.
@@ -823,8 +810,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
     (let ((content (buffer-string)))
       (xml-parse-region (+ (string-match "<\\?xml" content)
 			     (length (match-string 0 content)))
-                        (point-max))
-      )))
+                        (point-max)))))
 
 (defun identica-clean-weird-chars (&optional buffer)
 ;;(if (null buffer) (setq buffer (identica-http-buffer)))
@@ -838,8 +824,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 ?
 ?" nil t)
 (replace-match ""))
-(buffer-string))
-)
+(buffer-string)))
 
 (defun identica-clean-response-body ()
   "Removes weird strings (e.g., 1afc, a or 0) from within the
@@ -955,8 +940,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 			    (concat "https://" laconica-server "/" screen-name)
 			  (if group-name
 			      (concat "https://" laconica-server "/group/" group-name)
-			    (concat "https://" laconica-server "/tag/" tag-name)
-			    )))
+			    (concat "https://" laconica-server "/tag/" tag-name))))
 	       `(mouse-face highlight
 			    face identica-uri-face
 			    uri ,uri))
@@ -974,8 +958,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	     `(mouse-face highlight
 			  face identica-uri-face
 			  source ,source)
-	     source)
-	    ))
+	     source)))
 
       ;; save last update time
       (setq identica-timeline-last-update created-at)
@@ -1060,8 +1043,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (let ((buf (get-buffer identica-buffer)))
     (if (null buf)
 	(identica-stop)
-      (funcall func)
-      )))
+      (funcall func))))
 
 (defun identica-update-status-if-not-blank (method-class method status &optional parameters reply-to-id)
   (if (string-match "^\\s-*\\(?:@[-_a-z0-9]+\\)?\\s-*$" status)
@@ -1230,8 +1212,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		   "%a, %d %b %Y %H:%M:%S GMT"
 		   identica-timeline-last-update)))
 	   (identica-http-get "statuses" identica-method
-			       `(("since" . ,since))
-				)))))
+			       `(("since" . ,since)))))))
 
   (if identica-icon-mode
       (if (and identica-image-stack window-system)
@@ -1250,8 +1231,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	     (lambda (proc stat)
 	       (clear-image-cache)
 	       (save-excursion
-		 (set-buffer (identica-wget-buffer))
-		 )))))))
+		 (set-buffer (identica-wget-buffer)))))))))
+
 (defun identica-friends-timeline ()
   (interactive)
   (setq identica-method "friends_timeline")
@@ -1300,8 +1281,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	      "%a, %d %b %Y %H:%M:%S GMT"
 	      identica-timeline-last-update)))
       (identica-http-get "statuses" identica-last-timeline-retrieved
-			    `(("since" . ,since))
-			   ))))
+			    `(("since" . ,since))))))
 
 (defun identica-click ()
   (interactive)
