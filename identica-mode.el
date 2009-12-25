@@ -89,6 +89,14 @@
 (defvar identica-timer nil "Timer object for timeline refreshing will be stored here. DO NOT SET VALUE MANUALLY.")
 (defvar identica-last-timeline-retrieved nil)
 
+(defvar identica-tinyurl-service 'tinyurl
+  "The service to use. One of 'tinyurl' or 'toly'")
+
+(defvar identica-tinyurl-services-map
+  '((tinyurl . "http://tinyurl.com/api-create.php?url=")
+    (toly    . "http://to.ly/api.php?longurl="))
+  "Alist of tinyfy services")
+
 ;; Menu
 (unless menu-bar-identica-mode-menu
   (easy-menu-define
@@ -355,6 +363,7 @@ The available choices are:
       (define-key km "\C-c\C-d" 'identica-direct-message-interactive)
       (define-key km "\C-c\C-m" 'identica-redent)
       (define-key km "\C-c\C-o" 'identica-favorite)
+      (define-key km "f" 'identica-favorite)
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
       (define-key km "\C-m" 'identica-enter)
       (define-key km "\C-c\C-l" 'identica-update-lambda)
@@ -1097,9 +1106,34 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
         t (setq mode-line-format (cons (format "%s (%%i/140) " msgtype) mode-line-format)))
       (message "Type C-c C-c to post status update (C-c C-k to cancel)."))))
 
+(defun identica-show-minibuffer-length (&optional beg end len)
+  "Show the number of characters in minibuffer."
+  (when (minibuffer-window-active-p (selected-window))
+    (let* ((status-len (- (buffer-size) (minibuffer-prompt-width)))
+	   (mes (format "%d" status-len)))
+      (if (<= 23 emacs-major-version)
+	  (minibuffer-message mes) ; Emacs23 or later
+	(minibuffer-message (concat " (" mes ")")))
+      )))
+
+(defun identica-setup-minibuffer ()
+  (twittering-show-minibuffer-length)
+  (add-hook 'post-command-hook 'identica-show-minibuffer-length t t))
+
+(defun identica-finish-minibuffer ()
+  (remove-hook 'post-command-hook 'identica-show-minibuffer-length t))
+
 (defun identica-update-status (update-input-method &optional init-str reply-to-id method-class method parameters)
   (if (null init-str) (setq init-str ""))
-  (let ((msgtype "") (status init-str) (not-posted-p t) (user nil))
+  (let ((msgtype "")
+	(status init-str)
+	(not-posted-p t)
+	(user nil)
+	(map minibuffer-local-map)
+	(minibuffer-message-timeout nil))
+    (define-key map (kbd "<f4>") 'identica-tinyurl-replace-at-point)
+    (add-hook 'minibuffer-setup-hook 'identica-setup-minibuffer t)
+    (add-hook 'minibuffer-exit-hook 'identica-finish-minibuffer t)
     (if (null method-class)
         (progn (setq msgtype "Status")
                (setq method-class "statuses")
@@ -1109,6 +1143,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
              (setq parameters (read-from-minibuffer "To user: " user nil nil nil nil t))
              (setq method "new")))
     (cond ((eq update-input-method 'minibuffer)
+	   (unwind-protect
            (while not-posted-p
              (setq status (read-from-minibuffer (concat msgtype ": ") status nil nil nil nil t))
              (while (< 141 (length status))
@@ -1116,10 +1151,12 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
                                                           (- 140 (length status)))
                                                   status nil nil nil nil t)))
              (setq not-posted-p
-                   (not (identica-update-status-if-not-blank method-class method status parameters reply-to-id)))))
+                   (not (identica-update-status-if-not-blank method-class method status parameters reply-to-id))))
+	   (remove-hook 'minibuffer-setup-hook 'identica-setup-minibuffer)
+	   (remove-hook 'minibuffer-exit-hook 'identica-finish-minibuffer))
           ((eq update-input-method 'edit-buffer)
            (identica-update-status-edit-in-edit-buffer init-str msgtype method-class method parameters reply-to-id))
-          (t (error "Unknown update-input-method in identica-update-status: %S" update-input-method)))))
+          (t (error "Unknown update-input-method in identica-update-status: %S" update-input-method))))))
 
 (defun identica-update-status-from-edit-buffer-send ()
   (interactive)
@@ -1176,6 +1213,40 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		       "\xd0a1\xd24f\xd243!?"))
 	 ("source" . "emacs-identicamode")))))
 
+(defun identica-tinyurl-get (longurl)
+  "Tinyfy LONGURL"
+  (require 'url)
+  (let ((api (cdr (assoc identica-tinyurl-service
+			 identica-tinyurl-services-map))))
+    (unless api
+      (error (concat
+	      "`identica-tinyurl-service' was invalid. try one of "
+	      (mapconcat (lambda (x)
+			   (symbol-name (car x)))
+			 identica-tinyurl-services-map ", ")
+	      ".")))
+    (if longurl
+	(save-excursion
+	  (let ((buffer (url-retrieve-synchronously (concat api longurl))))
+	    (set-buffer buffer)
+	    (goto-char (point-min))
+	    (search-forward-regexp "\n\r?\n\\([^\n\r]*\\)")
+	    (prog1
+		(match-string-no-properties 1)
+	      (kill-buffer buffer))))
+      nil)))
+
+(defun identica-tinyurl-replace-at-point ()
+  "Replace the url at point with a tiny version."
+  (interactive)
+  (let ((url-bounds (bounds-of-thing-at-point 'url)))
+    (when url-bounds
+      (let ((url (identica-tinyurl-get (thing-at-point 'url))))
+	(when url
+	  (save-restriction
+	    (narrow-to-region (car url-bounds) (cdr url-bounds))
+	    (delete-region (point-min) (point-max))
+	    (insert url)))))))
 ;;;
 ;;; Commands
 ;;;
