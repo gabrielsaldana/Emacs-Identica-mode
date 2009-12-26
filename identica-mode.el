@@ -1153,10 +1153,10 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
              (setq not-posted-p
                    (not (identica-update-status-if-not-blank method-class method status parameters reply-to-id))))
 	   (remove-hook 'minibuffer-setup-hook 'identica-setup-minibuffer)
-	   (remove-hook 'minibuffer-exit-hook 'identica-finish-minibuffer))
+	   (remove-hook 'minibuffer-exit-hook 'identica-finish-minibuffer)))
           ((eq update-input-method 'edit-buffer)
            (identica-update-status-edit-in-edit-buffer init-str msgtype method-class method parameters reply-to-id))
-          (t (error "Unknown update-input-method in identica-update-status: %S" update-input-method))))))
+          (t (error "Unknown update-input-method in identica-update-status: %S" update-input-method)))))
 
 (defun identica-update-status-from-edit-buffer-send ()
   (interactive)
