@@ -97,6 +97,15 @@
     (toly    . "http://to.ly/api.php?longurl="))
   "Alist of tinyfy services")
 
+(defvar identica-new-dents-count 0
+  "Number of new tweets when `identica-new-dents-hook' is run")
+
+(defvar identica-new-dents-hook nil
+  "Hook run when new twits are received.
+
+You can read `identica-new-dents-count' to get the number of new
+tweets received when this hook is run.")
+
 ;; Menu
 (unless menu-bar-identica-mode-menu
   (easy-menu-define
@@ -551,13 +560,16 @@ The available choices are:
 	  (case-string
 	   status
 	   (("200 OK")
-	    (mapcar
-	     #'identica-cache-status-datum
-	     (reverse (identica-xmltree-to-status
-		       body)))
+	    (setq identica-new-dents-count
+		  (count t (mapcar
+			    #'identica-cache-status-datum
+			    (reverse (identica-xmltree-to-status
+				      body)))))
 	    (identica-render-timeline)
+	    (if (> identica-new-dents-count 0)
+		(run-hooks 'identica-new-dents-hook))
 	    (when identica-display-success-messages
-	    (message (if suc-msg suc-msg "Success: Get."))))
+	      (message (if suc-msg suc-msg "Success: Get."))))
 	   (t (message status))))
       (message "Failure: Bad http response."))))
 
