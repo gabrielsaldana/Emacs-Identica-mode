@@ -1129,7 +1129,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       )))
 
 (defun identica-setup-minibuffer ()
-  (twittering-show-minibuffer-length)
+  (identica-show-minibuffer-length)
   (add-hook 'post-command-hook 'identica-show-minibuffer-length t t))
 
 (defun identica-finish-minibuffer ()
