@@ -55,10 +55,10 @@
 ;; (global-set-key "\C-cid" 'identica-direct-message-interactive)
 
 
-;; If you want to connect to a custom laconica server add this and change
+;; If you want to connect to a custom statusnet server add this and change
 ;; identi.ca with your server's doman name.
 
-;; (setq laconica-server "identi.ca")
+;; (setq statusnet-server "identi.ca")
 
 ;; Start using with M-x identica-mode
 
@@ -141,9 +141,14 @@ tweets received when this hook is run.")
   :type '(choice (const :tag "Ask" nil) (string))
   :group 'identica-mode)
 
-(defcustom laconica-server "identi.ca"
-  "Laconica instance url"
+(defcustom statusnet-server "identi.ca"
+  "Statusnet instance url"
   :type 'string
+  :group 'identica-mode)
+
+(defcustom statusnet-port 80
+  "Port on which StatusNet instance listens"
+  :type 'integer
   :group 'identica-mode)
 
 (defcustom identica-default-timeline "friends_timeline"
@@ -497,7 +502,7 @@ The available choices are:
 		    port (if (integerp identica-proxy-port)
 			     (int-to-string identica-proxy-port)
 			   identica-proxy-port))
-	    (setq server laconica-server
+	    (setq server statusnet-server
 		  port "80"))
 	  (setq proc
 		(open-network-stream
@@ -510,7 +515,7 @@ The available choices are:
 	   (let ((nl "\r\n")
 		 request)
 	     (setq request
-		   (concat "GET https://" laconica-server "/api/" method-class "/" method
+		   (concat "GET https://" statusnet-server "/api/" method-class "/" method
 			   ".xml?"
 			   (when parameters
 			     (concat "?"
@@ -522,7 +527,7 @@ The available choices are:
 				      parameters
 				      "&")))
 			   " HTTP/1.1" nl
-			   (concat "Host: " laconica-server) nl
+			   (concat "Host: " statusnet-server) nl
 			   "User-Agent: " (identica-user-agent) nl
 			   "Authorization: Basic "
 			   (base64-encode-string
@@ -728,7 +733,7 @@ The available choices are:
 
 (defun identica-http-post
   (method-class method &optional parameters contents sentinel)
-  "Send HTTP POST request to laconica server
+  "Send HTTP POST request to statusnet server
 
 METHOD-CLASS must be one of Identica API method classes(statuses, users or direct_messages).
 METHOD must be one of Identica API method which belongs to METHOD-CLASS.
@@ -749,7 +754,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 		port (if (integerp identica-proxy-port)
 			 (int-to-string identica-proxy-port)
 		       identica-proxy-port))
-	(setq server laconica-server
+	(setq server statusnet-server
 	      port "80"))
       (setq proc
 	    (open-network-stream
@@ -761,7 +766,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
        (let ((nl "\r\n")
 	     request)
 	 (setq  request
-		(concat "POST https://" laconica-server "/api/" method-class "/" method ".xml"
+		(concat "POST https://" statusnet-server "/api/" method-class "/" method ".xml"
 			(when parameters
 			  (concat "?"
 				  (mapconcat
@@ -772,7 +777,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 				   parameters
 				   "&")))
 			" HTTP/1.1" nl
-			(concat "Host: " laconica-server) nl
+			(concat "Host: " statusnet-server) nl
 			"User-Agent: " (identica-user-agent) nl
 			"Authorization: Basic "
 			(base64-encode-string
@@ -849,7 +854,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 
 (defun identica-clean-response-body ()
   "Removes weird strings (e.g., 1afc, a or 0) from within the
-response body.  Known Laconica issue.  Mostly harmless except if
+response body.  Known Statusnet issue.  Mostly harmless except if
 in tags."
   (goto-char (point-min))
   (while (re-search-forward "\r?\n[0-9a-z]+\r?\n" nil t)
@@ -921,7 +926,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (add-text-properties
        0 (length user-name)
        `(mouse-face highlight
-		    uri ,(concat "https://" laconica-server "/" user-screen-name)
+		    uri ,(concat "https://" statusnet-server "/" user-screen-name)
 		    face identica-username-face)
        user-name)
 
@@ -930,7 +935,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
        0 (length user-screen-name)
        `(mouse-face highlight
 		    face identica-username-face
-		    uri ,(concat "https://" laconica-server "/" user-screen-name)
+		    uri ,(concat "https://" statusnet-server "/" user-screen-name)
 		    face identica-username-face)
        user-screen-name)
 
@@ -958,10 +963,10 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		   highlight
 		   face identica-uri-face
 		   uri ,(if screen-name
-			    (concat "https://" laconica-server "/" screen-name)
+			    (concat "https://" statusnet-server "/" screen-name)
 			  (if group-name
-			      (concat "https://" laconica-server "/group/" group-name)
-			    (concat "https://" laconica-server "/tag/" tag-name))))
+			      (concat "https://" statusnet-server "/group/" group-name)
+			    (concat "https://" statusnet-server "/tag/" tag-name))))
 	       `(mouse-face highlight
 			    face identica-uri-face
 			    uri ,uri))
@@ -1492,11 +1497,11 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 (defun identica-get-status-url (id)
   "Generate status URL."
-  (format "https://%s/notice/%s" laconica-server id))
+  (format "https://%s/notice/%s" statusnet-server id))
 
 (defun identica-get-context-url (id)
   "Generate status URL."
-  (format "https://%s/conversation/%s" laconica-server id))
+  (format "https://%s/conversation/%s" statusnet-server id))
 
 ;;;###autoload
 (defun identica ()
