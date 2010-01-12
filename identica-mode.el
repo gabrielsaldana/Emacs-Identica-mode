@@ -1144,8 +1144,6 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	(map minibuffer-local-map)
 	(minibuffer-message-timeout nil))
     (define-key map (kbd "<f4>") 'identica-tinyurl-replace-at-point)
-    (add-hook 'minibuffer-setup-hook 'identica-setup-minibuffer t)
-    (add-hook 'minibuffer-exit-hook 'identica-finish-minibuffer t)
     (if (null method-class)
         (progn (setq msgtype "Status")
                (setq method-class "statuses")
@@ -1155,6 +1153,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
              (setq parameters (read-from-minibuffer "To user: " user nil nil nil nil t))
              (setq method "new")))
     (cond ((eq update-input-method 'minibuffer)
+	   (add-hook 'minibuffer-setup-hook 'identica-setup-minibuffer t)
+	   (add-hook 'minibuffer-exit-hook 'identica-finish-minibuffer t)
 	   (unwind-protect
            (while not-posted-p
              (setq status (read-from-minibuffer (concat msgtype ": ") status nil nil nil nil t))
