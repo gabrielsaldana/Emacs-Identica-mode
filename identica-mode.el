@@ -1377,10 +1377,10 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (let ((username (get-text-property (point) 'username))
 	(id (get-text-property (point) 'id))
 	(uri (get-text-property (point) 'uri)))
-    (if username
-	(identica-update-status identica-update-status-method (concat "@" username " ") id)
-      (if uri
-	  (browse-url uri)))))
+    (if uri
+        (browse-url uri)
+      (if username
+          (identica-update-status identica-update-status-method (concat "@" username " ") id)))))
 
 (defun identica-favorite ()
   (interactive)
