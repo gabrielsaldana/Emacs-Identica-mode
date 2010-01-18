@@ -193,9 +193,6 @@ The available choices are:
 (defvar identica-scroll-mode nil)
 (make-variable-buffer-local 'identica-scroll-mode)
 
-(defvar identica-jojo-mode nil)
-(make-variable-buffer-local 'identica-jojo-mode)
-
 (defvar identica-source "emacs-identicamode")
 
 (defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r"
@@ -317,13 +314,6 @@ The available choices are:
 	    (not identica-scroll-mode)
 	  (> (prefix-numeric-value arg) 0))))
 
-(defun identica-jojo-mode (&optional arg)
-  (interactive)
-  (setq identica-jojo-mode
-	(if (null arg)
-	    (not identica-jojo-mode)
-	  (> (prefix-numeric-value arg) 0))))
-
 (defvar identica-image-stack nil)
 
 (defun identica-image-type (file-name)
@@ -375,7 +365,6 @@ The available choices are:
       (define-key km "f" 'identica-favorite)
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
       (define-key km "\C-m" 'identica-enter)
-      (define-key km "\C-c\C-l" 'identica-update-lambda)
       (define-key km [mouse-1] 'identica-click)
       (define-key km "\C-c\C-v" 'identica-view-user-page)
       (define-key km "q" 'bury-buffer)
@@ -424,8 +413,7 @@ The available choices are:
 
   (set-face-attribute 'identica-uri-face nil :underline t)
   (add-to-list 'minor-mode-alist '(identica-icon-mode " id-icon"))
-  (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll"))
-  (add-to-list 'minor-mode-alist '(identica-jojo-mode " id-jojo")))
+  (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll")))
 
 (defmacro case-string (str &rest clauses)
   `(cond
@@ -867,9 +855,6 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		    (eql id (cdr (assq 'id item))))
 		  (symbol-value data-var))))
 	(progn
-	  (if identica-jojo-mode
-	      (identica-update-jojo (cdr (assq 'user-screen-name status-datum))
-				      (cdr (assq 'text status-datum))))
 	  (set data-var (cons status-datum (symbol-value data-var)))
 	  t)
       nil)))
@@ -1206,24 +1191,6 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (if (> (- end beg) 140) (setq end (+ beg 140)))
   (if (< (- end beg) -140) (setq beg (+ end 140)))
   (identica-update-status-if-not-blank ("statuses" "update" buffer-substring beg end)))
-
-(defun identica-update-lambda ()
-  (interactive)
-  (identica-http-post
-   "statuses" "update"
-   `(("status" . "\xd34b\xd22b\xd26f\xd224\xd224\xd268\xd34b")
-     ("source" . "emacs-identicamode"))))
-
-(defun identica-update-jojo (usr msg)
-  (if (string-match "\xde21\xd24b\\(\xd22a\xe0b0\\|\xdaae\xe6cd\\)\xd24f\xd0d6\\([^\xd0d7]+\\)\xd0d7\xd248\xdc40\xd226"
-		    msg)
-      (identica-http-post
-       "statuses" "update"
-       `(("status" . ,(concat
-		       "@" usr " "
-		       (match-string-no-properties 2 msg)
-		       "\xd0a1\xd24f\xd243!?"))
-	 ("source" . "emacs-identicamode")))))
 
 (defun identica-tinyurl-get (longurl)
   "Tinyfy LONGURL"
