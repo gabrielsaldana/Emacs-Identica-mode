@@ -319,7 +319,6 @@ The available choices are:
 	    (not identica-scroll-mode)
 	  (> (prefix-numeric-value arg) 0))))
 
-
 (defvar identica-image-stack nil)
 
 (defun identica-image-type (file-name)
