@@ -1356,8 +1356,11 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 (defun identica-favorite ()
   (interactive)
-  (let ((id (get-text-property (point) 'id)))
-    (identica-http-post "favorites/create" (number-to-string id))))
+  (let ((confirmation (read-from-minibuffer "Do you want to favor this notice? [y/n] ")))
+    (if (string-equal confirmation "y")
+	(let ((id (get-text-property (point) 'id)))
+	  (identica-http-post "favorites/create" (number-to-string id))
+	  (message "Notice saved as favorite")))))
 
 (defun identica-view-user-page ()
   (interactive)
