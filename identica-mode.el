@@ -117,6 +117,8 @@ tweets received when this hook is run.")
       ["Send a direct message" identica-direct-message-interactive t]
       ["Re-dent someone's update" identica-redent t]
       ["Add as favorite" identica-favorite t]
+      ["Follow user" identica-follow]
+      ["Unfollow user" identica-unfollow]
       ["--" nil nil]
       ["Friends timeline" identica-friends-timeline t]
       ["Public timeline" identica-public-timeline t]
@@ -369,7 +371,7 @@ The available choices are:
       (define-key km "\C-c\C-d" 'identica-direct-message-interactive)
       (define-key km "\C-c\C-m" 'identica-redent)
       (define-key km "\C-c\C-o" 'identica-favorite)
-      (define-key km "f" 'identica-favorite)
+      (define-key km "F" 'identica-favorite)
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
       (define-key km "\C-m" 'identica-enter)
       (define-key km [mouse-1] 'identica-click)
@@ -1429,10 +1431,29 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (if username
           (identica-update-status identica-update-status-method (concat "@" username " ") id)))))
 
+(defun identica-follow (&optional remove)
+  (interactive)
+  (let ((username (get-text-property (point) 'username))
+	(method (if remove "destroy" "create"))
+	(message (if remove "unfollowing" "following")))
+    (unless username
+      (setq username (read-from-minibuffer "user: ")))
+    (if (> (length username) 0)
+	(when (y-or-n-p (format "%s %s? " message username))
+	  (identica-http-post (format "friendships/%s" method) username)
+	  (message (format "Now %s %s" message username)))
+      (message "No user selected"))))
+
+(defun identica-unfollow ()
+  (interactive)
+  (identica-follow t))
+
 (defun identica-favorite ()
   (interactive)
-  (let ((id (get-text-property (point) 'id)))
-    (identica-http-post "favorites/create" (number-to-string id))))
+    (if (y-or-n-p "Do you want to favor this notice? ")
+	(let ((id (get-text-property (point) 'id)))
+	  (identica-http-post "favorites/create" (number-to-string id))
+	  (message "Notice saved as favorite"))))
 
 (defun identica-view-user-page ()
   (interactive)
