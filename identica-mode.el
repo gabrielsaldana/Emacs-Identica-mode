@@ -1354,13 +1354,29 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (if username
           (identica-update-status identica-update-status-method (concat "@" username " ") id)))))
 
+(defun identica-follow (&optional remove)
+  (interactive)
+  (let ((username (get-text-property (point) 'username))
+	(method (if remove "destroy" "create"))
+	(message (if remove "unfollowing" "following")))
+    (unless username
+      (setq username (read-from-minibuffer "user: ")))
+    (if (> (length username) 0)
+	(when (y-or-n-p (format "%s %s? " message username))
+	  (identica-http-post (format "friendships/%s" method) username)
+	  (message (format "Now %s %s" message username)))
+      (message "No user selected"))))
+
+(defun identica-unfollow ()
+  (interactive)
+  (identica-follow t))
+
 (defun identica-favorite ()
   (interactive)
-  (let ((confirmation (read-from-minibuffer "Do you want to favor this notice? [y/n] ")))
-    (if (string-equal confirmation "y")
+    (if (y-or-n-p "Do you want to favor this notice? ")
 	(let ((id (get-text-property (point) 'id)))
 	  (identica-http-post "favorites/create" (number-to-string id))
-	  (message "Notice saved as favorite")))))
+	  (message "Notice saved as favorite"))))
 
 (defun identica-view-user-page ()
   (interactive)
