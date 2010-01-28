@@ -115,6 +115,8 @@ tweets received when this hook is run.")
       ["Send a direct message" identica-direct-message-interactive t]
       ["Re-dent someone's update" identica-redent t]
       ["Add as favorite" identica-favorite t]
+      ["Follow user" identica-follow]
+      ["Unfollow user" identica-unfollow]
       ["--" nil nil]
       ["Friends timeline" identica-friends-timeline t]
       ["Public timeline" identica-public-timeline t]
