@@ -1,6 +1,6 @@
 ;;; identica-mode.el --- Major mode for Identica
 
-;; Copyright (C) 2008 Gabriel Saldana
+;; Copyright (C) 2008, 2009, 2010 Gabriel Saldana
 ;; Copyright (C) 2009 Bradley M. Kuhn
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
