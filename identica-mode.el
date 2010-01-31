@@ -63,10 +63,11 @@
 
 ;; Start using with M-x identica-mode
 
-(require 'cl)
+(eval-when-compile (require 'cl))
 (require 'xml)
 (require 'parse-time)
 (require 'longlines)
+(require 'url)
 
 (defconst identica-mode-version "0.8")
 
@@ -1201,25 +1202,23 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (identica-update-status-if-not-blank "statuses" "update" (buffer-substring beg end)))
 
 (defun identica-tinyurl-get (longurl)
-  "Tinyfy LONGURL"
-  (require 'url)
+  "Shortens url through a url shortening service"
   (let ((api (cdr (assoc identica-tinyurl-service
 			 identica-tinyurl-services-map))))
     (unless api
-      (error (concat
-	      "`identica-tinyurl-service' was invalid. try one of "
+      (error "`identica-tinyurl-service' was invalid. try one of %s"
 	      (mapconcat (lambda (x)
 			   (symbol-name (car x)))
 			 identica-tinyurl-services-map ", ")
-	      ".")))
+	      "."))
     (if longurl
-	(save-excursion
 	  (let ((buffer (url-retrieve-synchronously (concat api longurl))))
-	    (set-buffer buffer)
+	    (with-current-buffer buffer
 	    (goto-char (point-min))
-	    (search-forward-regexp "\n\r?\n\\([^\n\r]*\\)")
 	    (prog1
-		(match-string-no-properties 1)
+		(if (search-forward-regexp "\n\r?\n\\([^\n\r]*\\)" nil t)
+		    (match-string-no-properties 1)
+		  (error "URL shortening service failed: %s" longurl))
 	      (kill-buffer buffer))))
       nil)))
 
