@@ -1197,7 +1197,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (interactive "r")
   (if (> (- end beg) 140) (setq end (+ beg 140)))
   (if (< (- end beg) -140) (setq beg (+ end 140)))
-  (identica-update-status-if-not-blank ("statuses" "update" buffer-substring beg end)))
+  (identica-update-status-if-not-blank "statuses" "update" (buffer-substring beg end)))
 
 (defun identica-tinyurl-get (longurl)
   "Tinyfy LONGURL"
