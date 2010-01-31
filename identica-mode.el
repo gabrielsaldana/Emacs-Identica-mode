@@ -1310,7 +1310,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (interactive)
   (let ((from-user (read-from-minibuffer "User [Empty for mine]: "
                                          nil nil nil nil nil t)))
-    (if (null from-user)
+    (if (string-equal from-user "")
         (setq identica-method "user_timeline")
       (setq identica-method (concat "user_timeline/" from-user))))
   (identica-get-timeline))
