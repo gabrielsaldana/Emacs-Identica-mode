@@ -955,10 +955,16 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 			    (concat "https://" statusnet-server "/" screen-name)
 			  (if group-name
 			      (concat "https://" statusnet-server "/group/" group-name)
+			    (concat "https://" statusnet-server "/tag/" tag-name)))
+		   uri-in-text ,(if screen-name
+			    (concat "https://" statusnet-server "/" screen-name)
+			  (if group-name
+			      (concat "https://" statusnet-server "/group/" group-name)
 			    (concat "https://" statusnet-server "/tag/" tag-name))))
 	       `(mouse-face highlight
 			    face identica-uri-face
-			    uri ,uri))
+			    uri ,uri
+			    uri-in-text ,uri))
 	     text))
 	  (setq regex-index (match-end 0)) ))
 
