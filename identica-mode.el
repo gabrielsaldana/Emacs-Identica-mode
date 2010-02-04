@@ -374,6 +374,8 @@ The available choices are:
       (define-key km "F" 'identica-favorite)
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
       (define-key km "\C-m" 'identica-enter)
+      (define-key km "\t" 'identica-next-link)
+      (define-key km [backtab] 'identica-prev-link)
       (define-key km [mouse-1] 'identica-click)
       (define-key km "\C-c\C-v" 'identica-view-user-page)
       (define-key km "q" 'bury-buffer)
@@ -1369,6 +1371,18 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
         (browse-url uri)
       (if username
           (identica-update-status identica-update-status-method (concat "@" username " ") id)))))
+
+(defun identica-next-link nil
+  (interactive)
+  (goto-char (next-single-property-change (point) 'uri))
+  (if (not (get-text-property (point) 'uri))
+      (goto-char (next-single-property-change (point) 'uri))))
+
+(defun identica-prev-link nil
+  (interactive)
+  (goto-char (previous-single-property-change (point) 'uri))
+  (if (not (get-text-property (point) 'uri))
+      (goto-char (previous-single-property-change (point) 'uri))))
 
 (defun identica-follow (&optional remove)
   (interactive)
