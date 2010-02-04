@@ -196,6 +196,11 @@ The available choices are:
   :type 'integer
   :group 'identica-mode)
 
+(defcustom identica-sign-string-value nil
+  "Sign string to be appended to dents. FIXME: not used yet"
+  :type 'string
+  :group 'identica-mode)
+
 ;; Initialize with default timeline
 (defvar identica-method identica-default-timeline)
 
@@ -1127,7 +1132,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	(deactivate-mark))
     (let* ((deactivate-mark deactivate-mark)
 	   (status-len (- (buffer-size) (minibuffer-prompt-width)))
-	   (sign-len (length (twittering-sign-string)))
+	   (sign-len (length (identica-sign-string)))
 	   (mes (if (< 0 sign-len)
 		    (format "%d=%d+%d"
 			    (+ status-len sign-len) status-len sign-len)
@@ -1136,6 +1141,12 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	  (minibuffer-message mes) ; Emacs23 or later
 	(minibuffer-message (concat " (" mes ")")))
       )))
+
+(defun identica-sign-string nil
+  "Append sign string"
+  (if identica-sign-string-value
+      (format " [%s]" identica-sign-string-value)
+    ""))
 
 (defun identica-setup-minibuffer ()
   (identica-show-minibuffer-length)
