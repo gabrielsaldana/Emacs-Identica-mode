@@ -934,7 +934,6 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (while regex-index
 	(setq regex-index
 	      (string-match "@\\([_a-zA-Z0-9]+\\)\\|!\\([_a-zA-Z0-9\-]+\\)\\|#\\([_a-zA-Z0-9\-]+\\)\\|\\(https?://[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+\\)"
-;;	      (string-match "@\\([_a-zA-Z0-9]+\\)\\|\\(https?://[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+\\)"
 			    text
 			    regex-index))
 	(when regex-index
@@ -1116,8 +1115,15 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 (defun identica-show-minibuffer-length (&optional beg end len)
   "Show the number of characters in minibuffer."
   (when (minibuffer-window-active-p (selected-window))
-    (let* ((status-len (- (buffer-size) (minibuffer-prompt-width)))
-	   (mes (format "%d" status-len)))
+    (if (and transient-mark-mode deactivate-mark)
+	(deactivate-mark))
+    (let* ((deactivate-mark deactivate-mark)
+	   (status-len (- (buffer-size) (minibuffer-prompt-width)))
+	   (sign-len (length (twittering-sign-string)))
+	   (mes (if (< 0 sign-len)
+		    (format "%d=%d+%d"
+			    (+ status-len sign-len) status-len sign-len)
+		  (format "%d" status-len))))
       (if (<= 23 emacs-major-version)
 	  (minibuffer-message mes) ; Emacs23 or later
 	(minibuffer-message (concat " (" mes ")")))
