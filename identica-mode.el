@@ -826,9 +826,10 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
     (set-buffer buffer)
     (identica-clean-response-body)
     (let ((content (buffer-string)))
+      (unless (string-equal content "")
       (xml-parse-region (+ (string-match "<\\?xml" content)
 			     (length (match-string 0 content)))
-                        (point-max)))))
+                        (point-max))))))
 
 (defun identica-clean-weird-chars (&optional buffer)
 ;;(if (null buffer) (setq buffer (identica-http-buffer)))
