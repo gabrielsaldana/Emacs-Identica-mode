@@ -1,6 +1,6 @@
 ;;; identica-mode.el --- Major mode for Identica
 
-;; Copyright (C) 2008 Gabriel Saldana
+;; Copyright (C) 2008, 2009, 2010 Gabriel Saldana
 ;; Copyright (C) 2009 Bradley M. Kuhn
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
@@ -16,6 +16,7 @@
 ;;     Alberto Garcia <agarcia@igalia.com> (integrated patch from twittering-mode for retrieving multiplemethods)
 ;;     Bradley M. Kuhn <bkuhn@ebb.org> (editing status from edit-buffer rather than minibuffer)
 ;;     Jason McBrayer <jmcbray@carcosa.net> (replace group tags with hashtags on redents, longlines use)
+;;     Sean Neakums (patches of bugs flagged by byte-compiler)
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
@@ -62,7 +63,7 @@
 
 ;; Start using with M-x identica-mode
 
-(require 'cl)
+(eval-when-compile (require 'cl))
 (require 'xml)
 (require 'parse-time)
 (require 'longlines)
@@ -374,6 +375,8 @@ The available choices are:
       (define-key km "F" 'identica-favorite)
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
       (define-key km "\C-m" 'identica-enter)
+      (define-key km "\t" 'identica-next-link)
+      (define-key km [backtab] 'identica-prev-link)
       (define-key km [mouse-1] 'identica-click)
       (define-key km "\C-c\C-v" 'identica-view-user-page)
       (define-key km "q" 'bury-buffer)
@@ -1000,7 +1003,6 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (while regex-index
 	(setq regex-index
 	      (string-match "@\\([_a-zA-Z0-9]+\\)\\|!\\([_a-zA-Z0-9\-]+\\)\\|#\\([_a-zA-Z0-9\-]+\\)\\|\\(https?://[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+\\)"
-;;	      (string-match "@\\([_a-zA-Z0-9]+\\)\\|\\(https?://[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+\\)"
 			    text
 			    regex-index))
 	(when regex-index
@@ -1022,10 +1024,16 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 			    (concat "https://" statusnet-server "/" screen-name)
 			  (if group-name
 			      (concat "https://" statusnet-server "/group/" group-name)
+			    (concat "https://" statusnet-server "/tag/" tag-name)))
+		   uri-in-text ,(if screen-name
+			    (concat "https://" statusnet-server "/" screen-name)
+			  (if group-name
+			      (concat "https://" statusnet-server "/group/" group-name)
 			    (concat "https://" statusnet-server "/tag/" tag-name))))
 	       `(mouse-face highlight
 			    face identica-uri-face
-			    uri ,uri))
+			    uri ,uri
+			    uri-in-text ,uri))
 	     text))
 	  (setq regex-index (match-end 0)) ))
 
@@ -1266,28 +1274,26 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (interactive "r")
   (if (> (- end beg) 140) (setq end (+ beg 140)))
   (if (< (- end beg) -140) (setq beg (+ end 140)))
-  (identica-update-status-if-not-blank ("statuses" "update" buffer-substring beg end)))
+  (identica-update-status-if-not-blank "statuses" "update" (buffer-substring beg end)))
 
 (defun identica-tinyurl-get (longurl)
-  "Tinyfy LONGURL"
-  (require 'url)
+  "Shortens url through a url shortening service"
   (let ((api (cdr (assoc identica-tinyurl-service
 			 identica-tinyurl-services-map))))
     (unless api
-      (error (concat
-	      "`identica-tinyurl-service' was invalid. try one of "
+      (error "`identica-tinyurl-service' was invalid. try one of %s"
 	      (mapconcat (lambda (x)
 			   (symbol-name (car x)))
 			 identica-tinyurl-services-map ", ")
-	      ".")))
+	      "."))
     (if longurl
-	(save-excursion
 	  (let ((buffer (url-retrieve-synchronously (concat api longurl))))
-	    (set-buffer buffer)
+	    (with-current-buffer buffer
 	    (goto-char (point-min))
-	    (search-forward-regexp "\n\r?\n\\([^\n\r]*\\)")
 	    (prog1
-		(match-string-no-properties 1)
+		(if (search-forward-regexp "\n\r?\n\\([^\n\r]*\\)" nil t)
+		    (match-string-no-properties 1)
+		  (error "URL shortening service failed: %s" longurl))
 	      (kill-buffer buffer))))
       nil)))
 
@@ -1382,10 +1388,11 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 (defun identica-user-timeline ()
   (interactive)
-  (setq from_user (read-from-minibuffer "User [Empty for mine]: " nil nil nil nil nil t))
-       (if (null from_user)
-	   (setq identica-method "user_timeline")
-	 (setq identica-method (concat "user_timeline/" from_user)))
+  (let ((from-user (read-from-minibuffer "User [Empty for mine]: "
+                                         nil nil nil nil nil t)))
+    (if (string-equal from-user "")
+        (setq identica-method "user_timeline")
+      (setq identica-method (concat "user_timeline/" from-user))))
   (identica-get-timeline))
 
 (defun identica-current-timeline ()
@@ -1430,6 +1437,18 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
         (browse-url uri)
       (if username
           (identica-update-status identica-update-status-method (concat "@" username " ") id)))))
+
+(defun identica-next-link nil
+  (interactive)
+  (goto-char (next-single-property-change (point) 'uri))
+  (if (not (get-text-property (point) 'uri))
+      (goto-char (next-single-property-change (point) 'uri))))
+
+(defun identica-prev-link nil
+  (interactive)
+  (goto-char (previous-single-property-change (point) 'uri))
+  (if (not (get-text-property (point) 'uri))
+      (goto-char (previous-single-property-change (point) 'uri))))
 
 (defun identica-follow (&optional remove)
   (interactive)
