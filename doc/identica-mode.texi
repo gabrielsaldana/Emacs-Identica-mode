@@ -17,7 +17,7 @@
 
 @titlepage
   @title Identica mode manual
-  @subtitle v0.2 for identica-mode.el v0.8
+  @subtitle v0.3 for identica-mode.el v0.9
   @author Chris Bryant (@email{chrisbryant@@ucla.edu})
   @page
   @vskip 0pt plus 1filll
@@ -29,7 +29,7 @@
 @node Top, About Identica mode and obtaining it, (dir), (dir)
 @ifnottex
 @top identica-mode
-This manual is for identica-mode.el, version 0.8.
+This manual is for identica-mode.el, version 0.9.
 @end ifnottex
 
 @menu
@@ -121,7 +121,7 @@ The following GNU Emacs libraries are required by identica-mode.el.  A standard 
 In addition to the library requirements, the following software is currently required:
 
 @itemize @bullet
-@item GNU Emacs 22
+@item GNU Emacs 22 or later
 @item Curl
 @item Wget
 @item UNIX-like OS (GNU/Linux, BSD, etcetera)
@@ -179,6 +179,7 @@ For general usage, the defaults for each of these settings (excluding Username a
 * Personal timeline::
 * Update status::
 * Send notice::
+* Shorten url::
 @end menu
 
 @node Introduction, Startup, Basic usage, Basic usage
@@ -242,7 +243,7 @@ C-c C-s
 @paragraphindent 3
 At the @code{Status:} prompt, type the content of your status, up to 140 characters.  When done, hit the @command{Enter} key.  The message @code{Success: Post} will apper in the minibuffer.
 
-@node Send notice,  , Update status, Basic usage
+@node Send notice, , Update status, Basic usage
 @subsection Send notice
 
 @firstparagraphindent none
@@ -255,12 +256,46 @@ C-c C-d
 @paragraphindent 3
 At the @code{To user:} prompt type the exact user name and press the @command{Enter} key.  At the @code{Direct message:} prompt, type your message and press the @command{Enter} key.
 
+@node Tips and tricks,  , Update status, Basic usage
+@subsection Shorten url
+
+@firstparagraphindent none
+You can shorten a url while typing your update status message on the
+minibuffer by pressing the @command{<F4>} key while the cursor is in
+between or at the end of the long url you just typed.
+
 @node Tips and tricks,  , Basic usage, Using identica-mode.el
 @section Tips and tricks
 
 @menu
+* Run commands after recieving notices::
 * Extending identica-mode::
 @end menu
+
+@node Run commands after recieving notices,  , Tips and tricks, Tips and tricks
+@subsection Run commands after recieving notices
+
+@firstparagraphindent none
+You can now create ``hooks'' that will run after recieving new
+notices. Just add a hook function to @code{identica-new-dents-hook}.
+
+@firstparagraphindent none
+To display a notification message on KDE 4 you can add the following
+code on your .emacs file:
+@*
+@example
+;; KDE 4 Notification of new dents with kdialog
+(add-hook 'identica-new-dents-hook (lambda ()
+   (let ((n identica-new-dents-count))
+     (start-process "identica-notify" nil "kdialog"
+		    "--title"
+		    "Emacs Identica-mode New dents"
+		    "--passivepopup"
+                    (format "You have %d new dent%s"
+                            n (if (> n 1) "s" ""))
+		    "3"
+))))
+@end example
 
 @node Extending identica-mode,  , Tips and tricks, Tips and tricks
 @subsection Extending identica-mode
@@ -289,6 +324,7 @@ The following individuals have contributed to the Identica mode project.  See th
 @item  Jason McBrayer
 @item  Carlos A. Perilla
 @item  Alex Schröder
+@item  Shyam Karanatt
 @end itemize
 
 @node Contributing,  , Credits, Credits and contributing
