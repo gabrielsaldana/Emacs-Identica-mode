@@ -5,7 +5,7 @@
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
 ;; Last update: 2009-02-21
-;; Version: 0.8
+;; Version: 0.9
 ;; Keywords: identica web
 ;; URL: http://blog.nethazard.net/identica-mode-for-emacs/
 ;; Contributors:
@@ -17,6 +17,7 @@
 ;;     Bradley M. Kuhn <bkuhn@ebb.org> (editing status from edit-buffer rather than minibuffer)
 ;;     Jason McBrayer <jmcbray@carcosa.net> (replace group tags with hashtags on redents, longlines use)
 ;;     Sean Neakums (patches of bugs flagged by byte-compiler)
+;;     Shyam Karanatt <shyam@swathanthran.in> (several patches and code cleanup)
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
@@ -69,7 +70,7 @@
 (require 'longlines)
 (require 'url)
 
-(defconst identica-mode-version "0.8")
+(defconst identica-mode-version "0.9")
 
 (defgroup identica-mode nil
   "Identica Mode for microblogging"
