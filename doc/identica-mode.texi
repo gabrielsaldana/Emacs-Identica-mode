@@ -260,7 +260,7 @@ At the @code{To user:} prompt type the exact user name and press the @command{En
 @subsection Shorten url
 
 @firstparagraphindent none
-You can shorten a url while typing your update status message on the
+You can shorten a url while typing your update notice on the
 minibuffer by pressing the @command{<F4>} key while the cursor is in
 between or at the end of the long url you just typed.
 
