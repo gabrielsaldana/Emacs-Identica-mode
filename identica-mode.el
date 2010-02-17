@@ -450,7 +450,7 @@ The available choices are:
 (defvar identica-mode-string identica-method)
 
 (defun identica-set-mode-string (loading)
-  (setq mode-name  
+  (setq mode-name
 	(if loading (concat "loading " identica-method "...") identica-method)))
 
 (defvar identica-mode-hook nil
@@ -489,7 +489,7 @@ or parsed URL. If URL is non-nil and valid, proxy authentication
 values are read from it.the rest of the arguments can be used to
 directly set proxy authentication.This function essentially adds
 authentication parameters from one of the above methods to the double
-alist `url-http-proxy-basic-auth-storage' and sets `url-using-proxy'." 
+alist `url-http-proxy-basic-auth-storage' and sets `url-using-proxy'."
   (let* ((href (if (stringp url)
 		   (url-generic-parse-url url)
 		 url))
@@ -501,7 +501,7 @@ alist `url-http-proxy-basic-auth-storage' and sets `url-using-proxy'."
 	 (server (and server
 		      (concat server (when port (concat ":" port)))))
 	 (file (if href (let ((file-url (url-filename href)))
-			  (cond 
+			  (cond
 			   ((string= "" file-url) "/")
 			   ((string-match "/$" file-url) file-url)
 			   (t (url-basepath file-url))))
@@ -511,12 +511,12 @@ alist `url-http-proxy-basic-auth-storage' and sets `url-using-proxy'."
 	 (auth (concat (or (and href (url-user href))
 			   username identica-proxy-user)
 		       (and password (concat ":" password)))))
-    (when (and identica-proxy-use 
+    (when (and identica-proxy-use
 	       (not (string= "" server))
 	       (not (string= "" auth)))
       (setq url-using-proxy server)
       (let* ((proxy-double-alist
-	      (or (assoc server 
+	      (or (assoc server
 			 url-http-proxy-basic-auth-storage)
 		  (car (push (cons server nil)
 			     url-http-proxy-basic-auth-storage))))
@@ -527,22 +527,22 @@ alist `url-http-proxy-basic-auth-storage' and sets `url-using-proxy'."
 		  (cons (cons file
 			      (base64-encode-string auth))
 			(cdr-safe proxy-double-alist))))))))
-						      
+
 (defun identica-change-user ()
   (interactive)
   "Interactive function to instantly change user authentication by
 directly reading parameters from user. This function only sets the
 identica-mode variables `identica-username' and
-`identica-password'. 
+`identica-password'.
 It is the `identica-set-auth' function that eventually sets the
 url library variables according to the above variables which does the
 authentication. This will be done automatically in normal use cases
 enabling dynamic change of user authentication."
   (setq identica-username
 	(read-string (concat "Username [for " statusnet-server
-			     ":" (int-to-string statusnet-port) "]: ") 
+			     ":" (int-to-string statusnet-port) "]: ")
 		     nil nil identica-username)
-	identica-password 
+	identica-password
 	(read-passwd "Password: " nil identica-password))
   (identica-get-timeline))
 
@@ -552,7 +552,7 @@ If URL is non-nil and valid, it reads user authentication
 parameters from url.
 If URL is nil, Rest of the arguments can be used to directly set user
 authentication.
-When called with no arguments, user authentication parameters are 
+When called with no arguments, user authentication parameters are
 read from identica-mode variables `identica-username'
 `identica-password' `statusnet-server' `statusnet-port'."
   (let* ((href (if (stringp url)
@@ -566,7 +566,7 @@ read from identica-mode variables `identica-username'
 	 (server (and server
 		      (concat server (when port (concat ":" port)))))
 	 (file (if href (let ((file-url (url-filename href)))
-			  (cond 
+			  (cond
 			   ((string= "" file-url) "/")
 			   ((string-match "/$" file-url) file-url)
 			   (t (url-basepath file-url))))
@@ -586,7 +586,7 @@ read from identica-mode variables `identica-username'
 	     (api-auth-alist (assoc file server-double-alist)))
 	(if api-auth-alist
 	    (setcdr api-auth-alist (base64-encode-string auth))
-	  (setcdr server-double-alist 
+	  (setcdr server-double-alist
 		  (cons (cons file
 			      (base64-encode-string auth))
 			(cdr-safe server-double-alist))))))))
@@ -604,7 +604,7 @@ response is completely retrieved. SENTINEL-ARGUMENTS is the list of
 arguments (if any) of the SENTINEL procedure."
   (or sentinel (setq sentinel 'identica-http-get-default-sentinel))
   (let ((url (concat "http://" statusnet-server "/api/" method-class
-		     "/" method ".xml" 
+		     "/" method ".xml"
 		     (when parameters
 		       (concat "?"
 			       (mapconcat
@@ -622,17 +622,17 @@ arguments (if any) of the SENTINEL procedure."
     (when (get-buffer-process identica-http-buffer)
       (delete-process identica-http-buffer)
       (kill-buffer identica-http-buffer))
-    (setq identica-http-buffer 
-	  (url-retrieve url sentinel 
+    (setq identica-http-buffer
+	  (url-retrieve url sentinel
 			(append (list method-class method parameters)
 				sentinel-arguments)))
-    (save-excursion 
+    (save-excursion
       (set-buffer identica-buffer)
       (identica-set-mode-string t))))
 
-(defun identica-http-get-default-sentinel 
+(defun identica-http-get-default-sentinel
   (&optional status method-class method parameters success-message)
-  (cond  ((setq error-object 
+  (cond  ((setq error-object
 		(or (assoc :error status)
 		    (and (equal :error (car status))
 			 (cadr status))))
@@ -651,10 +651,10 @@ arguments (if any) of the SENTINEL procedure."
 	      ;; when the network process is deleted by another query
 	      ;; or the user queried is not found , query is _finished_
 	      ;; unsuccessful and we want to restore identica-method
-	      ;; to loose track of this unsuccessful attempt 
+	      ;; to loose track of this unsuccessful attempt
 	      (setq identica-method identica-last-timeline-retrieved))))
 	 ((< (- (point-max) (or (re-search-forward ">\r?\n\r*$" nil t) 0)) 2)
-		;;Checking the whether the message is complete by 
+		;;Checking the whether the message is complete by
 		;;searching for > that closes the last tag, followed by
 		;;CRLF at (point-max)
 	  (when (setq body (identica-get-response-body))
@@ -835,8 +835,8 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
   (let ((url-request-method "POST")
 	 (url (concat "http://"statusnet-server "/api/" method-class "/" method ".xml"
 		      (when parameters
-			(concat "?" 
-				(mapconcat 
+			(concat "?"
+				(mapconcat
 				 (lambda (param-pair)
 				  (format "%s=%s"
 					  (identica-percent-encode (car param-pair))
@@ -858,11 +858,11 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 (defun identica-http-post-default-sentinel
   (&optional status method-class method parameters success-message)
   (cond  ((and
-	   (setq error-object (or (assoc :error status) 
+	   (setq error-object (or (assoc :error status)
 				 (and (equal :error (car status))
 				      (cadr status))))
-	   (y-or-n-p (format "Network error:%s %s Retry?" 
-			     (cadr error-object) 
+	   (y-or-n-p (format "Network error:%s %s Retry?"
+			     (cadr error-object)
 			     (caddr error-object))))
 	  (identica-http-post method-class method parameters nil success-message))
 	 (identica-display-success-messages
@@ -893,9 +893,9 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
   (save-excursion
     (set-buffer buffer)
     (set-buffer-multibyte t)
-    (let ((start (save-excursion 
-		  (goto-char (point-min)) 
-		  (and (re-search-forward "<\?xml" (point-max) t) 
+    (let ((start (save-excursion
+		  (goto-char (point-min))
+		  (and (re-search-forward "<\?xml" (point-max) t)
 		       (match-beginning 0)))))
       (identica-clean-response-body)
       (and start
