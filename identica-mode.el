@@ -200,6 +200,7 @@ The available choices are:
 
 ;; Initialize with default timeline
 (defvar identica-method identica-default-timeline)
+(defvar identica-method-class "statuses")
 
 (defvar identica-scroll-mode nil)
 (make-variable-buffer-local 'identica-scroll-mode)
@@ -366,7 +367,9 @@ The available choices are:
     (let ((km identica-mode-map))
       (define-key km "\C-c\C-f" 'identica-friends-timeline)
       (define-key km "\C-c\C-r" 'identica-replies-timeline)
-      (define-key km "\C-c\C-g" 'identica-public-timeline)
+      (define-key km "\C-c\C-a" 'identica-public-timeline)
+      (define-key km "\C-c\C-p" 'identica-group-timeline)
+      (define-key km "\C-c\C-t" 'identica-tag-timeline)
       (define-key km "\C-c\C-k" 'identica-stop)
       (define-key km "\C-c\C-u" 'identica-user-timeline)
       (define-key km "\C-c\C-s" 'identica-update-status-interactive)
@@ -1030,7 +1033,9 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 			    (concat "https://" statusnet-server "/" screen-name)
 			  (if group-name
 			      (concat "https://" statusnet-server "/group/" group-name)
-			    (concat "https://" statusnet-server "/tag/" tag-name))))
+			    (concat "https://" statusnet-server "/tag/" tag-name)))
+                   tag ,tag-name
+                   group ,group-name)
 	       `(mouse-face highlight
 			    face identica-uri-face
 			    uri ,uri
@@ -1344,13 +1349,13 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
     (if (not buf)
 	(identica-stop)
        (if (not identica-timeline-last-update)
-	   (identica-http-get "statuses" identica-method)
+	   (identica-http-get identica-method-class identica-method)
 	 (let* ((system-time-locale "C")
 		(since
 		  (identica-global-strftime
 		   "%a, %d %b %Y %H:%M:%S GMT"
 		   identica-timeline-last-update)))
-	   (identica-http-get "statuses" identica-method
+	   (identica-http-get identica-method-class identica-method
 			       `(("since" . ,since)))))))
 
   (if identica-icon-mode
@@ -1375,16 +1380,39 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 (defun identica-friends-timeline ()
   (interactive)
   (setq identica-method "friends_timeline")
+  (setq identica-method-class "statuses")
   (identica-get-timeline))
 
 (defun identica-replies-timeline ()
   (interactive)
   (setq identica-method "replies")
+  (setq identica-method-class "statuses")
   (identica-get-timeline))
 
 (defun identica-public-timeline ()
   (interactive)
   (setq identica-method "public_timeline")
+  (setq identica-method-class "statuses")
+  (identica-get-timeline))
+
+(defun identica-group-timeline (&optional group)
+  (interactive)
+  (unless group
+    (setq group (read-from-minibuffer "Group: " nil nil nil nil nil t)))
+  (setq identica-method-class "statusnet/groups")
+  (if (string-equal group "")
+      (setq identica-method "timeline")
+    (setq identica-method (concat "timeline/" group)))
+  (identica-get-timeline))
+
+(defun identica-tag-timeline (&optional tag)
+  (interactive)
+  (unless tag
+    (setq tag (read-from-minibuffer "Tag: " nil nil nil nil nil t)))
+  (setq identica-method-class "statusnet/tags")
+  (if (string-equal tag "")
+      (setq identica-method "timeline")
+    (setq identica-method (concat "timeline/" tag)))
   (identica-get-timeline))
 
 (defun identica-user-timeline ()
@@ -1433,11 +1461,15 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (interactive)
   (let ((username (get-text-property (point) 'username))
 	(id (get-text-property (point) 'id))
-	(uri (get-text-property (point) 'uri)))
-    (if uri
-        (browse-url uri)
-      (if username
-          (identica-update-status identica-update-status-method (concat "@" username " ") id)))))
+	(uri (get-text-property (point) 'uri))
+        (group (get-text-property (point) 'group))
+        (tag (get-text-property (point) 'tag)))
+    (if group (identica-group-timeline group)
+      (if tag (identica-tag-timeline tag)
+        (if uri (browse-url uri)
+          (if username
+              (identica-update-status identica-update-status-method
+                                      (concat "@" username " ") id)))))))
 
 (defun identica-next-link nil
   (interactive)
