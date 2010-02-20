@@ -73,6 +73,10 @@
 
 (defconst identica-mode-version "0.9")
 
+;;url-basepath fix for emacs22
+(unless (fboundp 'url-basepath)
+  (defalias 'url-basepath 'url-file-directory))
+
 (defgroup identica-mode nil
   "Identica Mode for microblogging"
   :tag "Microblogging"
