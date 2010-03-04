@@ -1352,15 +1352,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (let ((buf (get-buffer identica-buffer)))
     (if (not buf)
 	(identica-stop)
-       (if (not identica-timeline-last-update)
 	   (identica-http-get identica-method-class identica-method)
-	 (let* ((system-time-locale "C")
-		(since
-		  (identica-global-strftime
-		   "%a, %d %b %Y %H:%M:%S GMT"
-		   identica-timeline-last-update)))
-	   (identica-http-get identica-method-class identica-method
-			       `(("since" . ,since)))))))
+	   ))
 
   (if identica-icon-mode
       (if (and identica-image-stack window-system)
@@ -1445,15 +1438,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (setq identica-timeline-data nil)
   (if (not identica-last-timeline-retrieved)
       (setq identica-last-timeline-retrieved identica-method))
-  (if (not identica-timeline-last-update)
       (identica-http-get "statuses" identica-last-timeline-retrieved)
-    (let* ((system-time-locale "C")
-	   (since
-	     (identica-global-strftime
-	      "%a, %d %b %Y %H:%M:%S GMT"
-	      identica-timeline-last-update)))
-      (identica-http-get "statuses" identica-last-timeline-retrieved
-			    `(("since" . ,since))))))
+      )
 
 (defun identica-click ()
   (interactive)
