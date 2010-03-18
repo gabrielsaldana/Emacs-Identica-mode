@@ -70,6 +70,7 @@
 (require 'longlines)
 (require 'url)
 (require 'url-http)
+(require 'json)
 
 (defconst identica-mode-version "0.9")
 
@@ -97,12 +98,10 @@
 (defvar identica-timer nil "Timer object for timeline refreshing will be stored here. DO NOT SET VALUE MANUALLY.")
 (defvar identica-last-timeline-retrieved nil)
 
-(defvar identica-tinyurl-service 'tinyurl
-  "The service to use. One of 'tinyurl' or 'toly'")
-
 (defvar identica-tinyurl-services-map
   '((tinyurl . "http://tinyurl.com/api-create.php?url=")
-    (toly    . "http://to.ly/api.php?longurl="))
+    (toly    . "http://to.ly/api.php?longurl=")
+    (google . "http://ggl-shortener.appspot.com/?url="))
   "Alist of tinyfy services")
 
 (defvar identica-new-dents-count 0
@@ -232,6 +231,12 @@ The available choices are:
 ;; %' - truncated
 ;; %f - source
 ;; %# - id
+
+(defcustom identica-tinyurl-service 'tinyurl
+  "The service to use for URL shortening. Values understood are
+tinyurl, toly, and google."
+  :type 'symbol
+  :group 'identica-mode)
 
 (defvar identica-buffer "*identica*")
 (defun identica-buffer (&optional method)
@@ -1287,6 +1292,17 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (if (< (- end beg) -140) (setq beg (+ end 140)))
   (identica-update-status-if-not-blank "statuses" "update" (buffer-substring beg end)))
 
+(defun identica-tinyurl-unjson-google (result)
+  "Gets only the URL from JSON URL tinyfying service results.
+
+Google's shortening service, goo.gl, returns shortened URLs as a
+JSON dictionary. This function retrieves only the URL value from
+this dictionary, only if identica-tinyurl-service is 'google.
+"
+  (if (eq identica-tinyurl-service 'google)
+      (cdr (assoc 'short_url (json-read-from-string result)))
+    result))
+
 (defun identica-tinyurl-get (longurl)
   "Shortens url through a url shortening service"
   (let ((api (cdr (assoc identica-tinyurl-service
@@ -1302,9 +1318,10 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	    (with-current-buffer buffer
 	    (goto-char (point-min))
 	    (prog1
-		(if (search-forward-regexp "\n\r?\n\\([^\n\r]*\\)" nil t)
-		    (match-string-no-properties 1)
-		  (error "URL shortening service failed: %s" longurl))
+                (identica-tinyurl-unjson-google
+                 (if (search-forward-regexp "\n\r?\n\\([^\n\r]*\\)" nil t)
+                     (match-string-no-properties 1)
+                   (error "URL shortening service failed: %s" longurl)))
 	      (kill-buffer buffer))))
       nil)))
 
