@@ -235,7 +235,8 @@ The available choices are:
 (defcustom identica-tinyurl-service 'tinyurl
   "The service to use for URL shortening. Values understood are
 tinyurl, toly, and google."
-  :type 'symbol)
+  :type 'symbol
+  :group 'identica-mode)
 
 (defvar identica-buffer "*identica*")
 (defun identica-buffer (&optional method)
