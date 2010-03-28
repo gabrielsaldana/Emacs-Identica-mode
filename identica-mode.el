@@ -56,13 +56,12 @@
 ;; Add this to send direct messages
 ;; (global-set-key "\C-cid" 'identica-direct-message-interactive)
 
-
 ;; If you want to connect to a custom statusnet server add this and change
 ;; identi.ca with your server's doman name.
 
 ;; (setq statusnet-server "identi.ca")
 
-;; Start using with M-x identica-mode
+;; Start using with M-x identica
 
 (eval-when-compile (require 'cl))
 (require 'xml)
@@ -301,10 +300,6 @@ tinyurl, toly, and google."
 
 ;;; to show image files
 
-(defvar identica-wget-buffer "*identica-wget-buffer*")
-(defun identica-wget-buffer ()
-  (identica-get-or-generate-buffer identica-wget-buffer))
-
 (defvar identica-tmp-dir
   (expand-file-name (concat "identicamode-images-" (user-login-name))
 		    temporary-file-directory))
@@ -488,7 +483,6 @@ tinyurl, toly, and google."
 	(if (fboundp 'longlines-mode)
 	    (longlines-mode t))))
   (identica-start))
-
 
 ;;;
 ;;; Basic HTTP functions
@@ -1370,16 +1364,14 @@ this dictionary, only if identica-tinyurl-service is 'google.
   (let ((buf (get-buffer identica-buffer)))
     (if (not buf)
 	(identica-stop)
-	   (identica-http-get identica-method-class identica-method)
-	   ))
-
+      (identica-http-get identica-method-class identica-method)))
   (if identica-icon-mode
       (if (and identica-image-stack window-system)
 	  (let ((proc
 		 (apply
 		  #'start-process
 		  "wget-images"
-		  (identica-wget-buffer)
+		  nil
 		  "wget"
 		  (format "--directory-prefix=%s" identica-tmp-dir)
 		  "--no-clobber"
@@ -1389,8 +1381,7 @@ this dictionary, only if identica-tinyurl-service is 'google.
 	     proc
 	     (lambda (proc stat)
 	       (clear-image-cache)
-	       (save-excursion
-		 (set-buffer (identica-wget-buffer)))))))))
+	      ))))))
 
 (defun identica-friends-timeline ()
   (interactive)
