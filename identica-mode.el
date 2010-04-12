@@ -403,7 +403,7 @@ tinyurl, toly, and google."
       (define-key km "n" 'identica-goto-next-status-of-user)
       (define-key km "p" 'identica-goto-previous-status-of-user)
       (define-key km [backspace] 'scroll-down)
-      (define-key km [space] 'scroll-up)
+      (define-key km " " 'scroll-up)
       (define-key km "G" 'end-of-buffer)
       (define-key km "g" 'identica-current-timeline)
       (define-key km "H" 'beginning-of-buffer)
