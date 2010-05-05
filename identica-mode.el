@@ -207,7 +207,7 @@ The available choices are:
 (defvar identica-scroll-mode nil)
 (make-variable-buffer-local 'identica-scroll-mode)
 
-(defvar identica-source "emacs-identicamode")
+(defvar identica-source "identica-mode")
 
 (defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r"
   "The format used to display the status updates"
