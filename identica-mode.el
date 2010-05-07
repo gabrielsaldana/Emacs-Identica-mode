@@ -214,6 +214,11 @@ The available choices are:
 
 (defvar identica-source "identica-mode")
 
+(defcustom identica-redent-format "♻"
+  "The format/symbol to represent redents"
+  :type 'string
+  :group 'identica-mode)
+
 (defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r"
   "The format used to display the status updates"
   :type 'string
@@ -1524,7 +1529,7 @@ this dictionary, only if identica-tinyurl-service is 'google.
 	(text (replace-regexp-in-string "!\\(.\\)" "#\\1" (get-text-property (point) 'text))))
     (when username
        (identica-update-status identica-update-status-method
-        (concat "♻ @" username ": " text) id))))
+        (concat identica-redent-format " @" username ": " text) id))))
 
 (defun identica-reply-to-user ()
   (interactive)
