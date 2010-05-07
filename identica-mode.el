@@ -129,7 +129,10 @@ tweets received when this hook is run.")
       ["Friends timeline" identica-friends-timeline t]
       ["Public timeline" identica-public-timeline t]
       ["Replies timeline" identica-replies-timeline t]
-      ["User timeline" identica-user-timeline t])))
+      ["User timeline" identica-user-timeline t]
+      ["Group timeline" identica-group-timeline t]
+      ["Tag timeline" identica-tag-timeline t]
+)))
 
 (defcustom identica-idle-time 20
   "Idle time"
