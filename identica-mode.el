@@ -129,7 +129,10 @@ tweets received when this hook is run.")
       ["Friends timeline" identica-friends-timeline t]
       ["Public timeline" identica-public-timeline t]
       ["Replies timeline" identica-replies-timeline t]
-      ["User timeline" identica-user-timeline t])))
+      ["User timeline" identica-user-timeline t]
+      ["Group timeline" identica-group-timeline t]
+      ["Tag timeline" identica-tag-timeline t]
+)))
 
 (defcustom identica-idle-time 20
   "Idle time"
@@ -210,6 +213,11 @@ The available choices are:
 (make-variable-buffer-local 'identica-scroll-mode)
 
 (defvar identica-source "identica-mode")
+
+(defcustom identica-redent-format "♻"
+  "The format/symbol to represent redents"
+  :type 'string
+  :group 'identica-mode)
 
 (defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r"
   "The format used to display the status updates"
@@ -374,17 +382,17 @@ tinyurl, toly, and google."
       (define-key km "\C-c\C-f" 'identica-friends-timeline)
       (define-key km "\C-c\C-r" 'identica-replies-timeline)
       (define-key km "\C-c\C-a" 'identica-public-timeline)
-      (define-key km "\C-c\C-p" 'identica-group-timeline)
+      (define-key km "\C-c\C-g" 'identica-group-timeline)
       (define-key km "\C-c\C-t" 'identica-tag-timeline)
       (define-key km "\C-c\C-k" 'identica-stop)
       (define-key km "\C-c\C-u" 'identica-user-timeline)
       (define-key km "\C-c\C-s" 'identica-update-status-interactive)
       (define-key km "\C-c\C-d" 'identica-direct-message-interactive)
       (define-key km "\C-c\C-m" 'identica-redent)
-      (define-key km "\C-c\C-o" 'identica-favorite)
       (define-key km "F" 'identica-favorite)
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
       (define-key km "\C-m" 'identica-enter)
+      (define-key km "R" 'identica-reply-to-user)
       (define-key km "\t" 'identica-next-link)
       (define-key km [backtab] 'identica-prev-link)
       (define-key km [mouse-1] 'identica-click)
@@ -1521,7 +1529,7 @@ this dictionary, only if identica-tinyurl-service is 'google.
 	(text (replace-regexp-in-string "!\\(.\\)" "#\\1" (get-text-property (point) 'text))))
     (when username
        (identica-update-status identica-update-status-method
-        (concat "♻ @" username ": " text) id))))
+        (concat identica-redent-format " @" username ": " text) id))))
 
 (defun identica-reply-to-user ()
   (interactive)
