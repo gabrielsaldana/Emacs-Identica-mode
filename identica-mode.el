@@ -479,6 +479,7 @@ tinyurl, toly, and google."
 \\{identica-mode-map}"
   (interactive)
   (switch-to-buffer (identica-buffer))
+  (buffer-disable-undo (identica-buffer))
   (kill-all-local-variables)
   (identica-mode-init-variables)
   (use-local-map identica-mode-map)
