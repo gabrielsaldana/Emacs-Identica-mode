@@ -99,10 +99,12 @@
 (defvar identica-timer nil "Timer object for timeline refreshing will be stored here. DO NOT SET VALUE MANUALLY.")
 (defvar identica-last-timeline-retrieved nil)
 
-(defvar identica-tinyurl-services-map
+(defvar identica-urlshortening-services-map
   '((tinyurl . "http://tinyurl.com/api-create.php?url=")
     (toly    . "http://to.ly/api.php?longurl=")
-    (google . "http://ggl-shortener.appspot.com/?url="))
+    (google . "http://ggl-shortener.appspot.com/?url=")
+    (ur1ca . "http://ur1.ca")
+    (tighturl    . "http://2tu.us"))
   "Alist of tinyfy services")
 
 (defvar identica-new-dents-count 0
@@ -241,9 +243,9 @@ The available choices are:
 ;; %f - source
 ;; %# - id
 
-(defcustom identica-tinyurl-service 'tinyurl
+(defcustom identica-urlshortening-service 'ur1ca
   "The service to use for URL shortening. Values understood are
-tinyurl, toly, and google."
+ur1ca, tighturl, tinyurl, toly, and google"
   :type 'symbol
   :group 'identica-mode)
 
@@ -1233,7 +1235,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	(user nil)
 	(map minibuffer-local-map)
 	(minibuffer-message-timeout nil))
-    (define-key map (kbd "<f4>") 'identica-tinyurl-replace-at-point)
+    (define-key map (kbd "<f4>") 'identica-shortenurl-replace-at-point)
     (if (null method-class)
         (progn (setq msgtype "Status")
                (setq method-class "statuses")
@@ -1302,23 +1304,34 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 Google's shortening service, goo.gl, returns shortened URLs as a
 JSON dictionary. This function retrieves only the URL value from
-this dictionary, only if identica-tinyurl-service is 'google.
+this dictionary, only if identica-urlshortening-service is 'google.
 "
-  (if (eq identica-tinyurl-service 'google)
+  (if (eq identica-urlshortening-service 'google)
       (cdr (assoc 'short_url (json-read-from-string result)))
     result))
 
-(defun identica-tinyurl-get (longurl)
+(defun identica-ur1ca-get (api longurl)
+  "Shortens url through ur1.ca free service 'as in freedom'"
+  (with-temp-buffer
+    (call-process "curl" nil (current-buffer) nil "-s" (concat "-dlongurl=" longurl) api)
+    (goto-char (point-min))
+    (setq ur1short
+	  (if (search-forward-regexp "Your .* is: .*>\\(http://ur1.ca/[0-9A-Za-z].*\\)</a>" nil t)
+	      (match-string-no-properties 1)))))
+
+(defun identica-shortenurl-get (longurl)
   "Shortens url through a url shortening service"
-  (let ((api (cdr (assoc identica-tinyurl-service
-			 identica-tinyurl-services-map))))
+  (let ((api (cdr (assoc identica-urlshortening-service
+			 identica-urlshortening-services-map))))
     (unless api
-      (error "`identica-tinyurl-service' was invalid. try one of %s"
+      (error "`identica-urlshortening-service' was invalid. try one of %s"
 	      (mapconcat (lambda (x)
 			   (symbol-name (car x)))
-			 identica-tinyurl-services-map ", ")
+			 identica-urlshortening-services-map ", ")
 	      "."))
     (if longurl
+	(if (or (eq identica-urlshortening-service 'ur1ca) (eq identica-urlshortening-service 'tighturl))
+	    (identica-ur1ca-get api longurl)
 	  (let ((buffer (url-retrieve-synchronously (concat api longurl))))
 	    (with-current-buffer buffer
 	    (goto-char (point-min))
@@ -1328,14 +1341,14 @@ this dictionary, only if identica-tinyurl-service is 'google.
                      (match-string-no-properties 1)
                    (error "URL shortening service failed: %s" longurl)))
 	      (kill-buffer buffer))))
-      nil)))
+      nil))))
 
-(defun identica-tinyurl-replace-at-point ()
+(defun identica-shortenurl-replace-at-point ()
   "Replace the url at point with a tiny version."
   (interactive)
   (let ((url-bounds (bounds-of-thing-at-point 'url)))
     (when url-bounds
-      (let ((url (identica-tinyurl-get (thing-at-point 'url))))
+      (let ((url (identica-shortenurl-get (thing-at-point 'url))))
 	(when url
 	  (save-restriction
 	    (narrow-to-region (car url-bounds) (cdr url-bounds))
