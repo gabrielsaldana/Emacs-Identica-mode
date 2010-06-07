@@ -17,7 +17,7 @@
 ;;     Bradley M. Kuhn <bkuhn@ebb.org> (editing status from edit-buffer rather than minibuffer)
 ;;     Jason McBrayer <jmcbray@carcosa.net> (replace group tags with hashtags on redents, longlines use)
 ;;     Sean Neakums (patches of bugs flagged by byte-compiler)
-;;     Shyam Karanatt <shyam@swathanthran.in> (several patches and code cleanup)
+;;     Shyam Karanatt <shyam@swathanthran.in> (several patches and code cleanup, new http backend based on url.el)
 ;;     Tezcatl Franco <tzk@riseup.net> (ur1.ca support)
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
