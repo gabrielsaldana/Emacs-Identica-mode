@@ -5,7 +5,7 @@
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
 ;; Last update: 2009-02-21
-;; Version: 0.9
+;; Version: 1.0
 ;; Keywords: identica web
 ;; URL: http://blog.nethazard.net/identica-mode-for-emacs/
 ;; Contributors:
@@ -17,7 +17,8 @@
 ;;     Bradley M. Kuhn <bkuhn@ebb.org> (editing status from edit-buffer rather than minibuffer)
 ;;     Jason McBrayer <jmcbray@carcosa.net> (replace group tags with hashtags on redents, longlines use)
 ;;     Sean Neakums (patches of bugs flagged by byte-compiler)
-;;     Shyam Karanatt <shyam@swathanthran.in> (several patches and code cleanup)
+;;     Shyam Karanatt <shyam@swathanthran.in> (several patches and code cleanup, new http backend based on url.el)
+;;     Tezcatl Franco <tzk@riseup.net> (ur1.ca support)
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
@@ -73,7 +74,7 @@
 (require 'url-http)
 (require 'json)
 
-(defconst identica-mode-version "0.9")
+(defconst identica-mode-version "1.0")
 
 ;;url-basepath fix for emacs22
 (unless (fboundp 'url-basepath)
@@ -99,10 +100,12 @@
 (defvar identica-timer nil "Timer object for timeline refreshing will be stored here. DO NOT SET VALUE MANUALLY.")
 (defvar identica-last-timeline-retrieved nil)
 
-(defvar identica-tinyurl-services-map
+(defvar identica-urlshortening-services-map
   '((tinyurl . "http://tinyurl.com/api-create.php?url=")
     (toly    . "http://to.ly/api.php?longurl=")
-    (google . "http://ggl-shortener.appspot.com/?url="))
+    (google . "http://ggl-shortener.appspot.com/?url=")
+    (ur1ca . "http://ur1.ca")
+    (tighturl    . "http://2tu.us"))
   "Alist of tinyfy services")
 
 (defvar identica-new-dents-count 0
@@ -129,7 +132,10 @@ tweets received when this hook is run.")
       ["Friends timeline" identica-friends-timeline t]
       ["Public timeline" identica-public-timeline t]
       ["Replies timeline" identica-replies-timeline t]
-      ["User timeline" identica-user-timeline t])))
+      ["User timeline" identica-user-timeline t]
+      ["Group timeline" identica-group-timeline t]
+      ["Tag timeline" identica-tag-timeline t]
+)))
 
 (defcustom identica-idle-time 20
   "Idle time"
@@ -211,6 +217,11 @@ The available choices are:
 
 (defvar identica-source "identica-mode")
 
+(defcustom identica-redent-format "♻"
+  "The format/symbol to represent redents"
+  :type 'string
+  :group 'identica-mode)
+
 (defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r"
   "The format used to display the status updates"
   :type 'string
@@ -233,9 +244,9 @@ The available choices are:
 ;; %f - source
 ;; %# - id
 
-(defcustom identica-tinyurl-service 'tinyurl
+(defcustom identica-urlshortening-service 'ur1ca
   "The service to use for URL shortening. Values understood are
-tinyurl, toly, and google."
+ur1ca, tighturl, tinyurl, toly, and google"
   :type 'symbol
   :group 'identica-mode)
 
@@ -374,17 +385,17 @@ tinyurl, toly, and google."
       (define-key km "\C-c\C-f" 'identica-friends-timeline)
       (define-key km "\C-c\C-r" 'identica-replies-timeline)
       (define-key km "\C-c\C-a" 'identica-public-timeline)
-      (define-key km "\C-c\C-p" 'identica-group-timeline)
+      (define-key km "\C-c\C-g" 'identica-group-timeline)
       (define-key km "\C-c\C-t" 'identica-tag-timeline)
       (define-key km "\C-c\C-k" 'identica-stop)
       (define-key km "\C-c\C-u" 'identica-user-timeline)
       (define-key km "\C-c\C-s" 'identica-update-status-interactive)
       (define-key km "\C-c\C-d" 'identica-direct-message-interactive)
       (define-key km "\C-c\C-m" 'identica-redent)
-      (define-key km "\C-c\C-o" 'identica-favorite)
       (define-key km "F" 'identica-favorite)
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
       (define-key km "\C-m" 'identica-enter)
+      (define-key km "R" 'identica-reply-to-user)
       (define-key km "\t" 'identica-next-link)
       (define-key km [backtab] 'identica-prev-link)
       (define-key km [mouse-1] 'identica-click)
@@ -471,6 +482,7 @@ tinyurl, toly, and google."
 \\{identica-mode-map}"
   (interactive)
   (switch-to-buffer (identica-buffer))
+  (buffer-disable-undo (identica-buffer))
   (kill-all-local-variables)
   (identica-mode-init-variables)
   (use-local-map identica-mode-map)
@@ -1224,7 +1236,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	(user nil)
 	(map minibuffer-local-map)
 	(minibuffer-message-timeout nil))
-    (define-key map (kbd "<f4>") 'identica-tinyurl-replace-at-point)
+    (define-key map (kbd "<f4>") 'identica-shortenurl-replace-at-point)
     (if (null method-class)
         (progn (setq msgtype "Status")
                (setq method-class "statuses")
@@ -1293,23 +1305,34 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 Google's shortening service, goo.gl, returns shortened URLs as a
 JSON dictionary. This function retrieves only the URL value from
-this dictionary, only if identica-tinyurl-service is 'google.
+this dictionary, only if identica-urlshortening-service is 'google.
 "
-  (if (eq identica-tinyurl-service 'google)
+  (if (eq identica-urlshortening-service 'google)
       (cdr (assoc 'short_url (json-read-from-string result)))
     result))
 
-(defun identica-tinyurl-get (longurl)
+(defun identica-ur1ca-get (api longurl)
+  "Shortens url through ur1.ca free service 'as in freedom'"
+  (with-temp-buffer
+    (call-process "curl" nil (current-buffer) nil "-s" (concat "-dlongurl=" longurl) api)
+    (goto-char (point-min))
+    (setq ur1short
+	  (if (search-forward-regexp "Your .* is: .*>\\(http://ur1.ca/[0-9A-Za-z].*\\)</a>" nil t)
+	      (match-string-no-properties 1)))))
+
+(defun identica-shortenurl-get (longurl)
   "Shortens url through a url shortening service"
-  (let ((api (cdr (assoc identica-tinyurl-service
-			 identica-tinyurl-services-map))))
+  (let ((api (cdr (assoc identica-urlshortening-service
+			 identica-urlshortening-services-map))))
     (unless api
-      (error "`identica-tinyurl-service' was invalid. try one of %s"
+      (error "`identica-urlshortening-service' was invalid. try one of %s"
 	      (mapconcat (lambda (x)
 			   (symbol-name (car x)))
-			 identica-tinyurl-services-map ", ")
+			 identica-urlshortening-services-map ", ")
 	      "."))
     (if longurl
+	(if (or (eq identica-urlshortening-service 'ur1ca) (eq identica-urlshortening-service 'tighturl))
+	    (identica-ur1ca-get api longurl)
 	  (let ((buffer (url-retrieve-synchronously (concat api longurl))))
 	    (with-current-buffer buffer
 	    (goto-char (point-min))
@@ -1319,14 +1342,14 @@ this dictionary, only if identica-tinyurl-service is 'google.
                      (match-string-no-properties 1)
                    (error "URL shortening service failed: %s" longurl)))
 	      (kill-buffer buffer))))
-      nil)))
+      nil))))
 
-(defun identica-tinyurl-replace-at-point ()
+(defun identica-shortenurl-replace-at-point ()
   "Replace the url at point with a tiny version."
   (interactive)
   (let ((url-bounds (bounds-of-thing-at-point 'url)))
     (when url-bounds
-      (let ((url (identica-tinyurl-get (thing-at-point 'url))))
+      (let ((url (identica-shortenurl-get (thing-at-point 'url))))
 	(when url
 	  (save-restriction
 	    (narrow-to-region (car url-bounds) (cdr url-bounds))
@@ -1521,7 +1544,7 @@ this dictionary, only if identica-tinyurl-service is 'google.
 	(text (replace-regexp-in-string "!\\(.\\)" "#\\1" (get-text-property (point) 'text))))
     (when username
        (identica-update-status identica-update-status-method
-        (concat "♻ @" username ": " text) id))))
+        (concat identica-redent-format " @" username ": " text) id))))
 
 (defun identica-reply-to-user ()
   (interactive)
