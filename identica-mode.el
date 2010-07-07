@@ -872,6 +872,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 				 "&")))))
 	 (url-package-name "emacs-identicamode")
 	 (url-package-version identica-mode-version)
+	 (url-request-extra-headers '(("Content-Length" . "0")))
 	 (url-show-status nil))
     (identica-set-proxy)
     (identica-set-auth url)
