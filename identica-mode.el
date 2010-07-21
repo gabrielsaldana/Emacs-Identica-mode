@@ -695,13 +695,18 @@ arguments (if any) of the SENTINEL procedure."
 (defun identica-render-timeline ()
   (with-current-buffer (identica-buffer)
     (let ((point (point))
-	  (end (point-max)))
+	  (end (point-max))
+          (wrapped (cond (longlines-mode 'longlines-mode)
+                         (visual-line-mode 'visual-line-mode)
+                         (t nil))))
+
       (setq buffer-read-only nil)
       (erase-buffer)
+      (when wrapped (funcall wrapped -1))
       (mapc (lambda (status)
 	      (insert (identica-format-status
 		       status identica-status-format))
-	      (if (not identica-soft-wrap-status)
+	      (if (not wrapped)
 		  (progn
 		    (fill-region-as-paragraph
 		     (save-excursion (beginning-of-line) (point)) (point))))
@@ -709,6 +714,7 @@ arguments (if any) of the SENTINEL procedure."
 	    identica-timeline-data)
       (if (and identica-image-stack window-system)
 	  (clear-image-cache))
+      (when wrapped (funcall wrapped 1))
       (setq buffer-read-only t)
       (debug-print (current-buffer))
       (goto-char (+ point (if identica-scroll-mode (- (point-max) end) 0)))
@@ -866,6 +872,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 				 "&")))))
 	 (url-package-name "emacs-identicamode")
 	 (url-package-version identica-mode-version)
+	 (url-request-extra-headers '(("Content-Length" . "0")))
 	 (url-show-status nil))
     (identica-set-proxy)
     (identica-set-auth url)
