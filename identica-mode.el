@@ -1538,6 +1538,12 @@ this dictionary, only if identica-urlshortening-service is 'google.
 	  (identica-http-post "favorites/create" (number-to-string id))
 	  (message "Notice saved as favorite"))))
 
+(defun identica-repeat ()
+  (interactive)
+	(let ((id (get-text-property (point) 'id)))
+	  (identica-http-post "statuses/retweet" (number-to-string id))
+	  (message "Notice repeated")))
+
 (defun identica-view-user-page ()
   (interactive)
   (let ((uri (get-text-property (point) 'uri)))
