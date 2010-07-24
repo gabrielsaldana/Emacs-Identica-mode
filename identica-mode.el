@@ -125,6 +125,7 @@ tweets received when this hook is run.")
       ["Send an update" identica-update-status-interactive t]
       ["Send a direct message" identica-direct-message-interactive t]
       ["Re-dent someone's update" identica-redent t]
+      ["Repeat someone's update" identica-repeat t]
       ["Add as favorite" identica-favorite t]
       ["Follow user" identica-follow]
       ["Unfollow user" identica-unfollow]
@@ -1656,6 +1657,105 @@ this dictionary, only if identica-urlshortening-service is 'google.
 (defun identica-get-context-url (id)
   "Generate status URL."
   (format "https://%s/conversation/%s" statusnet-server id))
+
+;; Icons
+;;; ACTIVE/INACTIVE
+(defconst identica-active-indicator-image
+  (when (image-type-available-p 'xpm)
+    '(image :type xpm
+	    :ascent center
+	    :data
+	    "/* XPM */
+static char * statusnet_xpm[] = {
+\"16 16 14 1\",
+\" 	c None\",
+\".	c #8F0000\",
+\"+	c #AB4040\",
+\"@	c #D59F9F\",
+\"#	c #E3BFBF\",
+\"$	c #CE8F8F\",
+\"%	c #C78080\",
+\"&	c #FFFFFF\",
+\"*	c #B96060\",
+\"=	c #DCAFAF\",
+\"-	c #C07070\",
+\";	c #F1DFDF\",
+\">	c #961010\",
+\",	c #9D2020\",
+\"    .......     \",
+\"   .........    \",
+\"  ...........   \",
+\" ....+@#$+....  \",
+\"....%&&&&&*.... \",
+\"...+&&&&&&&+... \",
+\"...=&&&&&&&$... \",
+\"...#&&&&&&&#... \",
+\"...=&&&&&&&@... \",
+\"...*&&&&&&&-... \",
+\"....@&&&&&&=... \",
+\" ....-#&#$;&>.. \",
+\" ..........,>.. \",
+\"  ............. \",
+\"    ............\",
+\"       .      ..\"};")))
+
+(defconst identica-inactive-indicator-image
+  (when (image-type-available-p 'xpm)
+    '(image :type xpm
+	    :ascent center
+	    :data
+	    "/* XPM */
+static char * statusnet_off_xpm[] = {
+\"16 16 13 1\",
+\" 	g None\",
+\".	g #5B5B5B\",
+\"+	g #8D8D8D\",
+\"@	g #D6D6D6\",
+\"#	g #EFEFEF\",
+\"$	g #C9C9C9\",
+\"%	g #BEBEBE\",
+\"&	g #FFFFFF\",
+\"*	g #A5A5A5\",
+\"=	g #E3E3E3\",
+\"-	g #B2B2B2\",
+\";	g #676767\",
+\">	g #747474\",
+\"    .......     \",
+\"   .........    \",
+\"  ...........   \",
+\" ....+@#$+....  \",
+\"....%&&&&&*.... \",
+\"...+&&&&&&&+... \",
+\"...=&&&&&&&$... \",
+\"...#&&&&&&&#... \",
+\"...=&&&&&&&@... \",
+\"...*&&&&&&&-... \",
+\"....@&&&&&&=... \",
+\" ....-#&#$&&;.. \",
+\" ..........>;.. \",
+\"  ............. \",
+\"    ............\",
+\"       .      ..\"};")))
+
+(let ((props
+       (when (display-mouse-p)
+	 `(local-map
+	   ,(purecopy (make-mode-line-mouse-map
+		       'mouse-2 #'identica-toggle-activate-buffer))
+	   help-echo "mouse-2 toggles activate buffer"))))
+  (defconst identica-modeline-active
+    (if identica-active-indicator-image
+	(apply 'propertize " "
+	       `(display ,identica-active-indicator-image ,@props))
+      " "))
+  (defconst identica-modeline-inactive
+    (if identica-inactive-indicator-image
+	(apply 'propertize "INACTIVE"
+	       `(display ,identica-inactive-indicator-image ,@props))
+      "INACTIVE")))
+
+  (make-local-variable 'identica-active-mode)
+  (setq identica-active-mode t)
 
 ;;;###autoload
 (defun identica ()
