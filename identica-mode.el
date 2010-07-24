@@ -1541,9 +1541,10 @@ this dictionary, only if identica-urlshortening-service is 'google.
 
 (defun identica-repeat ()
   (interactive)
+    (if (y-or-n-p "Do you want to repeat this notice? ")
 	(let ((id (get-text-property (point) 'id)))
 	  (identica-http-post "statuses/retweet" (number-to-string id))
-	  (message "Notice repeated")))
+	  (message "Notice repeated"))))
 
 (defun identica-view-user-page ()
   (interactive)
