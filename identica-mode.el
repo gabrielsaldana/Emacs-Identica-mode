@@ -490,6 +490,10 @@ ur1ca, tighturl, tinyurl, toly, and google"
   (use-local-map identica-mode-map)
   (setq major-mode 'identica-mode)
   (setq mode-name identica-mode-string)
+  (setq mode-line-buffer-identification
+	`(,(default-value 'mode-line-buffer-identification)
+	  (:eval (identica-mode-line-buffer-identification))))
+  (identica-update-mode-line)
   (set-syntax-table identica-mode-syntax-table)
   (run-mode-hooks 'identica-mode-hook)
   (font-lock-mode -1)
@@ -1377,7 +1381,9 @@ this dictionary, only if identica-urlshortening-service is 'google.
     (setq identica-timer
 	  (run-at-time "0 sec"
 		       identica-timer-interval
-		       #'identica-timer-action action))))
+		       #'identica-timer-action action)))
+  (setq identica-active-mode t)
+  (identica-update-mode-line))
 
 (defun identica-stop ()
 "Stop Current network activitiy (if any) and the reload-timer."
@@ -1389,7 +1395,9 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (identica-set-mode-string nil)
   (and identica-timer
        (cancel-timer identica-timer))
-  (setq identica-timer nil))
+  (setq identica-timer nil)
+  (setq identica-active-mode nil)
+  (identica-update-mode-line))
 
 (defun identica-get-timeline ()
   (if (not (eq identica-last-timeline-retrieved identica-method))
@@ -1742,7 +1750,7 @@ static char * statusnet_off_xpm[] = {
 	 `(local-map
 	   ,(purecopy (make-mode-line-mouse-map
 		       'mouse-2 #'identica-toggle-activate-buffer))
-	   help-echo "mouse-2 toggles activate buffer"))))
+	   help-echo "mouse-2 toggles automatic updates"))))
   (defconst identica-modeline-active
     (if identica-active-indicator-image
 	(apply 'propertize " "
@@ -1756,6 +1764,22 @@ static char * statusnet_off_xpm[] = {
 
   (make-local-variable 'identica-active-mode)
   (setq identica-active-mode t)
+
+(defun identica-toggle-activate-buffer ()
+  (interactive)
+  (setq identica-active-mode (not identica-active-mode))
+  (if (not identica-active-mode)
+      (identica-stop)
+    (identica-start)))
+
+(defun identica-mode-line-buffer-identification ()
+  (if identica-active-mode
+      identica-modeline-active
+    identica-modeline-inactive))
+
+(defun identica-update-mode-line ()
+  "Update mode line."
+  (force-mode-line-update))
 
 ;;;###autoload
 (defun identica ()
