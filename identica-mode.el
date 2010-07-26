@@ -334,7 +334,7 @@ ur1ca, tighturl, tinyurl, toly, and google"
 		(if (not (file-directory-p identica-tmp-dir))
 		    (make-directory identica-tmp-dir))
 		t)))))
-  (identica-render-timeline))
+  (identica-get-timeline))
 
 (defun identica-scroll-mode (&optional arg)
   (interactive)
