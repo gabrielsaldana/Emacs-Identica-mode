@@ -19,6 +19,7 @@
 ;;     Sean Neakums (patches of bugs flagged by byte-compiler)
 ;;     Shyam Karanatt <shyam@swathanthran.in> (several patches and code cleanup, new http backend based on url.el)
 ;;     Tezcatl Franco <tzk@riseup.net> (ur1.ca support)
+;;     Anthony Garcia <lagg@lavabit.com> (fix for icon-mode)
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
@@ -125,6 +126,7 @@ tweets received when this hook is run.")
       ["Send an update" identica-update-status-interactive t]
       ["Send a direct message" identica-direct-message-interactive t]
       ["Re-dent someone's update" identica-redent t]
+      ["Repeat someone's update" identica-repeat t]
       ["Add as favorite" identica-favorite t]
       ["Follow user" identica-follow]
       ["Unfollow user" identica-unfollow]
@@ -333,7 +335,7 @@ ur1ca, tighturl, tinyurl, toly, and google"
 		(if (not (file-directory-p identica-tmp-dir))
 		    (make-directory identica-tmp-dir))
 		t)))))
-  (identica-render-timeline))
+  (identica-get-timeline))
 
 (defun identica-scroll-mode (&optional arg)
   (interactive)
@@ -392,6 +394,7 @@ ur1ca, tighturl, tinyurl, toly, and google"
       (define-key km "\C-c\C-s" 'identica-update-status-interactive)
       (define-key km "\C-c\C-d" 'identica-direct-message-interactive)
       (define-key km "\C-c\C-m" 'identica-redent)
+      (define-key km "r" 'identica-repeat)
       (define-key km "F" 'identica-favorite)
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
       (define-key km "\C-m" 'identica-enter)
@@ -488,6 +491,10 @@ ur1ca, tighturl, tinyurl, toly, and google"
   (use-local-map identica-mode-map)
   (setq major-mode 'identica-mode)
   (setq mode-name identica-mode-string)
+  (setq mode-line-buffer-identification
+	`(,(default-value 'mode-line-buffer-identification)
+	  (:eval (identica-mode-line-buffer-identification))))
+  (identica-update-mode-line)
   (set-syntax-table identica-mode-syntax-table)
   (run-mode-hooks 'identica-mode-hook)
   (font-lock-mode -1)
@@ -1375,7 +1382,9 @@ this dictionary, only if identica-urlshortening-service is 'google.
     (setq identica-timer
 	  (run-at-time "0 sec"
 		       identica-timer-interval
-		       #'identica-timer-action action))))
+		       #'identica-timer-action action)))
+  (setq identica-active-mode t)
+  (identica-update-mode-line))
 
 (defun identica-stop ()
 "Stop Current network activitiy (if any) and the reload-timer."
@@ -1387,7 +1396,9 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (identica-set-mode-string nil)
   (and identica-timer
        (cancel-timer identica-timer))
-  (setq identica-timer nil))
+  (setq identica-timer nil)
+  (setq identica-active-mode nil)
+  (identica-update-mode-line))
 
 (defun identica-get-timeline ()
   (if (not (eq identica-last-timeline-retrieved identica-method))
@@ -1538,6 +1549,13 @@ this dictionary, only if identica-urlshortening-service is 'google.
 	  (identica-http-post "favorites/create" (number-to-string id))
 	  (message "Notice saved as favorite"))))
 
+(defun identica-repeat ()
+  (interactive)
+    (if (y-or-n-p "Do you want to repeat this notice? ")
+	(let ((id (get-text-property (point) 'id)))
+	  (identica-http-post "statuses/retweet" (number-to-string id))
+	  (message "Notice repeated"))))
+
 (defun identica-view-user-page ()
   (interactive)
   (let ((uri (get-text-property (point) 'uri)))
@@ -1648,6 +1666,121 @@ this dictionary, only if identica-urlshortening-service is 'google.
 (defun identica-get-context-url (id)
   "Generate status URL."
   (format "https://%s/conversation/%s" statusnet-server id))
+
+;; Icons
+;;; ACTIVE/INACTIVE
+(defconst identica-active-indicator-image
+  (when (image-type-available-p 'xpm)
+    '(image :type xpm
+	    :ascent center
+	    :data
+	    "/* XPM */
+static char * statusnet_xpm[] = {
+\"16 16 14 1\",
+\" 	c None\",
+\".	c #8F0000\",
+\"+	c #AB4040\",
+\"@	c #D59F9F\",
+\"#	c #E3BFBF\",
+\"$	c #CE8F8F\",
+\"%	c #C78080\",
+\"&	c #FFFFFF\",
+\"*	c #B96060\",
+\"=	c #DCAFAF\",
+\"-	c #C07070\",
+\";	c #F1DFDF\",
+\">	c #961010\",
+\",	c #9D2020\",
+\"    .......     \",
+\"   .........    \",
+\"  ...........   \",
+\" ....+@#$+....  \",
+\"....%&&&&&*.... \",
+\"...+&&&&&&&+... \",
+\"...=&&&&&&&$... \",
+\"...#&&&&&&&#... \",
+\"...=&&&&&&&@... \",
+\"...*&&&&&&&-... \",
+\"....@&&&&&&=... \",
+\" ....-#&#$;&>.. \",
+\" ..........,>.. \",
+\"  ............. \",
+\"    ............\",
+\"       .      ..\"};")))
+
+(defconst identica-inactive-indicator-image
+  (when (image-type-available-p 'xpm)
+    '(image :type xpm
+	    :ascent center
+	    :data
+	    "/* XPM */
+static char * statusnet_off_xpm[] = {
+\"16 16 13 1\",
+\" 	g None\",
+\".	g #5B5B5B\",
+\"+	g #8D8D8D\",
+\"@	g #D6D6D6\",
+\"#	g #EFEFEF\",
+\"$	g #C9C9C9\",
+\"%	g #BEBEBE\",
+\"&	g #FFFFFF\",
+\"*	g #A5A5A5\",
+\"=	g #E3E3E3\",
+\"-	g #B2B2B2\",
+\";	g #676767\",
+\">	g #747474\",
+\"    .......     \",
+\"   .........    \",
+\"  ...........   \",
+\" ....+@#$+....  \",
+\"....%&&&&&*.... \",
+\"...+&&&&&&&+... \",
+\"...=&&&&&&&$... \",
+\"...#&&&&&&&#... \",
+\"...=&&&&&&&@... \",
+\"...*&&&&&&&-... \",
+\"....@&&&&&&=... \",
+\" ....-#&#$&&;.. \",
+\" ..........>;.. \",
+\"  ............. \",
+\"    ............\",
+\"       .      ..\"};")))
+
+(let ((props
+       (when (display-mouse-p)
+	 `(local-map
+	   ,(purecopy (make-mode-line-mouse-map
+		       'mouse-2 #'identica-toggle-activate-buffer))
+	   help-echo "mouse-2 toggles automatic updates"))))
+  (defconst identica-modeline-active
+    (if identica-active-indicator-image
+	(apply 'propertize " "
+	       `(display ,identica-active-indicator-image ,@props))
+      " "))
+  (defconst identica-modeline-inactive
+    (if identica-inactive-indicator-image
+	(apply 'propertize "INACTIVE"
+	       `(display ,identica-inactive-indicator-image ,@props))
+      "INACTIVE")))
+
+  (make-local-variable 'identica-active-mode)
+  (setq identica-active-mode t)
+
+(defun identica-toggle-activate-buffer ()
+  (interactive)
+  (setq identica-active-mode (not identica-active-mode))
+  (if (not identica-active-mode)
+      (identica-stop)
+    (identica-start)))
+
+(defun identica-mode-line-buffer-identification ()
+  (if identica-active-mode
+      identica-modeline-active
+    identica-modeline-inactive))
+
+(defun identica-update-mode-line ()
+  "Update mode line."
+  (force-mode-line-update))
 
 ;;;###autoload
 (defun identica ()
