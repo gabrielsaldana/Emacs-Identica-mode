@@ -480,6 +480,10 @@ ur1ca, tighturl, tinyurl, toly, and google"
 (defvar identica-mode-hook nil
   "Identica-mode hook.")
 
+(defun identica-kill-buffer-function ()
+  (when (eq major-mode 'identica-mode)
+    (identica-stop)))
+
 (defun identica-mode ()
   "Major mode for Identica
 \\{identica-mode-map}"
@@ -503,6 +507,7 @@ ur1ca, tighturl, tinyurl, toly, and google"
 	(if (fboundp 'longlines-mode)
 	    (longlines-mode t))))
   (identica-start)
+  (add-hook 'kill-buffer-hook 'identica-kill-buffer-function)
   (run-mode-hooks 'identica-mode-hook))
 
 ;;;
