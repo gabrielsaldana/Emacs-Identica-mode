@@ -496,14 +496,14 @@ ur1ca, tighturl, tinyurl, toly, and google"
 	  (:eval (identica-mode-line-buffer-identification))))
   (identica-update-mode-line)
   (set-syntax-table identica-mode-syntax-table)
-  (run-mode-hooks 'identica-mode-hook)
   (font-lock-mode -1)
   (if identica-soft-wrap-status
       (if (fboundp 'visual-line-mode)
           (visual-line-mode t)
 	(if (fboundp 'longlines-mode)
 	    (longlines-mode t))))
-  (identica-start))
+  (identica-start)
+  (run-mode-hooks 'identica-mode-hook))
 
 ;;;
 ;;; Basic HTTP functions
