@@ -726,7 +726,8 @@ arguments (if any) of the SENTINEL procedure."
       (debug-print (current-buffer))
       (goto-char (+ point (if identica-scroll-mode (- (point-max) end) 0)))
       (identica-set-mode-string nil)
-      (setq identica-last-timeline-retrieved identica-method))))
+      (setq identica-last-timeline-retrieved identica-method)
+      (if transient-mark-mode (deactivate-mark)))))
 
 (defun identica-format-status (status format-str)
   (flet ((attr (key)
