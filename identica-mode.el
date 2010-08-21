@@ -382,6 +382,17 @@ ur1ca, tighturl, tinyurl, toly, and google"
 	(not identica-debug-mode))
   (message (if identica-debug-mode "debug mode:on" "debug mode:off")))
 
+(defun identica-delete-notice ()
+  (interactive)
+  (when (y-or-n-p "Delete this notice? ")
+    (let ((id (get-text-property (point) 'id))
+          (usern (get-text-property (point) 'username)))
+      (if (string= usern identica-username)
+          (progn
+            (identica-http-post "statuses/destroy" (number-to-string id))
+            (identica-get-timeline))
+        (message "Can't delete a notice that isn't yours.")))))
+
 (if identica-mode-map
     (let ((km identica-mode-map))
       (define-key km "\C-c\C-f" 'identica-friends-timeline)
@@ -421,6 +432,7 @@ ur1ca, tighturl, tinyurl, toly, and google"
       (define-key km "i" 'identica-icon-mode)
       (define-key km "s" 'identica-scroll-mode)
       (define-key km "t" 'identica-toggle-proxy)
+      (define-key km "\C-k" 'identica-delete-notice)
       (define-key km "\C-c\C-p" 'identica-toggle-proxy)
       nil))
 
