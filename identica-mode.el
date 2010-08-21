@@ -384,14 +384,13 @@ ur1ca, tighturl, tinyurl, toly, and google"
 
 (defun identica-delete-notice ()
   (interactive)
-  (when (y-or-n-p "Delete this notice? ")
-    (let ((id (get-text-property (point) 'id))
-          (usern (get-text-property (point) 'username)))
-      (if (string= usern identica-username)
-          (progn
-            (identica-http-post "statuses/destroy" (number-to-string id))
-            (identica-get-timeline))
-        (message "Can't delete a notice that isn't yours.")))))
+  (let ((id (get-text-property (point) 'id))
+        (usern (get-text-property (point) 'username)))
+    (if (string= usern identica-username)
+        (when (y-or-n-p "Delete this notice? ")
+          (identica-http-post "statuses/destroy" (number-to-string id))
+          (identica-get-timeline))
+      (message "Can't delete a notice that isn't yours"))))
 
 (if identica-mode-map
     (let ((km identica-mode-map))
