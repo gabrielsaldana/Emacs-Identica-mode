@@ -180,6 +180,11 @@ tweets received when this hook is run.")
   :type 'boolean
   :group 'identica-mode)
 
+(defcustom identica-oldest-first nil
+  "If t, display older messages before newer ones"
+  :type 'boolean
+  :group 'identica-mode)
+
 (defcustom identica-update-status-edit-confirm-cancellation nil
   "If t, ask user if they are sure when aborting editing of an
   identica status update when using an edit-buffer"
@@ -733,7 +738,9 @@ arguments (if any) of the SENTINEL procedure."
 		  (progn
 		    (fill-region-as-paragraph
 		     (save-excursion (beginning-of-line) (point)) (point))))
-	      (insert "\n"))
+	      (insert "\n")
+	      (if identica-oldest-first
+		  (goto-char (point-min))))
 	    identica-timeline-data)
       (if (and identica-image-stack window-system)
 	  (clear-image-cache))
