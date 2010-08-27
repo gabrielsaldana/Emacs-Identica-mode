@@ -180,6 +180,11 @@ tweets received when this hook is run.")
   :type 'boolean
   :group 'identica-mode)
 
+(defcustom identica-oldest-first nil
+  "If t, display older messages before newer ones"
+  :type 'boolean
+  :group 'identica-mode)
+
 (defcustom identica-update-status-edit-confirm-cancellation nil
   "If t, ask user if they are sure when aborting editing of an
   identica status update when using an edit-buffer"
@@ -382,6 +387,16 @@ ur1ca, tighturl, tinyurl, toly, and google"
 	(not identica-debug-mode))
   (message (if identica-debug-mode "debug mode:on" "debug mode:off")))
 
+(defun identica-delete-notice ()
+  (interactive)
+  (let ((id (get-text-property (point) 'id))
+        (usern (get-text-property (point) 'username)))
+    (if (string= usern identica-username)
+        (when (y-or-n-p "Delete this notice? ")
+          (identica-http-post "statuses/destroy" (number-to-string id))
+          (identica-get-timeline))
+      (message "Can't delete a notice that isn't yours"))))
+
 (if identica-mode-map
     (let ((km identica-mode-map))
       (define-key km "\C-c\C-f" 'identica-friends-timeline)
@@ -421,6 +436,7 @@ ur1ca, tighturl, tinyurl, toly, and google"
       (define-key km "i" 'identica-icon-mode)
       (define-key km "s" 'identica-scroll-mode)
       (define-key km "t" 'identica-toggle-proxy)
+      (define-key km "\C-k" 'identica-delete-notice)
       (define-key km "\C-c\C-p" 'identica-toggle-proxy)
       nil))
 
@@ -480,6 +496,10 @@ ur1ca, tighturl, tinyurl, toly, and google"
 (defvar identica-mode-hook nil
   "Identica-mode hook.")
 
+(defun identica-kill-buffer-function ()
+  (when (eq major-mode 'identica-mode)
+    (identica-stop)))
+
 (defun identica-mode ()
   "Major mode for Identica
 \\{identica-mode-map}"
@@ -496,14 +516,15 @@ ur1ca, tighturl, tinyurl, toly, and google"
 	  (:eval (identica-mode-line-buffer-identification))))
   (identica-update-mode-line)
   (set-syntax-table identica-mode-syntax-table)
-  (run-mode-hooks 'identica-mode-hook)
   (font-lock-mode -1)
   (if identica-soft-wrap-status
       (if (fboundp 'visual-line-mode)
           (visual-line-mode t)
 	(if (fboundp 'longlines-mode)
 	    (longlines-mode t))))
-  (identica-start))
+  (identica-start)
+  (add-hook 'kill-buffer-hook 'identica-kill-buffer-function)
+  (run-mode-hooks 'identica-mode-hook))
 
 ;;;
 ;;; Basic HTTP functions
@@ -717,7 +738,9 @@ arguments (if any) of the SENTINEL procedure."
 		  (progn
 		    (fill-region-as-paragraph
 		     (save-excursion (beginning-of-line) (point)) (point))))
-	      (insert "\n"))
+	      (insert "\n")
+	      (if identica-oldest-first
+		  (goto-char (point-min))))
 	    identica-timeline-data)
       (if (and identica-image-stack window-system)
 	  (clear-image-cache))
@@ -1209,21 +1232,26 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (let ((buf (get-buffer-create "*identica-status-update-edit*")))
     (pop-to-buffer buf)
     (with-current-buffer buf
-      (identica-update-status-edit-mode)
-      (longlines-mode)
-      (make-local-variable 'identica-update-status-edit-method-class)
-      (make-local-variable 'identica-update-status-edit-method)
-      (make-local-variable 'identica-update-status-edit-parameters)
-      (make-local-variable 'identica-update-status-edit-reply-to-id)
+      (if (not (equal major-mode 'identica-update-status-edit-mode))
+          (progn
+            (identica-update-status-edit-mode)
+            (longlines-mode)
+            (make-local-variable 'identica-update-status-edit-method-class)
+            (make-local-variable 'identica-update-status-edit-method)
+            (make-local-variable 'identica-update-status-edit-parameters)
+            (make-local-variable 'identica-update-status-edit-reply-to-id)
+            (if (> (length parameters) 0)
+                (setq mode-line-format
+                      (cons (format "%s(%s) (%%i/140) " msgtype parameters)
+                            mode-line-format))
+              t (setq mode-line-format
+                      (cons (format "%s (%%i/140) " msgtype) mode-line-format)))))
       (setq identica-update-status-edit-method-class method-class)
       (setq identica-update-status-edit-method method)
       (setq identica-update-status-edit-parameters parameters)
       (setq identica-update-status-edit-reply-to-id reply-to-id)
       (message identica-update-status-edit-method-class)
       (insert init-str)
-      (if (> (length parameters) 0)
-          (setq mode-line-format (cons (format "%s(%s) (%%i/140) " msgtype parameters) mode-line-format))
-        t (setq mode-line-format (cons (format "%s (%%i/140) " msgtype) mode-line-format)))
       (message "Type C-c C-c to post status update (C-c C-k to cancel)."))))
 
 (defun identica-show-minibuffer-length (&optional beg end len)
