@@ -43,6 +43,11 @@
 ;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth floor,
 ;; Boston, MA 02110-1301, USA.
 
+;; Requirements
+;; if using Emacs22 or previous, you'll need json.el
+;; get it from http://edward.oconnor.cx/2006/03/json.el
+;; json.el is part of Emacs23
+
 ;; Installation
 
 ;; You can use M-x customize-group identica-mode to setup all settings or simply
@@ -1062,7 +1067,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (setq regex-index 0)
       (while regex-index
 	(setq regex-index
-	      (string-match "@\\([_[:word:]0-9]+\\)\\|!\\([_[:word:]0-9\-]+\\)\\|#\\([_[:word:]0-9\-]+\\)\\|\\(https?://[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]+\\)"
+	      (string-match "@\\([_[:word:]0-9]+\\)\\|!\\([_[:word:]0-9\-]+\\)\\|#\\([_[:word:]0-9\-]+\\)\\|\\(https?://[-_.!~*'()[:word:]0-9;/?:@&=+$,%#]+\\)\\|\\(ur1\.ca/[a-z0-9]+/?\\)"
 			    text
 			    regex-index))
 	(when regex-index
@@ -1070,7 +1075,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		 (screen-name (match-string-no-properties 1 text))
 		 (group-name (match-string-no-properties 2 text))
 		 (tag-name (match-string-no-properties 3 text))
-		 (uri (match-string-no-properties 4 text)))
+		 (uri (match-string-no-properties 4 text))
+		 (uri (match-string-no-properties 5 text)))
 	    (add-text-properties
 	     (if (or screen-name group-name tag-name)
 		 (+ 1 (match-beginning 0))
