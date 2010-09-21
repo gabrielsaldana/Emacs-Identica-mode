@@ -405,6 +405,7 @@ ur1ca, tighturl, tinyurl, toly, and google"
 (if identica-mode-map
     (let ((km identica-mode-map))
       (define-key km "\C-c\C-f" 'identica-friends-timeline)
+      (define-key km "\C-c\C-i" 'identica-direct-messages-timeline)
       (define-key km "\C-c\C-r" 'identica-replies-timeline)
       (define-key km "\C-c\C-a" 'identica-public-timeline)
       (define-key km "\C-c\C-g" 'identica-group-timeline)
@@ -1470,6 +1471,12 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (interactive)
   (setq identica-method "replies")
   (setq identica-method-class "statuses")
+  (identica-get-timeline))
+
+(defun identica-direct-messages-timeline ()
+  (interactive)
+  (setq identica-method "")
+  (setq identica-method-class "direct_messages")
   (identica-get-timeline))
 
 (defun identica-public-timeline ()
