@@ -658,8 +658,10 @@ SENTINEL represents the callback function to be called after the http
 response is completely retrieved. SENTINEL-ARGUMENTS is the list of
 arguments (if any) of the SENTINEL procedure."
   (or sentinel (setq sentinel 'identica-http-get-default-sentinel))
-  (let ((url (concat "http://" statusnet-server "/api/" method-class
-		     "/" method ".xml"
+  (let ((url (concat "http://" statusnet-server "/api/"
+		     (when (not (string-equal method-class "none"))
+		       (concat method-class "/" ))
+		       method ".xml"
 		     (when parameters
 		       (concat "?"
 			       (mapconcat
@@ -1475,8 +1477,8 @@ this dictionary, only if identica-urlshortening-service is 'google.
 
 (defun identica-direct-messages-timeline ()
   (interactive)
-  (setq identica-method "")
-  (setq identica-method-class "direct_messages")
+  (setq identica-method "direct_messages")
+  (setq identica-method-class "none")
   (identica-get-timeline))
 
 (defun identica-public-timeline ()
