@@ -123,6 +123,11 @@
 You can read `identica-new-dents-count' to get the number of new
 tweets received when this hook is run.")
 
+(defvar identica-display-max-dents nil
+  "How many dents to keep on the displayed timeline.
+
+If non-nil, dents over this amount will bre removed.")
+
 ;; Menu
 (unless menu-bar-identica-mode-menu
   (easy-menu-define
@@ -720,6 +725,12 @@ arguments (if any) of the SENTINEL procedure."
 			    #'identica-cache-status-datum
 			    (reverse (identica-xmltree-to-status
 				      body)))))
+            ; Shorten the timeline if necessary
+            (if (and identica-display-max-dents
+                     (> (safe-length identica-timeline-data)
+                        identica-display-max-dents))
+                (cl-set-nthcdr identica-display-max-dents
+                               identica-timeline-data nil))
 	    (identica-render-timeline)
 	    (if (> identica-new-dents-count 0)
 		(run-hooks 'identica-new-dents-hook))

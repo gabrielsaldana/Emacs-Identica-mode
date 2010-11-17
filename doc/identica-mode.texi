@@ -243,7 +243,7 @@ C-c C-s
 @paragraphindent 3
 At the @code{Status:} prompt, type the content of your status, up to 140 characters.  When done, hit the @command{Enter} key.  The message @code{Success: Post} will apper in the minibuffer.
 
-@node Send notice, , Update status, Basic usage
+@node Send notice, Shorten url, Update status, Basic usage
 @subsection Send notice
 
 @firstparagraphindent none
@@ -256,7 +256,7 @@ C-c C-d
 @paragraphindent 3
 At the @code{To user:} prompt type the exact user name and press the @command{Enter} key.  At the @code{Direct message:} prompt, type your message and press the @command{Enter} key.
 
-@node Tips and tricks,  , Update status, Basic usage
+@node Shorten url, , Send notice, Basic usage
 @subsection Shorten url
 
 @firstparagraphindent none
