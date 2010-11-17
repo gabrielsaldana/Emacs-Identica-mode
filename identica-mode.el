@@ -410,6 +410,7 @@ ur1ca, tighturl, tinyurl, toly, and google"
 (if identica-mode-map
     (let ((km identica-mode-map))
       (define-key km "\C-c\C-f" 'identica-friends-timeline)
+      (define-key km "\C-c\C-i" 'identica-direct-messages-timeline)
       (define-key km "\C-c\C-r" 'identica-replies-timeline)
       (define-key km "\C-c\C-a" 'identica-public-timeline)
       (define-key km "\C-c\C-g" 'identica-group-timeline)
@@ -662,8 +663,10 @@ SENTINEL represents the callback function to be called after the http
 response is completely retrieved. SENTINEL-ARGUMENTS is the list of
 arguments (if any) of the SENTINEL procedure."
   (or sentinel (setq sentinel 'identica-http-get-default-sentinel))
-  (let ((url (concat "http://" statusnet-server "/api/" method-class
-		     "/" method ".xml"
+  (let ((url (concat "http://" statusnet-server "/api/"
+		     (when (not (string-equal method-class "none"))
+		       (concat method-class "/" ))
+		       method ".xml"
 		     (when parameters
 		       (concat "?"
 			       (mapconcat
@@ -1372,12 +1375,19 @@ this dictionary, only if identica-urlshortening-service is 'google.
 
 (defun identica-ur1ca-get (api longurl)
   "Shortens url through ur1.ca free service 'as in freedom'"
-  (with-temp-buffer
-    (call-process "curl" nil (current-buffer) nil "-s" (concat "-dlongurl=" longurl) api)
-    (goto-char (point-min))
-    (setq ur1short
-	  (if (search-forward-regexp "Your .* is: .*>\\(http://ur1.ca/[0-9A-Za-z].*\\)</a>" nil t)
-	      (match-string-no-properties 1)))))
+  (let* ((url-request-method "POST")
+	(url-request-extra-headers
+	 '(("Content-Type" . "application/x-www-form-urlencoded")))
+	(url-request-data (concat "longurl=" (url-hexify-string longurl)))
+	(buffer (url-retrieve-synchronously api)))
+    (with-current-buffer buffer
+      (goto-char (point-min))
+      (prog1
+	  (setq ur1short
+		(if (search-forward-regexp "Your .* is: .*>\\(http://ur1.ca/[0-9A-Za-z].*\\)</a>" nil t)
+		    (match-string-no-properties 1)
+		  (error "URL shortening service failed: %s" longurl)))
+	    (kill-buffer buffer)))))
 
 (defun identica-shortenurl-get (longurl)
   "Shortens url through a url shortening service"
@@ -1481,6 +1491,12 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (interactive)
   (setq identica-method "replies")
   (setq identica-method-class "statuses")
+  (identica-get-timeline))
+
+(defun identica-direct-messages-timeline ()
+  (interactive)
+  (setq identica-method "direct_messages")
+  (setq identica-method-class "none")
   (identica-get-timeline))
 
 (defun identica-public-timeline ()
