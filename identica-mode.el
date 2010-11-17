@@ -1375,12 +1375,19 @@ this dictionary, only if identica-urlshortening-service is 'google.
 
 (defun identica-ur1ca-get (api longurl)
   "Shortens url through ur1.ca free service 'as in freedom'"
-  (with-temp-buffer
-    (call-process "curl" nil (current-buffer) nil "-s" (concat "-dlongurl=" longurl) api)
-    (goto-char (point-min))
-    (setq ur1short
-	  (if (search-forward-regexp "Your .* is: .*>\\(http://ur1.ca/[0-9A-Za-z].*\\)</a>" nil t)
-	      (match-string-no-properties 1)))))
+  (let* ((url-request-method "POST")
+	(url-request-extra-headers
+	 '(("Content-Type" . "application/x-www-form-urlencoded")))
+	(url-request-data (concat "longurl=" (url-hexify-string longurl)))
+	(buffer (url-retrieve-synchronously api)))
+    (with-current-buffer buffer
+      (goto-char (point-min))
+      (prog1
+	  (setq ur1short
+		(if (search-forward-regexp "Your .* is: .*>\\(http://ur1.ca/[0-9A-Za-z].*\\)</a>" nil t)
+		    (match-string-no-properties 1)
+		  (error "URL shortening service failed: %s" longurl)))
+	    (kill-buffer buffer)))))
 
 (defun identica-shortenurl-get (longurl)
   "Shortens url through a url shortening service"
