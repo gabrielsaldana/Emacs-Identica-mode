@@ -72,7 +72,7 @@
 
 ;; Follow me on identica: http://identi.ca/gabrielsaldana
 
-(eval-when-compile (require 'cl))
+(require 'cl)
 (require 'xml)
 (require 'parse-time)
 (require 'longlines)
