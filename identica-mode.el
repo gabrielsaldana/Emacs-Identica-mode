@@ -4,8 +4,8 @@
 ;; Copyright (C) 2009 Bradley M. Kuhn
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
-;; Last update: 2009-02-21
-;; Version: 1.0
+;; Last update: 2010-11-26
+;; Version: 1.1
 ;; Keywords: identica web
 ;; URL: http://blog.nethazard.net/identica-mode-for-emacs/
 ;; Contributors:
@@ -72,7 +72,7 @@
 
 ;; Follow me on identica: http://identi.ca/gabrielsaldana
 
-(eval-when-compile (require 'cl))
+(require 'cl)
 (require 'xml)
 (require 'parse-time)
 (require 'longlines)
@@ -80,7 +80,7 @@
 (require 'url-http)
 (require 'json)
 
-(defconst identica-mode-version "1.0")
+(defconst identica-mode-version "1.1")
 
 ;;url-basepath fix for emacs22
 (unless (fboundp 'url-basepath)
@@ -410,7 +410,7 @@ ur1ca, tighturl, tinyurl, toly, and google"
 (if identica-mode-map
     (let ((km identica-mode-map))
       (define-key km "\C-c\C-f" 'identica-friends-timeline)
-      (define-key km "\C-c\C-i" 'identica-direct-messages-timeline)
+;;      (define-key km "\C-c\C-i" 'identica-direct-messages-timeline)
       (define-key km "\C-c\C-r" 'identica-replies-timeline)
       (define-key km "\C-c\C-a" 'identica-public-timeline)
       (define-key km "\C-c\C-g" 'identica-group-timeline)
@@ -1081,7 +1081,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (setq regex-index 0)
       (while regex-index
 	(setq regex-index
-	      (string-match "@\\([_[:word:]0-9]+\\)\\|!\\([_[:word:]0-9\-]+\\)\\|#\\([_[:word:]0-9\-]+\\)\\|\\(ur1\.ca/[a-z0-9]+/?\\|https?://[-_.!~*'()[:word:]0-9;/?:@&=+$,%#]+\\)"
+	      (string-match "@\\([_[:word:]0-9]+\\)\\|!\\([_[:word:]0-9\-]+\\)\\|#\\([_[:word:]0-9\-]+\\)\\|\\(ur1\.ca/[a-z0-9]+/?\\|https?://[-_.!~*'()[:word:]0-9\;/?:@&=+$,%#]+\\)"
 			    text
 			    regex-index))
 	(when regex-index
@@ -1493,11 +1493,11 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (setq identica-method-class "statuses")
   (identica-get-timeline))
 
-(defun identica-direct-messages-timeline ()
-  (interactive)
-  (setq identica-method "direct_messages")
-  (setq identica-method-class "none")
-  (identica-get-timeline))
+;; (defun identica-direct-messages-timeline ()
+;;   (interactive)
+;;   (setq identica-method "direct_messages")
+;;   (setq identica-method-class "none")
+;;   (identica-get-timeline))
 
 (defun identica-public-timeline ()
   (interactive)
