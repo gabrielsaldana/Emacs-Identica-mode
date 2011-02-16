@@ -777,8 +777,7 @@ arguments (if any) of the SENTINEL procedure."
 	       (assocref key status))
 	 (profile-image
 	  ()
-	  (let ((profile-image-url (attr 'user-profile-image-url))
-		(icon-string "\n  "))
+	  (let ((profile-image-url (attr 'user-profile-image-url)))
 	    (if (string-match "/\\([^/?]+\\)\\(?:\\?\\|$\\)" profile-image-url)
 		(let ((filename (match-string-no-properties 1 profile-image-url)))
 		  ;; download icons if does not exist
@@ -787,11 +786,10 @@ arguments (if any) of the SENTINEL procedure."
 		      t
 		    (add-to-list 'identica-image-stack profile-image-url))
 
-		  (when (and icon-string identica-icon-mode)
-		    (set-text-properties
-		     1 2 `(display ,(create-image (concat identica-tmp-dir "/" filename)))
-		     icon-string)
-		    icon-string))))))
+		  (when identica-icon-mode
+		    (setq the_avatar (create-image (concat identica-tmp-dir "/" filename)))
+		    (insert-image the_avatar)
+		    nil))))))
     (let ((cursor 0)
 	  (result ())
 	  c
