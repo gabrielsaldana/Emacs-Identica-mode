@@ -1058,12 +1058,13 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (setq user-profile-image-url (assq-get 'profile_image_url user-data))
       (setq user-url (assq-get 'url user-data))
       (setq user-protected (assq-get 'protected user-data))
+      (setq user-profile-url (assq-get 'statusnet:profile_url user-data))
 
       ;; make username clickable
       (add-text-properties
        0 (length user-name)
        `(mouse-face highlight
-		    uri ,(concat "https://" statusnet-server "/" user-screen-name)
+		    uri ,user-profile-url
 		    face identica-username-face)
        user-name)
 
@@ -1072,7 +1073,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
        0 (length user-screen-name)
        `(mouse-face highlight
 		    face identica-username-face
-		    uri ,(concat "https://" statusnet-server "/" user-screen-name)
+		    uri ,user-profile-url
 		    face identica-username-face)
        user-screen-name)
 
