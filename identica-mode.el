@@ -79,6 +79,7 @@
 (require 'url)
 (require 'url-http)
 (require 'json)
+(require 'image)
 
 (defconst identica-mode-version "1.1")
 
@@ -111,7 +112,8 @@
     (toly    . "http://to.ly/api.php?longurl=")
     (google . "http://ggl-shortener.appspot.com/?url=")
     (ur1ca . "http://ur1.ca")
-    (tighturl    . "http://2tu.us"))
+    (tighturl    . "http://2tu.us")
+    (isgd . "http://is.gd/api.php?longurl="))
   "Alist of tinyfy services")
 
 (defvar identica-new-dents-count 0
@@ -263,7 +265,7 @@ The available choices are:
 
 (defcustom identica-urlshortening-service 'ur1ca
   "The service to use for URL shortening. Values understood are
-ur1ca, tighturl, tinyurl, toly, and google"
+ur1ca, tighturl, tinyurl, toly, google and isgd"
   :type 'symbol
   :group 'identica-mode)
 
@@ -776,8 +778,7 @@ arguments (if any) of the SENTINEL procedure."
 	       (assocref key status))
 	 (profile-image
 	  ()
-	  (let ((profile-image-url (attr 'user-profile-image-url))
-		(icon-string "\n  "))
+	  (let ((profile-image-url (attr 'user-profile-image-url)))
 	    (if (string-match "/\\([^/?]+\\)\\(?:\\?\\|$\\)" profile-image-url)
 		(let ((filename (match-string-no-properties 1 profile-image-url)))
 		  ;; download icons if does not exist
@@ -786,11 +787,14 @@ arguments (if any) of the SENTINEL procedure."
 		      t
 		    (add-to-list 'identica-image-stack profile-image-url))
 
-		  (when (and icon-string identica-icon-mode)
-		    (set-text-properties
-		     1 2 `(display ,(create-image (concat identica-tmp-dir "/" filename)))
-		     icon-string)
-		    icon-string))))))
+		  (when identica-icon-mode
+		    (setq avatar (create-image (concat identica-tmp-dir "/" filename)))
+		    ;; Make sure the avatar is 48 pixels (which it should already be!, but hey...)
+		    ;; For offenders, the top left slice of 48 by 48 pixels is displayed
+		    ;; TODO: perhaps make this configurable?
+		    (insert-image avatar nil nil `(0 0 48 48))
+
+		    nil))))))
     (let ((cursor 0)
 	  (result ())
 	  c
@@ -1059,12 +1063,13 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (setq user-profile-image-url (assq-get 'profile_image_url user-data))
       (setq user-url (assq-get 'url user-data))
       (setq user-protected (assq-get 'protected user-data))
+      (setq user-profile-url (assq-get 'statusnet:profile_url user-data))
 
       ;; make username clickable
       (add-text-properties
        0 (length user-name)
        `(mouse-face highlight
-		    uri ,(concat "https://" statusnet-server "/" user-screen-name)
+		    uri ,user-profile-url
 		    face identica-username-face)
        user-name)
 
@@ -1073,7 +1078,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
        0 (length user-screen-name)
        `(mouse-face highlight
 		    face identica-username-face
-		    uri ,(concat "https://" statusnet-server "/" user-screen-name)
+		    uri ,user-profile-url
 		    face identica-username-face)
        user-screen-name)
 
