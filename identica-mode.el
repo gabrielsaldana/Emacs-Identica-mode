@@ -79,6 +79,7 @@
 (require 'url)
 (require 'url-http)
 (require 'json)
+(require 'image)
 
 (defconst identica-mode-version "1.0")
 
@@ -787,8 +788,12 @@ arguments (if any) of the SENTINEL procedure."
 		    (add-to-list 'identica-image-stack profile-image-url))
 
 		  (when identica-icon-mode
-		    (setq the_avatar (create-image (concat identica-tmp-dir "/" filename)))
-		    (insert-image the_avatar)
+		    (setq avatar (create-image (concat identica-tmp-dir "/" filename)))
+		    ;; Make sure the avatar is 48 pixels (which it should already be!, but hey...)
+		    ;; For offenders, the top left slice of 48 by 48 pixels is displayed
+		    ;; TODO: perhaps make this configurable?
+		    (insert-image avatar nil nil `(0 0 48 48))
+
 		    nil))))))
     (let ((cursor 0)
 	  (result ())
