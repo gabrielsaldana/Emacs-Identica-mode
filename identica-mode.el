@@ -111,7 +111,8 @@
     (toly    . "http://to.ly/api.php?longurl=")
     (google . "http://ggl-shortener.appspot.com/?url=")
     (ur1ca . "http://ur1.ca")
-    (tighturl    . "http://2tu.us"))
+    (tighturl    . "http://2tu.us")
+    (isgd . "http://is.gd/api.php?longurl="))
   "Alist of tinyfy services")
 
 (defvar identica-new-dents-count 0
@@ -263,7 +264,7 @@ The available choices are:
 
 (defcustom identica-urlshortening-service 'ur1ca
   "The service to use for URL shortening. Values understood are
-ur1ca, tighturl, tinyurl, toly, and google"
+ur1ca, tighturl, tinyurl, toly, google and isgd"
   :type 'symbol
   :group 'identica-mode)
 
