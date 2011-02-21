@@ -19,7 +19,7 @@
 ;;     Sean Neakums (patches of bugs flagged by byte-compiler)
 ;;     Shyam Karanatt <shyam@swathanthran.in> (several patches and code cleanup, new http backend based on url.el)
 ;;     Tezcatl Franco <tzk@riseup.net> (ur1.ca support)
-;;     Anthony Garcia <lagg@lavabit.com> (fix for icon-mode)
+;http://www.pcworld.com/businesscenter/article/219481/why_you_need_to_have_a_linux_livecd.htmla <lagg@lavabit.com> (fix for icon-mode)
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
@@ -35,7 +35,7 @@
 
 ;; This file is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; MERCHANTABILITY or FITNESS FORCouldn't findSE.  See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
@@ -79,6 +79,7 @@
 (require 'url)
 (require 'url-http)
 (require 'json)
+(require 'image)
 
 (defconst identica-mode-version "1.1")
 
@@ -111,7 +112,8 @@
     (toly    . "http://to.ly/api.php?longurl=")
     (google . "http://ggl-shortener.appspot.com/?url=")
     (ur1ca . "http://ur1.ca")
-    (tighturl    . "http://2tu.us"))
+    (tighturl    . "http://2tu.us")
+    (isgd . "http://is.gd/api.php?longurl="))
   "Alist of tinyfy services")
 
 (defvar identica-new-dents-count 0
@@ -263,7 +265,7 @@ The available choices are:
 
 (defcustom identica-urlshortening-service 'ur1ca
   "The service to use for URL shortening. Values understood are
-ur1ca, tighturl, tinyurl, toly, and google"
+ur1ca, tighturl, tinyurl, toly, google and isgd"
   :type 'symbol
   :group 'identica-mode)
 
@@ -430,6 +432,7 @@ ur1ca, tighturl, tinyurl, toly, and google"
       (define-key km [mouse-1] 'identica-click)
       (define-key km "\C-c\C-v" 'identica-view-user-page)
       (define-key km "q" 'bury-buffer)
+      (define-key km "e" 'identica-expand-replace-at-point)
       (define-key km "j" 'identica-goto-next-status)
       (define-key km "k" 'identica-goto-previous-status)
       (define-key km "l" 'forward-char)
@@ -757,7 +760,7 @@ arguments (if any) of the SENTINEL procedure."
 		  (progn
 		    (fill-region-as-paragraph
 		     (save-excursion (beginning-of-line) (point)) (point))))
-	      (insert "\n")
+	      (insert "\n\n")
 	      (if identica-oldest-first
 		  (goto-char (point-min))))
 	    identica-timeline-data)
@@ -776,8 +779,7 @@ arguments (if any) of the SENTINEL procedure."
 	       (assocref key status))
 	 (profile-image
 	  ()
-	  (let ((profile-image-url (attr 'user-profile-image-url))
-		(icon-string "\n  "))
+	  (let ((profile-image-url (attr 'user-profile-image-url)))
 	    (if (string-match "/\\([^/?]+\\)\\(?:\\?\\|$\\)" profile-image-url)
 		(let ((filename (match-string-no-properties 1 profile-image-url)))
 		  ;; download icons if does not exist
@@ -786,11 +788,14 @@ arguments (if any) of the SENTINEL procedure."
 		      t
 		    (add-to-list 'identica-image-stack profile-image-url))
 
-		  (when (and icon-string identica-icon-mode)
-		    (set-text-properties
-		     1 2 `(display ,(create-image (concat identica-tmp-dir "/" filename)))
-		     icon-string)
-		    icon-string))))))
+		  (when identica-icon-mode
+		    (setq avatar (create-image (concat identica-tmp-dir "/" filename)))
+		    ;; Make sure the avatar is 48 pixels (which it should already be!, but hey...)
+		    ;; For offenders, the top left slice of 48 by 48 pixels is displayed
+		    ;; TODO: perhaps make this configurable?
+		    (insert-image avatar nil nil `(0 0 48 48))
+
+		    nil))))))
     (let ((cursor 0)
 	  (result ())
 	  c
@@ -1059,12 +1064,13 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (setq user-profile-image-url (assq-get 'profile_image_url user-data))
       (setq user-url (assq-get 'url user-data))
       (setq user-protected (assq-get 'protected user-data))
+      (setq user-profile-url (assq-get 'statusnet:profile_url user-data))
 
       ;; make username clickable
       (add-text-properties
        0 (length user-name)
        `(mouse-face highlight
-		    uri ,(concat "https://" statusnet-server "/" user-screen-name)
+		    uri ,user-profile-url
 		    face identica-username-face)
        user-name)
 
@@ -1073,7 +1079,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
        0 (length user-screen-name)
        `(mouse-face highlight
 		    face identica-username-face
-		    uri ,(concat "https://" statusnet-server "/" user-screen-name)
+		    uri ,user-profile-url
 		    face identica-username-face)
        user-screen-name)
 
@@ -1424,6 +1430,76 @@ this dictionary, only if identica-urlshortening-service is 'google.
 	    (narrow-to-region (car url-bounds) (cdr url-bounds))
 	    (delete-region (point-min) (point-max))
 	    (insert url)))))))
+
+(defun identica-expand-replace-at-point ()
+  "Replace the url at point with a tiny version."
+  (interactive)
+  (let ((url-bounds (bounds-of-thing-at-point 'url)))
+    (when url-bounds
+      (let ((uri (identica-expand-shorturl (thing-at-point 'url))))
+	(when uri
+	  (set-buffer (get-buffer identica-buffer))
+	  (save-restriction
+	    (setq buffer-read-only nil)
+	    (narrow-to-region (car url-bounds) (cdr url-bounds))
+	    (delete-region (point-min) (point-max))
+	    (insert uri)
+	    (setq buffer-read-only t)))))))
+
+(defun identica-expand-shorturl (url)
+  "Return the redirected url, or the original url if not found"
+  (setq temp-buf (get-buffer-create "*HTTP headers*"))
+  (set-buffer temp-buf)
+  (erase-buffer)
+  (goto-char 0)
+  (setq url (replace-regexp-in-string "http://" "" url))
+  (setq host (substring url 0 (string-match "/" url)))
+  (if (string-match "/" url)
+      (setq file (substring url (string-match "/" url)))
+    (setq file "/"))
+  (setq tcp-connection
+	(open-network-stream
+	 "Identica URLExpand"
+	 temp-buf
+	 host
+	 80))
+    (set-marker (process-mark tcp-connection) (point-min))
+    (set-process-sentinel tcp-connection 'identica-http-headers-sentinel)
+    (setq request (concat "GET http://" url " HTTP/1.1\r\n"
+			  "Host:" host "\r\n"
+			  "User-Agent: " (identica-user-agent) "\r\n"
+			  "Authorization: None\r\n"
+			  "Accept-Charset: utf-8;q=0.7,*;q=0.7\r\n\r\n"))
+    (process-send-string tcp-connection request)
+    (setq tmp (concat "http://" host file))
+    (sit-for 2)
+    (setq location (identica-get-location-from-header tmp tcp-connection))
+    (delete-process tcp-connection)
+    (kill-buffer temp-buf)
+    location)
+
+(defun identica-http-headers-sentinel (process string)
+  "Process the results from the efine network connection."
+
+  )
+
+(defun identica-get-location-from-header (url process)
+  "Parse HTTP header"
+  (let (
+	(buffer)
+	(headers)
+	(header-end)
+	)
+    (setq buffer (get-buffer-create "*HTTP headers*"))
+    (set-buffer buffer)
+    (goto-char 0)
+    (setq location
+	  (if (search-forward-regexp "^Location: \\(http://.*?\\)\r?$" nil t)
+	      (match-string-no-properties 1)
+	    url))
+    (setq location (replace-regexp-in-string "\r" "" location))
+    location))
+
 ;;;
 ;;; Commands
 ;;;
