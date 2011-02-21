@@ -760,7 +760,7 @@ arguments (if any) of the SENTINEL procedure."
 		  (progn
 		    (fill-region-as-paragraph
 		     (save-excursion (beginning-of-line) (point)) (point))))
-	      (insert "\n")
+	      (insert "\n\n")
 	      (if identica-oldest-first
 		  (goto-char (point-min))))
 	    identica-timeline-data)
