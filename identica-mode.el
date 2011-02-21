@@ -432,6 +432,7 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
       (define-key km [mouse-1] 'identica-click)
       (define-key km "\C-c\C-v" 'identica-view-user-page)
       (define-key km "q" 'bury-buffer)
+      (define-key km "e" 'identica-expand-replace-at-point)
       (define-key km "j" 'identica-goto-next-status)
       (define-key km "k" 'identica-goto-previous-status)
       (define-key km "l" 'forward-char)
@@ -1443,10 +1444,10 @@ this dictionary, only if identica-urlshortening-service is 'google.
 	    (narrow-to-region (car url-bounds) (cdr url-bounds))
 	    (delete-region (point-min) (point-max))
 	    (insert uri)
-	    (setq buffer-read-only t))))))
+	    (setq buffer-read-only t)))))))
 
 (defun identica-expand-shorturl (url)
-  "Return the redirected url, or nil if not found"
+  "Return the redirected url, or the original url if not found"
   (setq temp-buf (get-buffer-create "*HTTP headers*"))
   (set-buffer temp-buf)
   (erase-buffer)
@@ -1472,20 +1473,18 @@ this dictionary, only if identica-urlshortening-service is 'google.
     (process-send-string tcp-connection request)
     (setq tmp (concat "http://" host file))
     (sit-for 2)
-    (setq location (identica-expand-headers-parse tmp tcp-connection))
+    (setq location (identica-get-location-from-header tmp tcp-connection))
     (delete-process tcp-connection)
     (kill-buffer temp-buf)
     location)
 
 (defun identica-http-headers-sentinel (process string)
-  "Process the results from the efine network connection.
-process - The process object that is being notified.
-string - The string that describes the notification."
+  "Process the results from the efine network connection."
 
   )
 
-(defun identica-expand-headers-parse (url process)
-  "Parse header"
+(defun identica-get-location-from-header (url process)
+  "Parse HTTP header"
   (let (
 	(buffer)
 	(headers)
