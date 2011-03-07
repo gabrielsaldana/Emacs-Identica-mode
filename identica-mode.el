@@ -1443,6 +1443,11 @@ this dictionary, only if identica-urlshortening-service is 'google.
 	    (setq buffer-read-only nil)
 	    (narrow-to-region (car url-bounds) (cdr url-bounds))
 	    (delete-region (point-min) (point-max))
+	    (add-text-properties 0 (length uri)
+	       `(mouse-face highlight
+			    face identica-uri-face
+			    uri ,uri
+			    uri-in-text ,uri) uri)
 	    (insert uri)
 	    (setq buffer-read-only t)))))))
 
