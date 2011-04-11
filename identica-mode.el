@@ -927,7 +927,9 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 				 "&")))))
 	 (url-package-name "emacs-identicamode")
 	 (url-package-version identica-mode-version)
-	 (url-request-extra-headers '(("Content-Length" . "0")))
+	 ;; (if (assoc `media parameters)
+	 (url-request-extra-headers '(("Content-Type" . "multipart/form-data")))
+	   ;; (url-request-extra-headers '(("Content-Length" . "0"))))
 	 (url-show-status nil))
     (identica-set-proxy)
     (identica-set-auth url)
@@ -1229,6 +1231,9 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	(identica-http-post method-class method
 			    `(("status" . ,status)
 			      ("source" . ,identica-source)
+			      ,@(if (assoc `media parameters)
+				  `(("media" . ,(cdr (assoc `media parameters))))
+				  nil)
 			      ,@(if reply-to-id
 				    `(("in_reply_to_status_id"
 				       . ,(number-to-string reply-to-id))))))
@@ -1371,6 +1376,10 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (if (> (- end beg) 140) (setq end (+ beg 140)))
   (if (< (- end beg) -140) (setq beg (+ end 140)))
   (identica-update-status-if-not-blank "statuses" "update" (buffer-substring beg end)))
+
+(defun identica-update-status-with-media (attachment &optional init-str method-class method parameters reply-to-id)
+  (interactive "f")
+  (identica-update-status 'minibuffer nil reply-to-id nil nil `((media . ,(insert-file-contents-literally attachment)))))
 
 (defun identica-tinyurl-unjson-google (result)
   "Gets only the URL from JSON URL tinyfying service results.
