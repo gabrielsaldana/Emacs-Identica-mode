@@ -19,7 +19,8 @@
 ;;     Sean Neakums (patches of bugs flagged by byte-compiler)
 ;;     Shyam Karanatt <shyam@swathanthran.in> (several patches and code cleanup, new http backend based on url.el)
 ;;     Tezcatl Franco <tzk@riseup.net> (ur1.ca support)
-;http://www.pcworld.com/businesscenter/article/219481/why_you_need_to_have_a_linux_livecd.htmla <lagg@lavabit.com> (fix for icon-mode)
+;;     Anthony Garcia <lagg@lavabit.com> (fix for icon-mode)
+;;     Aidan Gauland <aidalgol@no8wireless.co.nz> (variable scope code cleanup)
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
@@ -601,13 +602,17 @@ It is the `identica-set-auth' function that eventually sets the
 url library variables according to the above variables which does the
 authentication. This will be done automatically in normal use cases
 enabling dynamic change of user authentication."
-  (setq identica-username
+  (identica-ask-credentials)
+  (identica-get-timeline))
+
+(defun identica-ask-credentials ()
+  "Asks for your username and password"
+ (setq identica-username
 	(read-string (concat "Username [for " statusnet-server
 			     ":" (int-to-string statusnet-port) "]: ")
 		     nil nil identica-username)
 	identica-password
-	(read-passwd "Password: " nil identica-password))
-  (identica-get-timeline))
+	(read-passwd "Password: " nil identica-password)))
 
 (defun identica-set-auth (&optional url username passwd server port)
   "Sets the authentication parameters as required by url library.
@@ -618,6 +623,8 @@ authentication.
 When called with no arguments, user authentication parameters are
 read from identica-mode variables `identica-username'
 `identica-password' `statusnet-server' `statusnet-port'."
+  (if (or (not identica-username) (not identica-password))
+	(identica-ask-credentials))
   (let* ((href (if (stringp url)
 		   (url-generic-parse-url url)
 		 url))
@@ -691,16 +698,15 @@ arguments (if any) of the SENTINEL procedure."
 	  (url-retrieve url sentinel
 			(append (list method-class method parameters)
 				sentinel-arguments)))
-    (save-excursion
       (set-buffer identica-buffer)
-      (identica-set-mode-string t))))
+    (identica-set-mode-string t)))
 
 (defun identica-http-get-default-sentinel
   (&optional status method-class method parameters success-message)
-  (cond  ((setq error-object
-		(or (assoc :error status)
+  (let ((error-object (or (assoc :error status)
 		    (and (equal :error (car status))
-			 (cadr status))))
+                               (cadr status)))))
+    (cond  (error-object
 	  (let ((error-data (format "%s" (caddr error-object))))
 	    (when (cond
 		   ((string= error-data "deleted\n") t)
@@ -722,7 +728,8 @@ arguments (if any) of the SENTINEL procedure."
 		;;Checking the whether the message is complete by
 		;;searching for > that closes the last tag, followed by
 		;;CRLF at (point-max)
-	  (when (setq body (identica-get-response-body))
+            (let ((body (identica-get-response-body)))
+              (when body
 	    (setq identica-new-dents-count
 		  (count t (mapcar
 			    #'identica-cache-status-datum
@@ -738,7 +745,7 @@ arguments (if any) of the SENTINEL procedure."
 	    (if (> identica-new-dents-count 0)
 		(run-hooks 'identica-new-dents-hook))
 	    (when identica-display-success-messages
-	      (message (or success-message "Success: Get"))))))
+                  (message (or success-message "Success: Get"))))))))
   (unless (get-buffer-process (current-buffer))
     (kill-buffer (current-buffer))))
 
@@ -789,11 +796,11 @@ arguments (if any) of the SENTINEL procedure."
 		    (add-to-list 'identica-image-stack profile-image-url))
 
 		  (when identica-icon-mode
-		    (setq avatar (create-image (concat identica-tmp-dir "/" filename)))
+                    (let ((avatar (create-image (concat identica-tmp-dir "/" filename))))
 		    ;; Make sure the avatar is 48 pixels (which it should already be!, but hey...)
 		    ;; For offenders, the top left slice of 48 by 48 pixels is displayed
 		    ;; TODO: perhaps make this configurable?
-		    (insert-image avatar nil nil `(0 0 48 48))
+                      (insert-image avatar nil nil `(0 0 48 48)))
 
 		    nil))))))
     (let ((cursor 0)
@@ -927,7 +934,9 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 				 "&")))))
 	 (url-package-name "emacs-identicamode")
 	 (url-package-version identica-mode-version)
-	 (url-request-extra-headers '(("Content-Length" . "0")))
+	 ;; (if (assoc `media parameters)
+	 (url-request-extra-headers '(("Content-Type" . "multipart/form-data")))
+	   ;; (url-request-extra-headers '(("Content-Length" . "0"))))
 	 (url-show-status nil))
     (identica-set-proxy)
     (identica-set-auth url)
@@ -940,16 +949,17 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 
 (defun identica-http-post-default-sentinel
   (&optional status method-class method parameters success-message)
-  (cond  ((and
-	   (setq error-object (or (assoc :error status)
+  (let ((error-object (or (assoc :error status)
 				 (and (equal :error (car status))
-				      (cadr status))))
+                               (cadr status)))))
+    (cond  ((and
+             error-object
 	   (y-or-n-p (format "Network error:%s %s Retry?"
 			     (cadr error-object)
 			     (caddr error-object))))
 	  (identica-http-post method-class method parameters nil success-message))
 	 (identica-display-success-messages
-	  (message (or success-message "Success: Post"))))
+            (message (or success-message "Success: Post")))))
   (unless (get-buffer-process (current-buffer))
     (kill-buffer (current-buffer))))
 
@@ -959,13 +969,12 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
  If `buffer' is omitted, current-buffer is parsed."
   (or buffer
       (setq buffer (current-buffer)))
-  (save-excursion
     (set-buffer buffer)
     (let ((end (or (and (search-forward-regexp "\r?\n\r?\n" (point-max) t)
 			(match-beginning 0))
 		   0)))
       (and (> end 1)
-	   (buffer-substring (point-min) end)))))
+         (buffer-substring (point-min) end))))
 
 (defun identica-get-response-body (&optional buffer)
   "Exract HTTP response body from HTTP response, parse it as XML, and return a XML tree as list.
@@ -973,7 +982,6 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
  If `buffer' is omitted, current-buffer is parsed."
   (or buffer
       (setq buffer (current-buffer)))
-  (save-excursion
     (set-buffer buffer)
     (set-buffer-multibyte t)
     (let ((start (save-excursion
@@ -982,7 +990,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 		       (match-beginning 0)))))
       (identica-clean-response-body)
       (and start
-	   (xml-parse-region start (point-max))))))
+         (xml-parse-region start (point-max)))))
 
 (defun identica-clean-weird-chars (&optional buffer)
 ;;(if (null buffer) (setq buffer (identica-http-buffer)))
@@ -1229,6 +1237,9 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	(identica-http-post method-class method
 			    `(("status" . ,status)
 			      ("source" . ,identica-source)
+			      ,@(if (assoc `media parameters)
+				  `(("media" . ,(cdr (assoc `media parameters))))
+				  nil)
 			      ,@(if reply-to-id
 				    `(("in_reply_to_status_id"
 				       . ,(number-to-string reply-to-id))))))
@@ -1372,6 +1383,10 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (if (< (- end beg) -140) (setq beg (+ end 140)))
   (identica-update-status-if-not-blank "statuses" "update" (buffer-substring beg end)))
 
+(defun identica-update-status-with-media (attachment &optional init-str method-class method parameters reply-to-id)
+  (interactive "f")
+  (identica-update-status 'minibuffer nil reply-to-id nil nil `((media . ,(insert-file-contents-literally attachment)))))
+
 (defun identica-tinyurl-unjson-google (result)
   "Gets only the URL from JSON URL tinyfying service results.
 
@@ -1457,7 +1472,12 @@ this dictionary, only if identica-urlshortening-service is 'google.
 
 (defun identica-expand-shorturl (url)
   "Return the redirected url, or the original url if not found"
-  (setq temp-buf (get-buffer-create "*HTTP headers*"))
+  (let ((temp-buf (get-buffer-create "*HTTP headers*"))
+        (url)
+        (host)
+        (file)
+        (tcp-connection)
+        (request))
   (set-buffer temp-buf)
   (erase-buffer)
   (goto-char 0)
@@ -1480,12 +1500,11 @@ this dictionary, only if identica-urlshortening-service is 'google.
 			  "Authorization: None\r\n"
 			  "Accept-Charset: utf-8;q=0.7,*;q=0.7\r\n\r\n"))
     (process-send-string tcp-connection request)
-    (setq tmp (concat "http://" host file))
     (sit-for 2)
-    (setq location (identica-get-location-from-header tmp tcp-connection))
+    (let ((location (identica-get-location-from-header (concat "http://" host file) tcp-connection)))
     (delete-process tcp-connection)
     (kill-buffer temp-buf)
-    location)
+      location)))
 
 (defun identica-http-headers-sentinel (process string)
   "Process the results from the efine network connection."
@@ -1494,11 +1513,9 @@ this dictionary, only if identica-urlshortening-service is 'google.
 
 (defun identica-get-location-from-header (url process)
   "Parse HTTP header"
-  (let (
-	(buffer)
+  (let ((buffer)
 	(headers)
-	(header-end)
-	)
+        (location))
     (setq buffer (get-buffer-create "*HTTP headers*"))
     (set-buffer buffer)
     (goto-char 0)
@@ -1506,8 +1523,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
 	  (if (search-forward-regexp "^Location: \\(http://.*?\\)\r?$" nil t)
 	      (match-string-no-properties 1)
 	    url))
-    (setq location (replace-regexp-in-string "\r" "" location))
-    location))
+    (replace-regexp-in-string "\r" "" location)))
 
 ;;;
 ;;; Commands
