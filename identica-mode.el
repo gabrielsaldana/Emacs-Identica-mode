@@ -601,13 +601,17 @@ It is the `identica-set-auth' function that eventually sets the
 url library variables according to the above variables which does the
 authentication. This will be done automatically in normal use cases
 enabling dynamic change of user authentication."
-  (setq identica-username
+  (identica-ask-credentials)
+  (identica-get-timeline))
+
+(defun identica-ask-credentials ()
+  "Asks for your username and password"
+ (setq identica-username
 	(read-string (concat "Username [for " statusnet-server
 			     ":" (int-to-string statusnet-port) "]: ")
 		     nil nil identica-username)
 	identica-password
-	(read-passwd "Password: " nil identica-password))
-  (identica-get-timeline))
+	(read-passwd "Password: " nil identica-password)))
 
 (defun identica-set-auth (&optional url username passwd server port)
   "Sets the authentication parameters as required by url library.
@@ -618,6 +622,8 @@ authentication.
 When called with no arguments, user authentication parameters are
 read from identica-mode variables `identica-username'
 `identica-password' `statusnet-server' `statusnet-port'."
+  (if (or (not identica-username) (not identica-password))
+	(identica-ask-credentials))
   (let* ((href (if (stringp url)
 		   (url-generic-parse-url url)
 		 url))
