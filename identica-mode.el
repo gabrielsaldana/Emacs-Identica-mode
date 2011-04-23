@@ -20,6 +20,7 @@
 ;;     Shyam Karanatt <shyam@swathanthran.in> (several patches and code cleanup, new http backend based on url.el)
 ;;     Tezcatl Franco <tzk@riseup.net> (ur1.ca support)
 ;;     Anthony Garcia <lagg@lavabit.com> (fix for icon-mode)
+;;     Alexande Oliva <oliva@lsd.ic.unicamp.br> (fix for icon placement on reverse order dents)
 ;;     Aidan Gauland <aidalgol@no8wireless.co.nz> (variable scope code cleanup)
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
