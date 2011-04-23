@@ -762,12 +762,13 @@ arguments (if any) of the SENTINEL procedure."
       (when wrapped (funcall wrapped -1))
       (mapc (lambda (status)
 	      (insert (identica-format-status
-		       status identica-status-format))
+		       status identica-status-format)
+		      "\n\n")
 	      (if (not wrapped)
 		  (progn
 		    (fill-region-as-paragraph
 		     (save-excursion (beginning-of-line) (point)) (point))))
-	      (insert "\n\n")
+	      (insert "\n")
 	      (if identica-oldest-first
 		  (goto-char (point-min))))
 	    identica-timeline-data)
