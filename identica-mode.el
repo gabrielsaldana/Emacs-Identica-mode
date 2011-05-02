@@ -1563,7 +1563,10 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (let ((buf (get-buffer identica-buffer)))
     (if (not buf)
 	(identica-stop)
-      (identica-http-get identica-method-class identica-method)))
+      (progn
+	(if (not identica-method)
+	    (setq identica-method "friends_timeline"))
+	(identica-http-get identica-method-class identica-method))))
   (if identica-icon-mode
       (if (and identica-image-stack window-system)
 	  (let ((proc
