@@ -1275,9 +1275,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
             (identica-update-status-edit-mode)
 	    (if identica-soft-wrap-status
 		(if (fboundp 'visual-line-mode)
-		    (visual-line-mode t)
-		  (if (fboundp 'longlines-mode)
-		      (longlines-mode t))))
+		    (visual-line-mode t)))
             (make-local-variable 'identica-update-status-edit-method-class)
             (make-local-variable 'identica-update-status-edit-method)
             (make-local-variable 'identica-update-status-edit-parameters)
