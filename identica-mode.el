@@ -1,6 +1,6 @@
 ;;; identica-mode.el --- Major mode for Identica
 
-;; Copyright (C) 2008, 2009, 2010 Gabriel Saldana
+;; Copyright (C) 2008, 2009, 2010, 2011 Gabriel Saldana
 ;; Copyright (C) 2009 Bradley M. Kuhn
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
@@ -20,6 +20,7 @@
 ;;     Shyam Karanatt <shyam@swathanthran.in> (several patches and code cleanup, new http backend based on url.el)
 ;;     Tezcatl Franco <tzk@riseup.net> (ur1.ca support)
 ;;     Anthony Garcia <lagg@lavabit.com> (fix for icon-mode)
+;;     Alexande Oliva <oliva@lsd.ic.unicamp.br> (fix for icon placement on reverse order dents)
 ;;     Aidan Gauland <aidalgol@no8wireless.co.nz> (variable scope code cleanup)
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
@@ -762,12 +763,13 @@ arguments (if any) of the SENTINEL procedure."
       (when wrapped (funcall wrapped -1))
       (mapc (lambda (status)
 	      (insert (identica-format-status
-		       status identica-status-format))
+		       status identica-status-format)
+		      "\n\n")
 	      (if (not wrapped)
 		  (progn
 		    (fill-region-as-paragraph
 		     (save-excursion (beginning-of-line) (point)) (point))))
-	      (insert "\n\n")
+	      (insert "\n")
 	      (if identica-oldest-first
 		  (goto-char (point-min))))
 	    identica-timeline-data)
@@ -1273,9 +1275,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
             (identica-update-status-edit-mode)
 	    (if identica-soft-wrap-status
 		(if (fboundp 'visual-line-mode)
-		    (visual-line-mode t)
-		  (if (fboundp 'longlines-mode)
-		      (longlines-mode t))))
+		    (visual-line-mode t)))
             (make-local-variable 'identica-update-status-edit-method-class)
             (make-local-variable 'identica-update-status-edit-method)
             (make-local-variable 'identica-update-status-edit-parameters)
@@ -1563,7 +1563,10 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (let ((buf (get-buffer identica-buffer)))
     (if (not buf)
 	(identica-stop)
-      (identica-http-get identica-method-class identica-method)))
+      (progn
+	(if (not identica-method)
+	    (setq identica-method "friends_timeline"))
+	(identica-http-get identica-method-class identica-method))))
   (if identica-icon-mode
       (if (and identica-image-stack window-system)
 	  (let ((proc
