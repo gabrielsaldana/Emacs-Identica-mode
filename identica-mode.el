@@ -509,8 +509,12 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 (defvar identica-mode-string identica-method)
 
 (defun identica-set-mode-string (loading)
-  (setq mode-name
-	(if loading (concat "loading " identica-method "...") identica-method)))
+  (with-current-buffer (identica-buffer)
+    (setq mode-name
+	  (if loading (concat
+		       (if (stringp loading) loading "loading")
+		       " " identica-method "...") identica-method))
+    (debug-print mode-name)))
 
 (defvar identica-mode-hook nil
   "Identica-mode hook.")
@@ -705,11 +709,25 @@ arguments (if any) of the SENTINEL procedure."
     (set-buffer identica-buffer)
     (identica-set-mode-string t)))
 
+(defun identica-render-pending-dents ()
+  (interactive)
+  "If at the time an HTTP request for new dents finishes,
+identica-buffer is not active, we defer its update, to make sure
+we adjust point within the right frame."
+  (identica-render-timeline)
+  (when (> identica-new-dents-count 0)
+    (run-hooks 'identica-new-dents-hook)
+    (setq identica-new-dents-count 0))
+  (when identica-display-success-messages
+    (message (or success-message "Success: Get"))))
+
 (defun identica-http-get-default-sentinel
   (&optional status method-class method parameters success-message)
+  (debug-print (window-buffer))
   (let ((error-object (or (assoc :error status)
 			  (and (equal :error (car status))
-                               (cadr status)))))
+                               (cadr status))))
+	(active-p (eq (window-buffer) (identica-buffer))))
     (cond (error-object
 	   (let ((error-data (format "%s" (caddr error-object))))
 	     (when (cond
@@ -733,23 +751,23 @@ arguments (if any) of the SENTINEL procedure."
 	   ;;searching for > that closes the last tag, followed by
 	   ;;CRLF at (point-max)
 	   (let ((body (identica-get-response-body)))
-	     (when body
+	     (if (not body)
+		 (identica-set-mode-string nil)
 	       (setq identica-new-dents-count
-		     (count t (mapcar
-			       #'identica-cache-status-datum
-			       (reverse (identica-xmltree-to-status
-					 body)))))
+		     (+ identica-new-dents-count
+			(count t (mapcar
+				  #'identica-cache-status-datum
+				  (reverse (identica-xmltree-to-status
+					    body))))))
 					; Shorten the timeline if necessary
 	       (if (and identica-display-max-dents
 			(> (safe-length identica-timeline-data)
 			   identica-display-max-dents))
 		   (cl-set-nthcdr identica-display-max-dents
 				  identica-timeline-data nil))
-	       (identica-render-timeline)
-	       (if (> identica-new-dents-count 0)
-		   (run-hooks 'identica-new-dents-hook))
-	       (when identica-display-success-messages
-		 (message (or success-message "Success: Get"))))))))
+	       (if active-p
+		   (identica-render-pending-dents)
+		 (identica-set-mode-string "pending")))))))
   (unless (get-buffer-process (current-buffer))
     (kill-buffer (current-buffer))))
 
@@ -1652,7 +1670,9 @@ this dictionary, only if identica-urlshortening-service is 'google.
 
 (defun identica-current-timeline ()
   (interactive)
-  (identica-get-timeline))
+  (if (> identica-new-dents-count 0)
+      (identica-render-pending-dents)
+    (identica-get-timeline)))
 
 (defun identica-update-status-interactive ()
   (interactive)
