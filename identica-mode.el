@@ -702,54 +702,54 @@ arguments (if any) of the SENTINEL procedure."
 	  (url-retrieve url sentinel
 			(append (list method-class method parameters)
 				sentinel-arguments)))
-      (set-buffer identica-buffer)
+    (set-buffer identica-buffer)
     (identica-set-mode-string t)))
 
 (defun identica-http-get-default-sentinel
   (&optional status method-class method parameters success-message)
   (let ((error-object (or (assoc :error status)
-		    (and (equal :error (car status))
+			  (and (equal :error (car status))
                                (cadr status)))))
-    (cond  (error-object
-	  (let ((error-data (format "%s" (caddr error-object))))
-	    (when (cond
-		   ((string= error-data "deleted\n") t)
-		   ((and (string= error-data "404") method
-			 (= 13 (string-match "/" method)))
-		    (message "No Such User: %s" (substring method 14))
-		    t)
-		   ((y-or-n-p
-		     (format "Identica-Mode: Network error:%s Retry? "
-			     status))
-		    (identica-http-get method-class method parameters)
-		    nil))
-	      ;; when the network process is deleted by another query
-	      ;; or the user queried is not found , query is _finished_
-	      ;; unsuccessful and we want to restore identica-method
-	      ;; to loose track of this unsuccessful attempt
-	      (setq identica-method identica-last-timeline-retrieved))))
-	 ((< (- (point-max) (or (re-search-forward ">\r?\n\r*$" nil t) 0)) 2)
-		;;Checking the whether the message is complete by
-		;;searching for > that closes the last tag, followed by
-		;;CRLF at (point-max)
-            (let ((body (identica-get-response-body)))
-              (when body
-	    (setq identica-new-dents-count
-		  (count t (mapcar
-			    #'identica-cache-status-datum
-			    (reverse (identica-xmltree-to-status
-				      body)))))
-            ; Shorten the timeline if necessary
-            (if (and identica-display-max-dents
-                     (> (safe-length identica-timeline-data)
-                        identica-display-max-dents))
-                (cl-set-nthcdr identica-display-max-dents
-                               identica-timeline-data nil))
-	    (identica-render-timeline)
-	    (if (> identica-new-dents-count 0)
-		(run-hooks 'identica-new-dents-hook))
-	    (when identica-display-success-messages
-                  (message (or success-message "Success: Get"))))))))
+    (cond (error-object
+	   (let ((error-data (format "%s" (caddr error-object))))
+	     (when (cond
+		    ((string= error-data "deleted\n") t)
+		    ((and (string= error-data "404") method
+			  (= 13 (string-match "/" method)))
+		     (message "No Such User: %s" (substring method 14))
+		     t)
+		    ((y-or-n-p
+		      (format "Identica-Mode: Network error:%s Retry? "
+			      status))
+		     (identica-http-get method-class method parameters)
+		     nil))
+	       ;; when the network process is deleted by another query
+	       ;; or the user queried is not found , query is _finished_
+	       ;; unsuccessful and we want to restore identica-method
+	       ;; to loose track of this unsuccessful attempt
+	       (setq identica-method identica-last-timeline-retrieved))))
+	  ((< (- (point-max) (or (re-search-forward ">\r?\n\r*$" nil t) 0)) 2)
+	   ;;Checking the whether the message is complete by
+	   ;;searching for > that closes the last tag, followed by
+	   ;;CRLF at (point-max)
+	   (let ((body (identica-get-response-body)))
+	     (when body
+	       (setq identica-new-dents-count
+		     (count t (mapcar
+			       #'identica-cache-status-datum
+			       (reverse (identica-xmltree-to-status
+					 body)))))
+					; Shorten the timeline if necessary
+	       (if (and identica-display-max-dents
+			(> (safe-length identica-timeline-data)
+			   identica-display-max-dents))
+		   (cl-set-nthcdr identica-display-max-dents
+				  identica-timeline-data nil))
+	       (identica-render-timeline)
+	       (if (> identica-new-dents-count 0)
+		   (run-hooks 'identica-new-dents-hook))
+	       (when identica-display-success-messages
+		 (message (or success-message "Success: Get"))))))))
   (unless (get-buffer-process (current-buffer))
     (kill-buffer (current-buffer))))
 
