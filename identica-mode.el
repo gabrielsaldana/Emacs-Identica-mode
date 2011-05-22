@@ -23,6 +23,7 @@
 ;;     Alexande Oliva <oliva@lsd.ic.unicamp.br> (fix for icon placement on reverse order dents)
 ;;     Aidan Gauland <aidalgol@no8wireless.co.nz> (variable scope code cleanup)
 ;;     Joel J. Adamson <adamsonj@email.unc.edu> Added countdown minibuffer-prompt style
+;;     Kevin Granade <kevin.granade@gmail.com> (OAuth support)
 
 
 
@@ -52,6 +53,8 @@
 ;; if using Emacs22 or previous, you'll need json.el
 ;; get it from http://edward.oconnor.cx/2006/03/json.el
 ;; json.el is part of Emacs23
+;; To use the OAuth support, you need oauth.el
+;; Downloadable from http://github.com/psanford/emacs-oauth/
 
 ;; Installation
 
@@ -85,8 +88,13 @@
 (require 'url-http)
 (require 'json)
 (require 'image)
+(require 'oauth)
 
 (defconst identica-mode-version "1.1")
+
+(defvar identica-mode-oauth-consumer-key "53e8e7bf7d1be8e58ef1024b31478d2b")
+
+(defvar identica-mode-oauth-consumer-secret "1ab0876f14bd82c4eb450f720a0e84ae")
 
 ;;url-basepath fix for emacs22
 (unless (fboundp 'url-basepath)
@@ -176,8 +184,31 @@ If non-nil, dents over this amount will bre removed.")
   :type '(choice (const :tag "Ask" nil) (string))
   :group 'identica-mode)
 
+(defcustom identica-auth-mode "password"
+  "Authorization mode used, options are password and oauth"
+  :type 'string
+  :group 'identica-mode)
+
 (defcustom statusnet-server "identi.ca"
   "Statusnet instance url"
+  :type 'string
+  :group 'identica-mode)
+
+(defcustom statusnet-request-url
+  "http://identi.ca/api/oauth/request_token"
+  "Statusnet oauth request_token url"
+  :type 'string
+  :group 'identica-mode)
+
+(defcustom statusnet-access-url
+  "http://identi.ca/api/oauth/access_token"
+  "Statusnet oauth access_token url"
+  :type 'string
+  :group 'identica-mode)
+
+(defcustom statusnet-authorize-url
+  "http://identi.ca/api/oauth/authorize"
+  "Statusnet authorization url"
   :type 'string
   :group 'identica-mode)
 
@@ -698,14 +729,28 @@ arguments (if any) of the SENTINEL procedure."
 	(url-package-version identica-mode-version)
 	(url-show-status nil))
     (identica-set-proxy)
-    (identica-set-auth url)
+    (if (equal identica-auth-mode "oauth")
+	(or (and (boundp 'oauth-access-token) oauth-access-token)
+	    (setq oauth-access-token
+		  (oauth-authorize-app identica-mode-oauth-consumer-key
+				       identica-mode-oauth-consumer-secret
+				       statusnet-request-url statusnet-access-url
+				       statusnet-authorize-url))
+	    (print oauth-access-token))
+      (identica-set-auth url))
     (when (get-buffer-process identica-http-buffer)
       (delete-process identica-http-buffer)
       (kill-buffer identica-http-buffer))
-    (setq identica-http-buffer
-	  (url-retrieve url sentinel
-			(append (list method-class method parameters)
-				sentinel-arguments)))
+    (if (and (equal identica-auth-mode "oauth") oauth-access-token)
+	(setq identica-http-buffer
+	      (oauth-url-retrieve oauth-access-token url sentinel
+				  (append (list method-class method parameters)
+					  sentinel-arguments)))
+        (setq identica-http-buffer
+	      (url-retrieve url sentinel
+			    (append (list method-class method parameters)
+				    sentinel-arguments))))
+    (set-buffer identica-buffer)
     (set-buffer identica-buffer)
     (identica-set-mode-string t)))
 
@@ -962,13 +1007,24 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 	   ;; (url-request-extra-headers '(("Content-Length" . "0"))))
 	 (url-show-status nil))
     (identica-set-proxy)
-    (identica-set-auth url)
+    (if (equal identica-auth-mode "oauth")
+	(or (and (boundp 'oauth-access-token) oauth-access-token)
+	    (setq oauth-access-token
+		  (oauth-authorize-app identica-mode-oauth-consumer-key
+				       identica-mode-oauth-consumer-secret
+				       statusnet-request-url statusnet-access-url
+				       statusnet-authorize-url)))
+        (identica-set-auth url))
     (when (get-buffer-process identica-http-buffer)
       (delete-process identica-http-buffer)
       (kill-buffer identica-http-buffer))
-    (url-retrieve url sentinel
-		  (append (list method-class method parameters)
-			  sentinel-arguments))))
+    (if (equal identica-auth-mode "oauth")
+	(oauth-url-retrieve oauth-access-token url sentinel
+			    (append (list method-class method parameters)
+				    sentinel-arguments))
+        (url-retrieve url sentinel
+		      (append (list method-class method parameters)
+			      sentinel-arguments)))))
 
 (defun identica-http-post-default-sentinel
   (&optional status method-class method parameters success-message)
