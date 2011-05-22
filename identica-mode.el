@@ -1294,15 +1294,24 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (insert init-str)
       (message "Type C-c C-c to post status update (C-c C-k to cancel)."))))
 
+(defcustom identica-minibuffer-length-prompt-style nil
+  "The preferred style of counting characters in the minibuffer
+  prompt; \"Down\" counts down from 140; \"Up\" counts
+  up from 0"
+  :type '(choice (const :tag "Down" nil)
+		 (const :tag "Up" t))
+  :group 'identica-mode)
+
 (defun identica-show-minibuffer-length (&optional beg end len)
   "Show the number of characters in minibuffer."
   (when (minibuffer-window-active-p (selected-window))
     (let* ((status-len (- (buffer-size) (minibuffer-prompt-width)))
-	   (mes (format "%d" status-len)))
+	   (mes (format "%d" (if identica-minibuffer-length-prompt-style
+				 status-len
+			       (- 140 status-len)))))
       (if (<= 23 emacs-major-version)
 	  (minibuffer-message mes) ; Emacs23 or later
-	(minibuffer-message (concat " (" mes ")")))
-      )))
+	(minibuffer-message (concat " (" mes ")"))))))
 
 (defun identica-setup-minibuffer ()
   (identica-show-minibuffer-length)
