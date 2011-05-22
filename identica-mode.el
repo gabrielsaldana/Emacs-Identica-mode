@@ -771,7 +771,7 @@ arguments (if any) of the SENTINEL procedure."
 	      (if (not wrapped)
 		  (progn
 		    (fill-region-as-paragraph
-		     (save-excursion (beginning-of-line) (point)) (point))))
+		     (save-excursion (beginning-of-line -1) (point)) (point))))
 	      (insert "\n")
 	      (if identica-oldest-first
 		  (goto-char (point-min))))
