@@ -743,8 +743,7 @@ arguments (if any) of the SENTINEL procedure."
 		  (oauth-authorize-app identica-mode-oauth-consumer-key
 				       identica-mode-oauth-consumer-secret
 				       statusnet-request-url statusnet-access-url
-				       statusnet-authorize-url))
-	    (print oauth-access-token))
+				       statusnet-authorize-url)))
       (identica-set-auth url))
     (when (get-buffer-process identica-http-buffer)
       (delete-process identica-http-buffer)
