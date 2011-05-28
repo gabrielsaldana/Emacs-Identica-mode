@@ -702,6 +702,42 @@ read from identica-mode variables `identica-username'
 			      (base64-encode-string auth))
 			(cdr-safe server-double-alist))))))))
 
+(defun identica-initialize-oauth ()
+  "Get authentication token unless we have one stashed already.
+Shamelessly stolen from yammer.el"
+  (if (file-exists-p "~/.identica-oauth-token")
+      (progn
+        (save-excursion
+          (find-file "~/.identica-oauth-token")
+          (let ((str (buffer-substring (point-min) (point-max))))
+            (if (string-match "\\([^:]*\\):\\(.*\\)"
+                              (buffer-substring (point-min) (point-max)))
+                (setq oauth-access-token
+                      (make-oauth-access-token
+                       :consumer-key identica-mode-oauth-consumer-key
+                       :consumer-secret identica-mode-oauth-consumer-secret
+                       :auth-t (make-oauth-t
+                                :token (match-string 1 str)
+                                :token-secret (match-string 2 str))))))
+          (save-buffer)
+          (kill-this-buffer))))
+  (unless oauth-access-token
+    (setq oauth-access-token
+	  (oauth-authorize-app identica-mode-oauth-consumer-key
+			       identica-mode-oauth-consumer-secret
+			       statusnet-request-url statusnet-access-url
+			       statusnet-authorize-url))
+    (save-excursion
+      (find-file "~/.identica-oauth-token")
+      (end-of-buffer)
+      (let ((token (oauth-access-token-auth-t oauth-access-token)))
+        (insert (format "%s:%s\n"
+                        (oauth-t-token token)
+                        (oauth-t-token-secret token))))
+      (save-buffer)
+      (kill-this-buffer)))
+  oauth-access-token)
+
 (defun identica-http-get (method-class method &optional parameters
 				       sentinel sentinel-arguments)
   "Basic function which communicates with server.
@@ -733,11 +769,7 @@ arguments (if any) of the SENTINEL procedure."
     (identica-set-proxy)
     (if (equal identica-auth-mode "oauth")
 	(or oauth-access-token
-	    (setq oauth-access-token
-		  (oauth-authorize-app identica-mode-oauth-consumer-key
-				       identica-mode-oauth-consumer-secret
-				       statusnet-request-url statusnet-access-url
-				       statusnet-authorize-url)))
+	    (identica-initialize-oauth))
       (identica-set-auth url))
     (when (get-buffer-process identica-http-buffer)
       (delete-process identica-http-buffer)
@@ -1010,11 +1042,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
     (identica-set-proxy)
     (if (equal identica-auth-mode "oauth")
 	(or oauth-access-token
-	    (setq oauth-access-token
-		  (oauth-authorize-app identica-mode-oauth-consumer-key
-				       identica-mode-oauth-consumer-secret
-				       statusnet-request-url statusnet-access-url
-				       statusnet-authorize-url)))
+	    (identica-initialize-oauth))
         (identica-set-auth url))
     (when (get-buffer-process identica-http-buffer)
       (delete-process identica-http-buffer)
