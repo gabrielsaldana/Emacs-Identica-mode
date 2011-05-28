@@ -210,6 +210,8 @@ If non-nil, dents over this amount will bre removed.")
   :type 'string
   :group 'identica-mode)
 
+(defvar oauth-access-token nil)
+
 (defcustom statusnet-port 80
   "Port on which StatusNet instance listens"
   :type 'integer
@@ -736,7 +738,7 @@ arguments (if any) of the SENTINEL procedure."
 	(url-show-status nil))
     (identica-set-proxy)
     (if (equal identica-auth-mode "oauth")
-	(or (and (boundp 'oauth-access-token) oauth-access-token)
+	(or oauth-access-token
 	    (setq oauth-access-token
 		  (oauth-authorize-app identica-mode-oauth-consumer-key
 				       identica-mode-oauth-consumer-secret
@@ -1033,7 +1035,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 	 (url-show-status nil))
     (identica-set-proxy)
     (if (equal identica-auth-mode "oauth")
-	(or (and (boundp 'oauth-access-token) oauth-access-token)
+	(or oauth-access-token
 	    (setq oauth-access-token
 		  (oauth-authorize-app identica-mode-oauth-consumer-key
 				       identica-mode-oauth-consumer-secret
