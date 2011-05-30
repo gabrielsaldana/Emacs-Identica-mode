@@ -317,6 +317,9 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 (defvar identica-timeline-data nil)
 (defvar identica-timeline-last-update nil)
 
+(defvar enable-striping nil)
+(defvar stripe-entry nil)
+
 (defvar identica-username-face 'identica-username-face)
 (defvar identica-uri-face 'identica-uri-face)
 (defvar identica-reply-face 'identica-reply-face)
@@ -816,6 +819,16 @@ we adjust point within the right frame."
   (unless (get-buffer-process (current-buffer))
     (kill-buffer (current-buffer))))
 
+(defun merge-text-properties (start end property)
+  (while (not (eq start end))
+    (let ((prop (get-text-property start 'face))
+          (next-change
+           (or (next-single-property-change start 'face (current-buffer))
+               end)))
+      (if prop (add-text-properties start next-change (list 'face (list prop property)))
+        (add-text-properties start next-change (list 'face property)))
+      (setq start next-change))))
+
 (defun identica-render-timeline ()
   (with-current-buffer (identica-buffer)
     (let ((point (point))
@@ -827,17 +840,22 @@ we adjust point within the right frame."
       (setq buffer-read-only nil)
       (erase-buffer)
       (when wrapped (funcall wrapped -1))
+      (setq stripe-entry nil)
       (mapc (lambda (status)
-	      (insert (identica-format-status
-		       status identica-status-format)
-		      "\n\n")
-	      (if (not wrapped)
-		  (progn
-		    (fill-region-as-paragraph
-		     (save-excursion (beginning-of-line -1) (point)) (point))))
-	      (insert "\n")
-	      (if identica-oldest-first
-		  (goto-char (point-min))))
+              (and enable-striping (setq stripe-entry (not stripe-entry)))
+              (let ((before-status (point-marker)))
+		(insert (identica-format-status
+			 status identica-status-format)
+			"\n\n")
+		(if (not wrapped)
+		    (progn
+		      (fill-region-as-paragraph
+		       (save-excursion (beginning-of-line -1) (point)) (point))))
+		(insert "\n")
+		(and stripe-entry (merge-text-properties before-status (point)
+							 '(:background "LightSlateGrey")))
+		(if identica-oldest-first
+		    (goto-char (point-min)))))
 	    identica-timeline-data)
       (if (and identica-image-stack window-system)
 	  (clear-image-cache))
