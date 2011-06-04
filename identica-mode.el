@@ -1309,18 +1309,20 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	    ret)))
 
 (defun identica-percent-encode (str &optional coding-system)
-  (if (or (null coding-system)
-	  (not (coding-system-p coding-system)))
-      (setq coding-system 'utf-8))
-  (mapconcat
-   (lambda (c)
-     (cond
-      ((identica-url-reserved-p c)
-       (char-to-string c))
-      ((eq c ? ) "+")
-      (t (format "%%%x" c))))
-   (encode-coding-string str coding-system)
-   ""))
+  (if (eq identica-auth-mode "oauth")
+      (oauth-hexify-string str)
+    (if (or (null coding-system)
+	    (not (coding-system-p coding-system)))
+	(setq coding-system 'utf-8))
+    (mapconcat
+     (lambda (c)
+       (cond
+	((identica-url-reserved-p c)
+	 (char-to-string c))
+	((eq c ? ) "+")
+	(t (format "%%%x" c))))
+     (encode-coding-string str coding-system)
+     "")))
 
 (defun identica-url-reserved-p (ch)
   (or (and (<= ?A ch) (<= ch ?z))
