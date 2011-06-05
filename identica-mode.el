@@ -319,8 +319,7 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 (defvar identica-timeline-data nil)
 (defvar identica-timeline-last-update nil)
 
-(defvar enable-striping nil)
-(defvar stripe-entry nil)
+(defvar identica-enable-striping nil)
 
 (defvar identica-username-face 'identica-username-face)
 (defvar identica-uri-face 'identica-uri-face)
@@ -868,14 +867,14 @@ we adjust point within the right frame."
 	  (end (point-max))
           (wrapped (cond (longlines-mode 'longlines-mode)
                          (visual-line-mode 'visual-line-mode)
-                         (t nil))))
+                         (t nil)))
+	  (stripe-entry nil))
 
       (setq buffer-read-only nil)
       (erase-buffer)
       (when wrapped (funcall wrapped -1))
-      (setq stripe-entry nil)
       (mapc (lambda (status)
-              (and enable-striping (setq stripe-entry (not stripe-entry)))
+              (and identica-enable-striping (setq stripe-entry (not stripe-entry)))
               (let ((before-status (point-marker)))
 		(insert (identica-format-status
 			 status identica-status-format)
