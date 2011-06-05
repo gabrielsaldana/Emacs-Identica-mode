@@ -319,6 +319,9 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 (defvar identica-timeline-data nil)
 (defvar identica-timeline-last-update nil)
 
+(defvar identica-entry-spacing 2
+  "The number of spaces to insert between entries.")
+
 (defcustom identica-enable-striping nil
   "If non-nil, set the background of every second entry to the background
 of identica-stripe-face."
@@ -897,7 +900,7 @@ we are interested in."
               (let ((before-status (point-marker)))
 		(insert (identica-format-status
 			 status identica-status-format)
-			"\n\n")
+			(make-string identica-entry-spacing ?\n))
 		(if (not wrapped)
 		    (progn
 		      (fill-region-as-paragraph
