@@ -324,6 +324,7 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 (defvar identica-username-face 'identica-username-face)
 (defvar identica-uri-face 'identica-uri-face)
 (defvar identica-reply-face 'identica-reply-face)
+(defvar identica-stripe-face 'identica-stripe-face)
 
 (defun identica-get-or-generate-buffer (buffer)
   (if (bufferp buffer)
