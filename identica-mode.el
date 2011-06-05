@@ -515,9 +515,14 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
   (copy-face 'font-lock-string-face 'identica-reply-face)
   (set-face-attribute 'identica-reply-face nil :foreground "white")
   (set-face-attribute 'identica-reply-face nil :background "DarkSlateGray")
+
+  (defface identica-stripe-face
+    `((t nil)) "" :group 'faces)
+  (copy-face 'font-lock-string-face 'identica-stripe-face)
+  (set-face-attribute 'identica-stripe-face nil :background "LightSlateGray")
+
   (defface identica-uri-face
     `((t nil)) "" :group 'faces)
-
   (set-face-attribute 'identica-uri-face nil :underline t)
   (add-to-list 'minor-mode-alist '(identica-icon-mode " id-icon"))
   (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll")))
@@ -851,14 +856,23 @@ we adjust point within the right frame."
   (unless (get-buffer-process (current-buffer))
     (kill-buffer (current-buffer))))
 
-(defun merge-text-properties (start end property)
+(defun merge-text-attribute (start end new-face attribute)
+  "If we just add the new face its attributes somehow get overridden by
+the attributes of the underlying face, so instead we just add the attribute
+we are interested in."
   (while (not (eq start end))
-    (let ((prop (get-text-property start 'face))
+    (let ((bg (face-attribute new-face attribute))
+	  (prop (get-text-property start 'face))
           (next-change
            (or (next-single-property-change start 'face (current-buffer))
                end)))
-      (if prop (add-text-properties start next-change (list 'face (list prop property)))
-        (add-text-properties start next-change (list 'face property)))
+      (if prop
+	  (add-text-properties start next-change
+			       (list 'face 
+				     (list prop 
+					   (list attribute bg))))
+        (add-text-properties start next-change 
+			     (list 'face (list attribute bg))))
       (setq start next-change))))
 
 (defun identica-render-timeline ()
@@ -884,8 +898,9 @@ we adjust point within the right frame."
 		      (fill-region-as-paragraph
 		       (save-excursion (beginning-of-line -1) (point)) (point))))
 		(insert "\n")
-		(and stripe-entry (merge-text-properties before-status (point)
-							 '(:background "LightSlateGrey")))
+		(and stripe-entry
+		     (merge-text-attribute before-status (point)
+					   'identica-stripe-face :background))
 		(if identica-oldest-first
 		    (goto-char (point-min)))))
 	    identica-timeline-data)
