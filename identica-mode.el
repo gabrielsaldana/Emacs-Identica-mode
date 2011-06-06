@@ -1632,12 +1632,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
 
 (defun identica-expand-shorturl (url)
   "Return the redirected url, or the original url if not found"
-  (let ((temp-buf (get-buffer-create "*HTTP headers*"))
-        (url)
-        (host)
-        (file)
-        (tcp-connection)
-        (request))
+  (let ((temp-buf (get-buffer-create "*HTTP headers*")))
   (set-buffer temp-buf)
   (erase-buffer)
   (goto-char 0)
