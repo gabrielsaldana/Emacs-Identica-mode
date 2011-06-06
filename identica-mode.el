@@ -1465,9 +1465,11 @@ this dictionary, only if identica-urlshortening-service is 'google.
 (defun identica-expand-replace-at-point ()
   "Replace the url at point with a tiny version."
   (interactive)
-  (let ((url-bounds (bounds-of-thing-at-point 'url)))
+  (let ((url-bounds (bounds-of-thing-at-point 'url))
+        (original-url (thing-at-point 'url)))
     (when url-bounds
-      (let ((uri (identica-expand-shorturl (thing-at-point 'url))))
+      (message (concat "Expanding url: " original-url))
+      (let ((uri (identica-expand-shorturl original-url)))
 	(when uri
 	  (set-buffer (get-buffer identica-buffer))
 	  (save-restriction
@@ -1480,6 +1482,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
 			    uri ,uri
 			    uri-in-text ,uri) uri)
 	    (insert uri)
+            (message (concat "Expanded Short URL " original-url "to Long URL: " uri))
 	    (setq buffer-read-only t)))))))
 
 (defun identica-expand-shorturl (url)
