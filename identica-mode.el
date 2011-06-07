@@ -1913,11 +1913,17 @@ this dictionary, only if identica-urlshortening-service is 'google.
 	(goto-char pos)
       (message "End of status."))))
 
+(defun memq-face (face property)
+  "Check whether face is present in property."
+  (if (listp property)
+      (memq face property)
+    (eq property face)))
+
 (defun identica-get-next-username-face-pos (pos)
   (interactive)
   (let ((prop))
     (catch 'not-found
-      (while (and pos (not (eq prop identica-username-face)))
+      (while (and pos (not (memq-face identica-username-face prop)))
 	(setq pos (next-single-property-change pos 'face))
 	(when (eq pos nil) (throw 'not-found nil))
 	(setq prop (get-text-property pos 'face)))
@@ -1936,7 +1942,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (interactive)
   (let ((prop))
     (catch 'not-found
-      (while (and pos (not (eq prop identica-username-face)))
+      (while (and pos (not (memq-face identica-username-face prop)))
 	(setq pos (previous-single-property-change pos 'face))
 	(when (eq pos nil) (throw 'not-found nil))
 	(setq prop (get-text-property pos 'face)))
@@ -1974,7 +1980,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (let ((start-pos pos)
 	(end-pos))
     (catch 'not-found
-      (while (eq (get-text-property start-pos 'face) identica-username-face)
+      (while (memq-face identica-username-face (get-text-property start-pos 'face))
 	(setq start-pos (1- start-pos))
 	(when (or (eq start-pos nil) (eq start-pos 0)) (throw 'not-found nil)))
       (setq start-pos (1+ start-pos))
