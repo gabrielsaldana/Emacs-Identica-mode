@@ -23,6 +23,7 @@
 ;;     Alexande Oliva <oliva@lsd.ic.unicamp.br> (fix for icon placement on reverse order dents)
 ;;     Aidan Gauland <aidalgol@no8wireless.co.nz> (variable scope code cleanup)
 ;;     Joel J. Adamson <adamsonj@email.unc.edu> Added countdown minibuffer-prompt style
+;;     Kevin Granade <kevin.granade@gmail.com> (OAuth support)
 
 
 
@@ -52,6 +53,8 @@
 ;; if using Emacs22 or previous, you'll need json.el
 ;; get it from http://edward.oconnor.cx/2006/03/json.el
 ;; json.el is part of Emacs23
+;; To use the OAuth support, you need oauth.el
+;; Downloadable from http://github.com/psanford/emacs-oauth/
 
 ;; Installation
 
@@ -85,8 +88,13 @@
 (require 'url-http)
 (require 'json)
 (require 'image)
+(require 'oauth)
 
 (defconst identica-mode-version "1.1")
+
+(defvar identica-mode-oauth-consumer-key "53e8e7bf7d1be8e58ef1024b31478d2b")
+
+(defvar identica-mode-oauth-consumer-secret "1ab0876f14bd82c4eb450f720a0e84ae")
 
 ;;url-basepath fix for emacs22
 (unless (fboundp 'url-basepath)
@@ -176,10 +184,35 @@ If non-nil, dents over this amount will bre removed.")
   :type '(choice (const :tag "Ask" nil) (string))
   :group 'identica-mode)
 
+(defcustom identica-auth-mode "password"
+  "Authorization mode used, options are password and oauth"
+  :type 'string
+  :group 'identica-mode)
+
 (defcustom statusnet-server "identi.ca"
   "Statusnet instance url"
   :type 'string
   :group 'identica-mode)
+
+(defcustom statusnet-request-url
+  "http://identi.ca/api/oauth/request_token"
+  "Statusnet oauth request_token url"
+  :type 'string
+  :group 'identica-mode)
+
+(defcustom statusnet-access-url
+  "http://identi.ca/api/oauth/access_token"
+  "Statusnet oauth access_token url"
+  :type 'string
+  :group 'identica-mode)
+
+(defcustom statusnet-authorize-url
+  "http://identi.ca/api/oauth/authorize"
+  "Statusnet authorization url"
+  :type 'string
+  :group 'identica-mode)
+
+(defvar oauth-access-token nil)
 
 (defcustom statusnet-port 80
   "Port on which StatusNet instance listens"
@@ -286,9 +319,19 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 (defvar identica-timeline-data nil)
 (defvar identica-timeline-last-update nil)
 
+(defvar identica-entry-spacing 2
+  "The number of spaces to insert between entries.")
+
+(defcustom identica-enable-striping nil
+  "If non-nil, set the background of every second entry to the background
+of identica-stripe-face."
+  :type 'boolean
+  :group 'identica-mode)
+
 (defvar identica-username-face 'identica-username-face)
 (defvar identica-uri-face 'identica-uri-face)
 (defvar identica-reply-face 'identica-reply-face)
+(defvar identica-stripe-face 'identica-stripe-face)
 
 (defun identica-get-or-generate-buffer (buffer)
   (if (bufferp buffer)
@@ -480,9 +523,14 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
   (copy-face 'font-lock-string-face 'identica-reply-face)
   (set-face-attribute 'identica-reply-face nil :foreground "white")
   (set-face-attribute 'identica-reply-face nil :background "DarkSlateGray")
+
+  (defface identica-stripe-face
+    `((t nil)) "" :group 'faces)
+  (copy-face 'font-lock-string-face 'identica-stripe-face)
+  (set-face-attribute 'identica-stripe-face nil :background "LightSlateGray")
+
   (defface identica-uri-face
     `((t nil)) "" :group 'faces)
-
   (set-face-attribute 'identica-uri-face nil :underline t)
   (add-to-list 'minor-mode-alist '(identica-icon-mode " id-icon"))
   (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll")))
@@ -509,8 +557,12 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 (defvar identica-mode-string identica-method)
 
 (defun identica-set-mode-string (loading)
-  (setq mode-name
-	(if loading (concat "loading " identica-method "...") identica-method)))
+  (with-current-buffer (identica-buffer)
+    (setq mode-name
+	  (if loading (concat
+		       (if (stringp loading) loading "loading")
+		       " " identica-method "...") identica-method))
+    (debug-print mode-name)))
 
 (defvar identica-mode-hook nil
   "Identica-mode hook.")
@@ -665,6 +717,42 @@ read from identica-mode variables `identica-username'
 			      (base64-encode-string auth))
 			(cdr-safe server-double-alist))))))))
 
+(defun identica-initialize-oauth ()
+  "Get authentication token unless we have one stashed already.
+Shamelessly stolen from yammer.el"
+  (if (file-exists-p "~/.identica-oauth-token")
+      (progn
+        (save-excursion
+          (find-file "~/.identica-oauth-token")
+          (let ((str (buffer-substring (point-min) (point-max))))
+            (if (string-match "\\([^:]*\\):\\(.*\\)"
+                              (buffer-substring (point-min) (point-max)))
+                (setq oauth-access-token
+                      (make-oauth-access-token
+                       :consumer-key identica-mode-oauth-consumer-key
+                       :consumer-secret identica-mode-oauth-consumer-secret
+                       :auth-t (make-oauth-t
+                                :token (match-string 1 str)
+                                :token-secret (match-string 2 str))))))
+          (save-buffer)
+          (kill-this-buffer))))
+  (unless oauth-access-token
+    (setq oauth-access-token
+	  (oauth-authorize-app identica-mode-oauth-consumer-key
+			       identica-mode-oauth-consumer-secret
+			       statusnet-request-url statusnet-access-url
+			       statusnet-authorize-url))
+    (save-excursion
+      (find-file "~/.identica-oauth-token")
+      (end-of-buffer)
+      (let ((token (oauth-access-token-auth-t oauth-access-token)))
+        (insert (format "%s:%s\n"
+                        (oauth-t-token token)
+                        (oauth-t-token-secret token))))
+      (save-buffer)
+      (kill-this-buffer)))
+  oauth-access-token)
+
 (defun identica-http-get (method-class method &optional parameters
 				       sentinel sentinel-arguments)
   "Basic function which communicates with server.
@@ -694,22 +782,45 @@ arguments (if any) of the SENTINEL procedure."
 	(url-package-version identica-mode-version)
 	(url-show-status nil))
     (identica-set-proxy)
-    (identica-set-auth url)
+    (if (equal identica-auth-mode "oauth")
+	(or oauth-access-token
+	    (identica-initialize-oauth))
+      (identica-set-auth url))
     (when (get-buffer-process identica-http-buffer)
       (delete-process identica-http-buffer)
       (kill-buffer identica-http-buffer))
-    (setq identica-http-buffer
-	  (url-retrieve url sentinel
-			(append (list method-class method parameters)
-				sentinel-arguments)))
+    (if (and (equal identica-auth-mode "oauth") oauth-access-token)
+	(setq identica-http-buffer
+	      (oauth-url-retrieve oauth-access-token url sentinel
+				  (append (list method-class method parameters)
+					  sentinel-arguments)))
+        (setq identica-http-buffer
+	      (url-retrieve url sentinel
+			    (append (list method-class method parameters)
+				    sentinel-arguments))))
+    (set-buffer identica-buffer)
     (set-buffer identica-buffer)
     (identica-set-mode-string t)))
 
+(defun identica-render-pending-dents ()
+  (interactive)
+  "If at the time an HTTP request for new dents finishes,
+identica-buffer is not active, we defer its update, to make sure
+we adjust point within the right frame."
+  (identica-render-timeline)
+  (when (> identica-new-dents-count 0)
+    (run-hooks 'identica-new-dents-hook)
+    (setq identica-new-dents-count 0))
+  (when identica-display-success-messages
+    (message (or success-message "Success: Get"))))
+
 (defun identica-http-get-default-sentinel
   (&optional status method-class method parameters success-message)
+  (debug-print (window-buffer))
   (let ((error-object (or (assoc :error status)
 			  (and (equal :error (car status))
-                               (cadr status)))))
+                               (cadr status))))
+	(active-p (eq (window-buffer) (identica-buffer))))
     (cond (error-object
 	   (let ((error-data (format "%s" (caddr error-object))))
 	     (when (cond
@@ -733,25 +844,44 @@ arguments (if any) of the SENTINEL procedure."
 	   ;;searching for > that closes the last tag, followed by
 	   ;;CRLF at (point-max)
 	   (let ((body (identica-get-response-body)))
-	     (when body
+	     (if (not body)
+		 (identica-set-mode-string nil)
 	       (setq identica-new-dents-count
-		     (count t (mapcar
-			       #'identica-cache-status-datum
-			       (reverse (identica-xmltree-to-status
-					 body)))))
+		     (+ identica-new-dents-count
+			(count t (mapcar
+				  #'identica-cache-status-datum
+				  (reverse (identica-xmltree-to-status
+					    body))))))
 					; Shorten the timeline if necessary
 	       (if (and identica-display-max-dents
 			(> (safe-length identica-timeline-data)
 			   identica-display-max-dents))
 		   (cl-set-nthcdr identica-display-max-dents
 				  identica-timeline-data nil))
-	       (identica-render-timeline)
-	       (if (> identica-new-dents-count 0)
-		   (run-hooks 'identica-new-dents-hook))
-	       (when identica-display-success-messages
-		 (message (or success-message "Success: Get"))))))))
+	       (if active-p
+		   (identica-render-pending-dents)
+		 (identica-set-mode-string "pending")))))))
   (unless (get-buffer-process (current-buffer))
     (kill-buffer (current-buffer))))
+
+(defun merge-text-attribute (start end new-face attribute)
+  "If we just add the new face its attributes somehow get overridden by
+the attributes of the underlying face, so instead we just add the attribute
+we are interested in."
+  (while (not (eq start end))
+    (let ((bg (face-attribute new-face attribute))
+	  (prop (get-text-property start 'face))
+          (next-change
+           (or (next-single-property-change start 'face (current-buffer))
+               end)))
+      (if prop
+	  (add-text-properties start next-change
+			       (list 'face 
+				     (list prop 
+					   (list attribute bg))))
+        (add-text-properties start next-change 
+			     (list 'face (list attribute bg))))
+      (setq start next-change))))
 
 (defun identica-render-timeline ()
   (with-current-buffer (identica-buffer)
@@ -759,22 +889,28 @@ arguments (if any) of the SENTINEL procedure."
 	  (end (point-max))
           (wrapped (cond (longlines-mode 'longlines-mode)
                          (visual-line-mode 'visual-line-mode)
-                         (t nil))))
+                         (t nil)))
+	  (stripe-entry nil))
 
       (setq buffer-read-only nil)
       (erase-buffer)
       (when wrapped (funcall wrapped -1))
       (mapc (lambda (status)
-	      (insert (identica-format-status
-		       status identica-status-format)
-		      "\n\n")
-	      (if (not wrapped)
-		  (progn
-		    (fill-region-as-paragraph
-		     (save-excursion (beginning-of-line -1) (point)) (point))))
-	      (insert "\n")
-	      (if identica-oldest-first
-		  (goto-char (point-min))))
+              (and identica-enable-striping (setq stripe-entry (not stripe-entry)))
+              (let ((before-status (point-marker)))
+		(insert (identica-format-status
+			 status identica-status-format)
+			(make-string identica-entry-spacing ?\n))
+		(if (not wrapped)
+		    (progn
+		      (fill-region-as-paragraph
+		       (save-excursion (beginning-of-line -1) (point)) (point))))
+		(insert "\n")
+		(and stripe-entry
+		     (merge-text-attribute before-status (point)
+					   'identica-stripe-face :background))
+		(if identica-oldest-first
+		    (goto-char (point-min)))))
 	    identica-timeline-data)
       (if (and identica-image-stack window-system)
 	  (clear-image-cache))
@@ -944,13 +1080,20 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 	   ;; (url-request-extra-headers '(("Content-Length" . "0"))))
 	 (url-show-status nil))
     (identica-set-proxy)
-    (identica-set-auth url)
+    (if (equal identica-auth-mode "oauth")
+	(or oauth-access-token
+	    (identica-initialize-oauth))
+        (identica-set-auth url))
     (when (get-buffer-process identica-http-buffer)
       (delete-process identica-http-buffer)
       (kill-buffer identica-http-buffer))
-    (url-retrieve url sentinel
-		  (append (list method-class method parameters)
-			  sentinel-arguments))))
+    (if (equal identica-auth-mode "oauth")
+	(oauth-url-retrieve oauth-access-token url sentinel
+			    (append (list method-class method parameters)
+				    sentinel-arguments))
+        (url-retrieve url sentinel
+		      (append (list method-class method parameters)
+			      sentinel-arguments)))))
 
 (defun identica-http-post-default-sentinel
   (&optional status method-class method parameters success-message)
@@ -1181,18 +1324,20 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	    ret)))
 
 (defun identica-percent-encode (str &optional coding-system)
-  (if (or (null coding-system)
-	  (not (coding-system-p coding-system)))
-      (setq coding-system 'utf-8))
-  (mapconcat
-   (lambda (c)
-     (cond
-      ((identica-url-reserved-p c)
-       (char-to-string c))
-      ((eq c ? ) "+")
-      (t (format "%%%x" c))))
-   (encode-coding-string str coding-system)
-   ""))
+  (if (eq identica-auth-mode "oauth")
+      (oauth-hexify-string str)
+    (if (or (null coding-system)
+	    (not (coding-system-p coding-system)))
+	(setq coding-system 'utf-8))
+    (mapconcat
+     (lambda (c)
+       (cond
+	((identica-url-reserved-p c)
+	 (char-to-string c))
+	((eq c ? ) "+")
+	(t (format "%%%x" c))))
+     (encode-coding-string str coding-system)
+     "")))
 
 (defun identica-url-reserved-p (ch)
   (or (and (<= ?A ch) (<= ch ?z))
@@ -1650,7 +1795,9 @@ this dictionary, only if identica-urlshortening-service is 'google.
 
 (defun identica-current-timeline ()
   (interactive)
-  (identica-get-timeline))
+  (if (> identica-new-dents-count 0)
+      (identica-render-pending-dents)
+    (identica-get-timeline)))
 
 (defun identica-update-status-interactive ()
   (interactive)
