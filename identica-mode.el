@@ -1324,7 +1324,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	    ret)))
 
 (defun identica-percent-encode (str &optional coding-system)
-  (if (eq identica-auth-mode "oauth")
+  (if (equal identica-auth-mode "oauth")
       (oauth-hexify-string str)
     (if (or (null coding-system)
 	    (not (coding-system-p coding-system)))
