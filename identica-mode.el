@@ -876,10 +876,10 @@ we are interested in."
                end)))
       (if prop
 	  (add-text-properties start next-change
-			       (list 'face 
-				     (list prop 
+			       (list 'face
+				     (list prop
 					   (list attribute bg))))
-        (add-text-properties start next-change 
+        (add-text-properties start next-change
 			     (list 'face (list attribute bg))))
       (setq start next-change))))
 
@@ -1076,8 +1076,8 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 	 (url-package-name "emacs-identicamode")
 	 (url-package-version identica-mode-version)
 	 ;; (if (assoc `media parameters)
-	 (url-request-extra-headers '(("Content-Type" . "multipart/form-data")))
-	   ;; (url-request-extra-headers '(("Content-Length" . "0"))))
+	 ;; (url-request-extra-headers '(("Content-Type" . "multipart/form-data")))
+         (url-request-extra-headers '(("Content-Length" . "0")))
 	 (url-show-status nil))
     (identica-set-proxy)
     (if (equal identica-auth-mode "oauth")
