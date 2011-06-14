@@ -286,6 +286,15 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 (defvar identica-timeline-data nil)
 (defvar identica-timeline-last-update nil)
 
+(defvar identica-entry-spacing 2
+  "The number of spaces to insert between entries.")
+
+(defcustom identica-enable-striping nil
+  "If non-nil, set the background of every second entry to the background
+of identica-stripe-face."
+  :type 'boolean
+  :group 'identica-mode)
+
 (defvar identica-username-face 'identica-username-face)
 (defvar identica-uri-face 'identica-uri-face)
 (defvar identica-reply-face 'identica-reply-face)
@@ -482,7 +491,6 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
   (set-face-attribute 'identica-reply-face nil :background "DarkSlateGray")
   (defface identica-uri-face
     `((t nil)) "" :group 'faces)
-
   (set-face-attribute 'identica-uri-face nil :underline t)
   (add-to-list 'minor-mode-alist '(identica-icon-mode " id-icon"))
   (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll")))
@@ -786,7 +794,7 @@ we are interested in."
       (mapc (lambda (status)
 	      (insert (identica-format-status
 		       status identica-status-format)
-		      "\n\n")
+		      (make-string identica-entry-spacing ?\n))
 	      (if (not wrapped)
 		  (progn
 		    (fill-region-as-paragraph
