@@ -753,6 +753,25 @@ arguments (if any) of the SENTINEL procedure."
   (unless (get-buffer-process (current-buffer))
     (kill-buffer (current-buffer))))
 
+(defun merge-text-attribute (start end new-face attribute)
+  "If we just add the new face its attributes somehow get overridden by
+the attributes of the underlying face, so instead we just add the attribute
+we are interested in."
+  (while (not (eq start end))
+    (let ((bg (face-attribute new-face attribute))
+	  (prop (get-text-property start 'face))
+          (next-change
+           (or (next-single-property-change start 'face (current-buffer))
+               end)))
+      (if prop
+	  (add-text-properties start next-change
+			       (list 'face
+				     (list prop
+					   (list attribute bg))))
+        (add-text-properties start next-change
+			     (list 'face (list attribute bg))))
+      (setq start next-change))))
+
 (defun identica-render-timeline ()
   (with-current-buffer (identica-buffer)
     (let ((point (point))
@@ -940,8 +959,8 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 	 (url-package-name "emacs-identicamode")
 	 (url-package-version identica-mode-version)
 	 ;; (if (assoc `media parameters)
-	 (url-request-extra-headers '(("Content-Type" . "multipart/form-data")))
-	   ;; (url-request-extra-headers '(("Content-Length" . "0"))))
+	 ;; (url-request-extra-headers '(("Content-Type" . "multipart/form-data")))
+         (url-request-extra-headers '(("Content-Length" . "0")))
 	 (url-show-status nil))
     (identica-set-proxy)
     (identica-set-auth url)
