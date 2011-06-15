@@ -244,7 +244,7 @@ The available choices are:
   :type 'string
   :group 'identica-mode)
 
-(defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r\n"
+(defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r\n\n"
   "The format used to display the status updates"
   :type 'string
   :group 'identica-mode)
