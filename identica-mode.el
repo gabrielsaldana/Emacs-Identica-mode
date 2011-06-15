@@ -24,8 +24,6 @@
 ;;     Aidan Gauland <aidalgol@no8wireless.co.nz> (variable scope code cleanup)
 ;;     Joel J. Adamson <adamsonj@email.unc.edu> Added countdown minibuffer-prompt style
 
-
-
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
 
@@ -246,7 +244,7 @@ The available choices are:
   :type 'string
   :group 'identica-mode)
 
-(defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r"
+(defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r\n"
   "The format used to display the status updates"
   :type 'string
   :group 'identica-mode)
