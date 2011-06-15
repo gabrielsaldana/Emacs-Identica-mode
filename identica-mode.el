@@ -333,9 +333,6 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 (defvar identica-timeline-data nil)
 (defvar identica-timeline-last-update nil)
 
-(defvar identica-entry-spacing 2
-  "The number of spaces to insert between entries.")
-
 (defcustom identica-enable-striping nil
   "If non-nil, set the background of every second entry to the background
 of identica-stripe-face."
@@ -907,6 +904,7 @@ we are interested in."
 	      (insert "\n")
 	      (if identica-oldest-first
 		  (goto-char (point-min))))
+ status format string
 	    identica-timeline-data)
       (if (and identica-image-stack window-system)
 	  (clear-image-cache))
@@ -1063,7 +1061,7 @@ and apply url-unhex-string workaround if necessary."
 bug in url-unhex-string present in emacsen previous to 23.3."
 		  (let ((url (oauth-request-url req)))
 		    (when (string-match (regexp-quote "?") url)
-		      (mapcar (lambda (pair) 
+		      (mapcar (lambda (pair)
 				`(,(car pair) . ,(w3m-url-decode-string (cadr pair))))
 			      (url-parse-query-string (substring url (match-end 0))))))))
 	    (identica-url-retrieve url sentinel method-class method parameters sentinel-arguments))
