@@ -871,10 +871,10 @@ we are interested in."
                end)))
       (if prop
 	  (add-text-properties start next-change
-			       (list 'face 
-				     (list prop 
+			       (list 'face
+				     (list prop
 					   (list attribute bg))))
-        (add-text-properties start next-change 
+        (add-text-properties start next-change
 			     (list 'face (list attribute bg))))
       (setq start next-change))))
 
