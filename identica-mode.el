@@ -25,8 +25,6 @@
 ;;     Joel J. Adamson <adamsonj@email.unc.edu> Added countdown minibuffer-prompt style
 ;;     Kevin Granade <kevin.granade@gmail.com> (OAuth support)
 
-
-
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
 
@@ -279,7 +277,7 @@ The available choices are:
   :type 'string
   :group 'identica-mode)
 
-(defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r"
+(defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r\n"
   "The format used to display the status updates"
   :type 'string
   :group 'identica-mode)
@@ -318,9 +316,6 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 
 (defvar identica-timeline-data nil)
 (defvar identica-timeline-last-update nil)
-
-(defvar identica-entry-spacing 2
-  "The number of spaces to insert between entries.")
 
 (defcustom identica-enable-striping nil
   "If non-nil, set the background of every second entry to the background
@@ -899,8 +894,7 @@ we are interested in."
               (and identica-enable-striping (setq stripe-entry (not stripe-entry)))
               (let ((before-status (point-marker)))
 		(insert (identica-format-status
-			 status identica-status-format)
-			(make-string identica-entry-spacing ?\n))
+			 status identica-status-format))
 		(if (not wrapped)
 		    (progn
 		      (fill-region-as-paragraph
