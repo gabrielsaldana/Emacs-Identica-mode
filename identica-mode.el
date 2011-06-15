@@ -24,8 +24,6 @@
 ;;     Aidan Gauland <aidalgol@no8wireless.co.nz> (variable scope code cleanup)
 ;;     Joel J. Adamson <adamsonj@email.unc.edu> Added countdown minibuffer-prompt style
 
-
-
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
 
