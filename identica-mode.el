@@ -158,8 +158,11 @@ If non-nil, dents over this amount will bre removed.")
       ["Public timeline" identica-public-timeline t]
       ["Replies timeline" identica-replies-timeline t]
       ["User timeline" identica-user-timeline t]
-      ["Group timeline" identica-group-timeline t]
       ["Tag timeline" identica-tag-timeline t]
+      ["--" nil nil]
+      ["Group timeline" identica-group-timeline t]
+      ["Join to this group" identica-group-join t]
+      ["Leave this group" identica-group-leave t]
 )))
 
 (defcustom identica-idle-time 20
@@ -459,6 +462,8 @@ of identica-stripe-face."
       (define-key km "\C-c\C-r" 'identica-replies-timeline)
       (define-key km "\C-c\C-a" 'identica-public-timeline)
       (define-key km "\C-c\C-g" 'identica-group-timeline)
+;;      (define-ley km "\C-c\C-j" 'identica-group-join)
+;;      (define-ley km "\C-c\C-l" 'identica-group-leave)
       (define-key km "\C-c\C-t" 'identica-tag-timeline)
       (define-key km "\C-c\C-k" 'identica-stop)
       (define-key km "\C-c\C-u" 'identica-user-timeline)
@@ -1857,6 +1862,18 @@ this dictionary, only if identica-urlshortening-service is 'google.
 (defun identica-unfollow ()
   (interactive)
   (identica-follow t))
+
+(defun identica-group-join (&optional leaving)
+"Simple functions to join/leave a group we are visiting."
+  (setq identica-method-class "statusnet/groups")
+  (string-match "\\([^\\]*\\)\\(/.*\\)" identica-method)
+  (setq group-method (replace-match
+		      (if leaving "leave"
+			"join") nil nil identica-method 1))
+  (identica-http-post identica-method-class group-method nil))
+
+(defun identica-group-leave ()
+  (identica-group-join t))
 
 (defun identica-favorite ()
   (interactive)
