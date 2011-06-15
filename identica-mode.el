@@ -284,6 +284,15 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 (defvar identica-timeline-data nil)
 (defvar identica-timeline-last-update nil)
 
+(defvar identica-entry-spacing 2
+  "The number of spaces to insert between entries.")
+
+(defcustom identica-enable-striping nil
+  "If non-nil, set the background of every second entry to the background
+of identica-stripe-face."
+  :type 'boolean
+  :group 'identica-mode)
+
 (defvar identica-username-face 'identica-username-face)
 (defvar identica-uri-face 'identica-uri-face)
 (defvar identica-reply-face 'identica-reply-face)
@@ -480,7 +489,6 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
   (set-face-attribute 'identica-reply-face nil :background "DarkSlateGray")
   (defface identica-uri-face
     `((t nil)) "" :group 'faces)
-
   (set-face-attribute 'identica-uri-face nil :underline t)
   (add-to-list 'minor-mode-alist '(identica-icon-mode " id-icon"))
   (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll")))
@@ -751,6 +759,25 @@ arguments (if any) of the SENTINEL procedure."
   (unless (get-buffer-process (current-buffer))
     (kill-buffer (current-buffer))))
 
+(defun merge-text-attribute (start end new-face attribute)
+  "If we just add the new face its attributes somehow get overridden by
+the attributes of the underlying face, so instead we just add the attribute
+we are interested in."
+  (while (not (eq start end))
+    (let ((bg (face-attribute new-face attribute))
+	  (prop (get-text-property start 'face))
+          (next-change
+           (or (next-single-property-change start 'face (current-buffer))
+               end)))
+      (if prop
+	  (add-text-properties start next-change
+			       (list 'face
+				     (list prop
+					   (list attribute bg))))
+        (add-text-properties start next-change
+			     (list 'face (list attribute bg))))
+      (setq start next-change))))
+
 (defun identica-render-timeline ()
   (with-current-buffer (identica-buffer)
     (let ((point (point))
@@ -765,7 +792,7 @@ arguments (if any) of the SENTINEL procedure."
       (mapc (lambda (status)
 	      (insert (identica-format-status
 		       status identica-status-format)
-		      "\n\n")
+		      (make-string identica-entry-spacing ?\n))
 	      (if (not wrapped)
 		  (progn
 		    (fill-region-as-paragraph
@@ -938,8 +965,8 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 	 (url-package-name "emacs-identicamode")
 	 (url-package-version identica-mode-version)
 	 ;; (if (assoc `media parameters)
-	 (url-request-extra-headers '(("Content-Type" . "multipart/form-data")))
-	   ;; (url-request-extra-headers '(("Content-Length" . "0"))))
+	 ;; (url-request-extra-headers '(("Content-Type" . "multipart/form-data")))
+         (url-request-extra-headers '(("Content-Length" . "0")))
 	 (url-show-status nil))
     (identica-set-proxy)
     (identica-set-auth url)
@@ -1463,9 +1490,11 @@ this dictionary, only if identica-urlshortening-service is 'google.
 (defun identica-expand-replace-at-point ()
   "Replace the url at point with a tiny version."
   (interactive)
-  (let ((url-bounds (bounds-of-thing-at-point 'url)))
+  (let ((url-bounds (bounds-of-thing-at-point 'url))
+        (original-url (thing-at-point 'url)))
     (when url-bounds
-      (let ((uri (identica-expand-shorturl (thing-at-point 'url))))
+      (message (concat "Expanding url: " original-url))
+      (let ((uri (identica-expand-shorturl original-url)))
 	(when uri
 	  (set-buffer (get-buffer identica-buffer))
 	  (save-restriction
@@ -1478,16 +1507,12 @@ this dictionary, only if identica-urlshortening-service is 'google.
 			    uri ,uri
 			    uri-in-text ,uri) uri)
 	    (insert uri)
+            (message (concat "Expanded Short URL " original-url "to Long URL: " uri))
 	    (setq buffer-read-only t)))))))
 
 (defun identica-expand-shorturl (url)
   "Return the redirected url, or the original url if not found"
-  (let ((temp-buf (get-buffer-create "*HTTP headers*"))
-        (url)
-        (host)
-        (file)
-        (tcp-connection)
-        (request))
+  (let ((temp-buf (get-buffer-create "*HTTP headers*")))
   (set-buffer temp-buf)
   (erase-buffer)
   (goto-char 0)
