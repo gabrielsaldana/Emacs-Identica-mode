@@ -61,7 +61,12 @@
 
 ;; (require 'identica-mode)
 ;; (setq identica-username "yourusername")
+
+;; If you want to use simple authentication add your password
 ;; (setq identica-password "yourpassword")
+
+;; If you want to use OAuth authentication add the following
+;; (setq identica-auth-mode "oauth")
 
 ;; If you want to post from the minibufer without having identica buffer active, add the following global keybinding.
 ;; Add this to send status updates
