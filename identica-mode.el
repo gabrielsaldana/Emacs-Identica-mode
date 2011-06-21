@@ -25,8 +25,6 @@
 ;;     Joel J. Adamson <adamsonj@email.unc.edu> Added countdown minibuffer-prompt style
 ;;     Kevin Granade <kevin.granade@gmail.com> (OAuth support)
 
-
-
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
 
@@ -160,8 +158,11 @@ If non-nil, dents over this amount will bre removed.")
       ["Public timeline" identica-public-timeline t]
       ["Replies timeline" identica-replies-timeline t]
       ["User timeline" identica-user-timeline t]
-      ["Group timeline" identica-group-timeline t]
       ["Tag timeline" identica-tag-timeline t]
+      ["--" nil nil]
+      ["Group timeline" identica-group-timeline t]
+      ["Join to this group" identica-group-join t]
+      ["Leave this group" identica-group-leave t]
 )))
 
 (defcustom identica-idle-time 20
@@ -279,7 +280,7 @@ The available choices are:
   :type 'string
   :group 'identica-mode)
 
-(defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r"
+(defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r\n\n"
   "The format used to display the status updates"
   :type 'string
   :group 'identica-mode)
@@ -318,9 +319,6 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 
 (defvar identica-timeline-data nil)
 (defvar identica-timeline-last-update nil)
-
-(defvar identica-entry-spacing 2
-  "The number of spaces to insert between entries.")
 
 (defcustom identica-enable-striping nil
   "If non-nil, set the background of every second entry to the background
@@ -464,6 +462,8 @@ of identica-stripe-face."
       (define-key km "\C-c\C-r" 'identica-replies-timeline)
       (define-key km "\C-c\C-a" 'identica-public-timeline)
       (define-key km "\C-c\C-g" 'identica-group-timeline)
+;;      (define-ley km "\C-c\C-j" 'identica-group-join)
+;;      (define-ley km "\C-c\C-l" 'identica-group-leave)
       (define-key km "\C-c\C-t" 'identica-tag-timeline)
       (define-key km "\C-c\C-k" 'identica-stop)
       (define-key km "\C-c\C-u" 'identica-user-timeline)
@@ -877,10 +877,10 @@ we are interested in."
                end)))
       (if prop
 	  (add-text-properties start next-change
-			       (list 'face 
-				     (list prop 
+			       (list 'face
+				     (list prop
 					   (list attribute bg))))
-        (add-text-properties start next-change 
+        (add-text-properties start next-change
 			     (list 'face (list attribute bg))))
       (setq start next-change))))
 
@@ -900,8 +900,7 @@ we are interested in."
               (and identica-enable-striping (setq stripe-entry (not stripe-entry)))
               (let ((before-status (point-marker)))
 		(insert (identica-format-status
-			 status identica-status-format)
-			(make-string identica-entry-spacing ?\n))
+			 status identica-status-format))
 		(if (not wrapped)
 		    (progn
 		      (fill-region-as-paragraph
@@ -1077,8 +1076,8 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 	 (url-package-name "emacs-identicamode")
 	 (url-package-version identica-mode-version)
 	 ;; (if (assoc `media parameters)
-	 (url-request-extra-headers '(("Content-Type" . "multipart/form-data")))
-	   ;; (url-request-extra-headers '(("Content-Length" . "0"))))
+	 ;; (url-request-extra-headers '(("Content-Type" . "multipart/form-data")))
+         (url-request-extra-headers '(("Content-Length" . "0")))
 	 (url-show-status nil))
     (identica-set-proxy)
     (if (equal identica-auth-mode "oauth")
@@ -1864,6 +1863,18 @@ this dictionary, only if identica-urlshortening-service is 'google.
 (defun identica-unfollow ()
   (interactive)
   (identica-follow t))
+
+(defun identica-group-join (&optional leaving)
+"Simple functions to join/leave a group we are visiting."
+  (setq identica-method-class "statusnet/groups")
+  (string-match "\\([^\\]*\\)\\(/.*\\)" identica-method)
+  (setq group-method (replace-match
+		      (if leaving "leave"
+			"join") nil nil identica-method 1))
+  (identica-http-post identica-method-class group-method nil))
+
+(defun identica-group-leave ()
+  (identica-group-join t))
 
 (defun identica-favorite ()
   (interactive)
