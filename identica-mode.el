@@ -725,37 +725,38 @@ read from identica-mode variables `identica-username'
 (defun identica-initialize-oauth ()
   "Get authentication token unless we have one stashed already.
 Shamelessly stolen from yammer.el"
-  (if (file-exists-p "~/.identica-oauth-token")
-      (progn
-        (save-excursion
-          (find-file "~/.identica-oauth-token")
-          (let ((str (buffer-substring (point-min) (point-max))))
-            (if (string-match "\\([^:]*\\):\\(.*\\)"
-                              (buffer-substring (point-min) (point-max)))
-                (setq oauth-access-token
-                      (make-oauth-access-token
-                       :consumer-key identica-mode-oauth-consumer-key
-                       :consumer-secret identica-mode-oauth-consumer-secret
-                       :auth-t (make-oauth-t
-                                :token (match-string 1 str)
-                                :token-secret (match-string 2 str))))))
-          (save-buffer)
-          (kill-this-buffer))))
-  (unless oauth-access-token
-    (setq oauth-access-token
-	  (oauth-authorize-app identica-mode-oauth-consumer-key
-			       identica-mode-oauth-consumer-secret
-			       statusnet-request-url statusnet-access-url
-			       statusnet-authorize-url))
-    (save-excursion
-      (find-file "~/.identica-oauth-token")
-      (end-of-buffer)
-      (let ((token (oauth-access-token-auth-t oauth-access-token)))
-        (insert (format "%s:%s\n"
-                        (oauth-t-token token)
-                        (oauth-t-token-secret token))))
-      (save-buffer)
-      (kill-this-buffer)))
+  (let ((filename (concat "~/." statusnet-server "-" identica-username "-oauth-token")))
+    (if (file-exists-p filename)
+	(progn
+	  (save-excursion
+	    (find-file filename)
+	    (let ((str (buffer-substring (point-min) (point-max))))
+	      (if (string-match "\\([^:]*\\):\\(.*\\)"
+				(buffer-substring (point-min) (point-max)))
+		  (setq oauth-access-token
+			(make-oauth-access-token
+			 :consumer-key identica-mode-oauth-consumer-key
+			 :consumer-secret identica-mode-oauth-consumer-secret
+			 :auth-t (make-oauth-t
+				  :token (match-string 1 str)
+				  :token-secret (match-string 2 str))))))
+	    (save-buffer)
+	    (kill-this-buffer))))
+    (unless oauth-access-token
+      (setq oauth-access-token
+	    (oauth-authorize-app identica-mode-oauth-consumer-key
+				 identica-mode-oauth-consumer-secret
+				 statusnet-request-url statusnet-access-url
+				 statusnet-authorize-url))
+      (save-excursion
+	(find-file filename)
+	(end-of-buffer)
+	(let ((token (oauth-access-token-auth-t oauth-access-token)))
+	  (insert (format "%s:%s\n"
+			  (oauth-t-token token)
+			  (oauth-t-token-secret token))))
+	(save-buffer)
+	(kill-this-buffer))))
   oauth-access-token)
 
 (defun identica-http-get (method-class method &optional parameters
