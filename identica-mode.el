@@ -103,6 +103,17 @@
 (unless (fboundp 'url-basepath)
   (defalias 'url-basepath 'url-file-directory))
 
+;;workaround for url-unhex-string bug that was fixed in emacs 23.3
+(defvar identica-unhex-broken nil
+  "predicate indicating broken-ness of url-unhex-string.
+
+If non-nil, indicates that url-unhex-string is broken and
+must be worked around when using oauth.")
+
+(unless (eq (url-unhex-string (url-hexify-string "²")) "²")
+  (setq identica-unhex-broken t)
+  (require 'w3m))
+
 (defgroup identica-mode nil
   "Identica Mode for microblogging"
   :tag "Microblogging"
@@ -786,15 +797,9 @@ arguments (if any) of the SENTINEL procedure."
     (when (get-buffer-process identica-http-buffer)
       (delete-process identica-http-buffer)
       (kill-buffer identica-http-buffer))
-    (if (and (equal identica-auth-mode "oauth") oauth-access-token)
-	(setq identica-http-buffer
-	      (oauth-url-retrieve oauth-access-token url sentinel
-				  (append (list method-class method parameters)
-					  sentinel-arguments)))
-        (setq identica-http-buffer
-	      (url-retrieve url sentinel
-			    (append (list method-class method parameters)
-				    sentinel-arguments))))
+    (setq identica-http-buffer
+	  (identica-url-retrieve url sentinel method-class
+				 method parameters sentinel-arguments))
     (set-buffer identica-buffer)
     (set-buffer identica-buffer)
     (identica-set-mode-string t)))
@@ -1046,6 +1051,29 @@ we are interested in."
 			     formatted-status)
 	formatted-status))))
 
+(defun identica-url-retrieve
+  (url sentinel method-class method parameters sentinel-arguments &optional unhex-workaround)
+  "Call url-retrieve or oauth-url-retrieve dsepending on the mode,
+and apply url-unhex-string workaround if necessary."
+  (if (and (equal identica-auth-mode "oauth") oauth-access-token)
+      (if unhex-workaround
+	  (flet ((oauth-extract-url-params
+		  (req)
+		  "Modified oauth-extract-url-params using w3m-url-decode-string to work around
+bug in url-unhex-string present in emacsen previous to 23.3."
+		  (let ((url (oauth-request-url req)))
+		    (when (string-match (regexp-quote "?") url)
+		      (mapcar (lambda (pair) 
+				`(,(car pair) . ,(w3m-url-decode-string (cadr pair))))
+			      (url-parse-query-string (substring url (match-end 0))))))))
+	    (identica-url-retrieve url sentinel method-class method parameters sentinel-arguments))
+	(oauth-url-retrieve oauth-access-token url sentinel
+			    (append (list method-class method parameters)
+				    sentinel-arguments)))
+    (url-retrieve url sentinel
+		  (append (list method-class method parameters)
+			  sentinel-arguments))))
+
 (defun identica-http-post
   (method-class method &optional parameters sentinel sentinel-arguments)
   "Send HTTP POST request to statusnet server
@@ -1078,13 +1106,8 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
     (when (get-buffer-process identica-http-buffer)
       (delete-process identica-http-buffer)
       (kill-buffer identica-http-buffer))
-    (if (equal identica-auth-mode "oauth")
-	(oauth-url-retrieve oauth-access-token url sentinel
-			    (append (list method-class method parameters)
-				    sentinel-arguments))
-        (url-retrieve url sentinel
-		      (append (list method-class method parameters)
-			      sentinel-arguments)))))
+    (identica-url-retrieve url sentinel method-class method parameters
+			   sentinel-arguments identica-unhex-broken)))
 
 (defun identica-http-post-default-sentinel
   (&optional status method-class method parameters success-message)
