@@ -330,6 +330,14 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 
 (defvar identica-timeline-data nil)
 (defvar identica-timeline-last-update nil)
+(defvar identica-highlighted-entries nil
+  "List of entry ids selected for highlighting.")
+
+(defcustom identica-enable-highlighting nil
+  "If non-nil, set the background of every selected entry to the background
+of identica-highlight-face."
+  :type 'boolean
+  :group 'identica-mode)
 
 (defcustom identica-enable-striping nil
   "If non-nil, set the background of every second entry to the background
@@ -341,6 +349,7 @@ of identica-stripe-face."
 (defvar identica-uri-face 'identica-uri-face)
 (defvar identica-reply-face 'identica-reply-face)
 (defvar identica-stripe-face 'identica-stripe-face)
+(defvar identica-highlight-face 'identica-highlight-face)
 
 (defun identica-get-or-generate-buffer (buffer)
   (if (bufferp buffer)
@@ -481,6 +490,7 @@ of identica-stripe-face."
       (define-key km "\C-c\C-s" 'identica-update-status-interactive)
       (define-key km "\C-c\C-d" 'identica-direct-message-interactive)
       (define-key km "\C-c\C-m" 'identica-redent)
+      (define-key km "\C-c\C-h" 'identica-toggle-highlight)
       (define-key km "r" 'identica-repeat)
       (define-key km "F" 'identica-favorite)
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
@@ -539,6 +549,11 @@ of identica-stripe-face."
     `((t nil)) "" :group 'faces)
   (copy-face 'font-lock-string-face 'identica-stripe-face)
   (set-face-attribute 'identica-stripe-face nil :background "LightSlateGray")
+
+  (defface identica-highlight-face
+    `((t nil)) "" :group 'faces)
+  (copy-face 'font-lock-string-face 'identica-highlight-face)
+  (set-face-attribute 'identica-highlight-face nil :background "SlateGray")
 
   (defface identica-uri-face
     `((t nil)) "" :group 'faces)
@@ -911,9 +926,12 @@ we are interested in."
 		      (fill-region-as-paragraph
 		       (save-excursion (beginning-of-line -1) (point)) (point))))
 		(insert "\n")
+                (if (and identica-enable-highlighting (memq (assocref 'id status) identica-highlighted-entries))
+                    (merge-text-attribute before-status (point)
+                                          'identica-highlight-face :background)
 		(and stripe-entry
 		     (merge-text-attribute before-status (point)
-					   'identica-stripe-face :background))
+					   'identica-stripe-face :background)))
 		(if identica-oldest-first
 		    (goto-char (point-min)))))
 	    identica-timeline-data)
@@ -1947,6 +1965,15 @@ this dictionary, only if identica-urlshortening-service is 'google.
     (if pos
 	(goto-char pos)
       (message "End of status."))))
+
+(defun identica-toggle-highlight ()
+  (interactive)
+  (let ((id (get-text-property (point) 'id)))
+    (setq identica-highlighted-entries 
+          (if (memq id identica-highlighted-entries)
+              (delq id identica-highlighted-entries)
+            (cons id identica-highlighted-entries)))
+  (identica-current-timeline)))
 
 (defun memq-face (face property)
   "Check whether face is present in property."
