@@ -1967,13 +1967,14 @@ this dictionary, only if identica-urlshortening-service is 'google.
       (message "End of status."))))
 
 (defun identica-toggle-highlight ()
+  "Add the id of entry at point to highlight list, or remove it if it is already present."
   (interactive)
   (let ((id (get-text-property (point) 'id)))
     (setq identica-highlighted-entries 
           (if (memq id identica-highlighted-entries)
               (delq id identica-highlighted-entries)
             (cons id identica-highlighted-entries)))
-  (identica-current-timeline)))
+  (identica-render-timeline)))
 
 (defun memq-face (face property)
   "Check whether face is present in property."
