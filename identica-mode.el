@@ -490,7 +490,7 @@ of identica-stripe-face."
       (define-key km "\C-c\C-s" 'identica-update-status-interactive)
       (define-key km "\C-c\C-d" 'identica-direct-message-interactive)
       (define-key km "\C-c\C-m" 'identica-redent)
-      (define-key km "\C-c\C-h" 'identica-set-highlight)
+      (define-key km "\C-c\C-h" 'identica-toggle-highlight)
       (define-key km "r" 'identica-repeat)
       (define-key km "F" 'identica-favorite)
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
@@ -1966,21 +1966,17 @@ this dictionary, only if identica-urlshortening-service is 'google.
 	(goto-char pos)
       (message "End of status."))))
 
-(defun identica-toggle-highlight ()
-  "Add the id of entry at point to highlight list, or remove it if it is already present."
-  (interactive)
+(defun identica-toggle-highlight (&optional arg)
+"With arg (or prefix, if interactive), set highlighted entries list to contain only
+the id of entry at point, With no arg or prefix, add current entry id to list if not present,
+or remove current entry id from list if it is present."
+  (interactive "P")
   (let ((id (get-text-property (point) 'id)))
     (setq identica-highlighted-entries 
-          (if (memq id identica-highlighted-entries)
-              (delq id identica-highlighted-entries)
-            (cons id identica-highlighted-entries)))
-  (identica-render-timeline)))
-
-(defun identica-set-highlight ()
-  "Add the id of entry at point as the only element of the highlight list."
-  (interactive)
-  (let ((id (get-text-property (point) 'id)))
-    (setq identica-highlighted-entries (list id)))
+          (if arg (list id)
+            (if (memq id identica-highlighted-entries)
+                (delq id identica-highlighted-entries)
+              (cons id identica-highlighted-entries)))))
   (identica-render-timeline))
 
 (defun memq-face (face property)
