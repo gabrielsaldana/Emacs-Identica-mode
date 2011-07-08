@@ -1971,14 +1971,18 @@ this dictionary, only if identica-urlshortening-service is 'google.
 	(goto-char pos)
       (message "End of status."))))
 
-(defun identica-toggle-highlight ()
-  (interactive)
+(defun identica-toggle-highlight (&optional arg)
+"With arg (or prefix, if interactive), set highlighted entries list to contain only
+the id of entry at point, With no arg or prefix, add current entry id to list if not present,
+or remove current entry id from list if it is present."
+  (interactive "P")
   (let ((id (get-text-property (point) 'id)))
     (setq identica-highlighted-entries 
-          (if (memq id identica-highlighted-entries)
-              (delq id identica-highlighted-entries)
-            (cons id identica-highlighted-entries)))
-  (identica-current-timeline)))
+          (if arg (list id)
+            (if (memq id identica-highlighted-entries)
+                (delq id identica-highlighted-entries)
+              (cons id identica-highlighted-entries)))))
+  (identica-render-timeline))
 
 (defun memq-face (face property)
   "Check whether face is present in property."
