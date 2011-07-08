@@ -895,8 +895,7 @@ we are interested in."
       (when wrapped (funcall wrapped -1))
       (mapc (lambda (status)
 	      (insert (identica-format-status
-		       status identica-status-format)
-		      (make-string identica-entry-spacing ?\n))
+		       status identica-status-format))
 	      (if (not wrapped)
 		  (progn
 		    (fill-region-as-paragraph
@@ -904,7 +903,6 @@ we are interested in."
 	      (insert "\n")
 	      (if identica-oldest-first
 		  (goto-char (point-min))))
- status format string
 	    identica-timeline-data)
       (if (and identica-image-stack window-system)
 	  (clear-image-cache))
