@@ -2082,7 +2082,8 @@ or remove current entry id from list if it is present."
 		 (site (xml-get-children (car body) 'site))
 		 (textlimit (xml-get-children (car site) 'textlimit))
 		 (textlimit-value (caddar textlimit)))
-	    (setq statusnet-server-textlimit (string-to-number textlimit-value)))))
+	    (if textlimit-value
+		(setq statusnet-server-textlimit (string-to-number textlimit-value))))))
   (identica-start))
 
 (defun identica-get-config-url ()
