@@ -843,9 +843,7 @@ we adjust point within the right frame."
 (defun identica-http-get-default-sentinel
   (&optional status method-class method parameters success-message)
   (debug-print (window-buffer))
-  (let ((error-object (or (assoc :error status)
-			  (and (equal :error (car status))
-                               (cadr status))))
+  (let ((error-object (assoc-workaround :error status))
 	(active-p (eq (window-buffer) (identica-buffer))))
     (cond (error-object
 	   (let ((error-data (format "%s" (caddr error-object))))
@@ -1143,9 +1141,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 
 (defun identica-http-post-default-sentinel
   (&optional status method-class method parameters success-message)
-  (let ((error-object (or (assoc :error status)
-				 (and (equal :error (car status))
-                               (cadr status)))))
+  (let ((error-object (assoc-workaround :error status)))
     (cond  ((and
              error-object
 	   (y-or-n-p (format "Network error:%s %s Retry?"
@@ -2058,6 +2054,12 @@ or remove current entry id from list if it is present."
       (setq end-pos (next-single-property-change pos 'face))
       (buffer-substring start-pos end-pos))))
 
+(defun assoc-workaround (tag array)
+  "Workaround odd semi-associative array returned by url-http."
+  (or (assoc tag array)
+      (and (equal tag (car array))
+	   (cadr array))))
+
 (defun identica-get-status-url (id)
   "Generate status URL."
   (format "https://%s/notice/%s" statusnet-server id))
@@ -2074,9 +2076,7 @@ or remove current entry id from list if it is present."
 (defun identica-http-get-config-sentinel
   (&optional status method-class method parameters success-message)
   "Process configuration page retrieved from statusnet server."
-  (let ((error-object  (or (assoc :error status)
-			   (and (equal :error (car status))
-				(cadr status)))))
+  (let ((error-object (assoc-workaround :error status)))
 	(unless error-object
 	  (let* ((body (identica-get-response-body))
 		 (site (xml-get-children (car body) 'site))
