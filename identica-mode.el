@@ -624,7 +624,7 @@ of identica-stripe-face."
           (visual-line-mode t)
 	(if (fboundp 'longlines-mode)
 	    (longlines-mode t))))
-  (identica-start)
+  (identica-retrieve-configuration)
   (add-hook 'kill-buffer-hook 'identica-kill-buffer-function)
   (run-mode-hooks 'identica-mode-hook))
 
@@ -2065,6 +2065,29 @@ or remove current entry id from list if it is present."
 (defun identica-get-context-url (id)
   "Generate status URL."
   (format "https://%s/conversation/%s" statusnet-server id))
+
+(defun identica-retrieve-configuration ()
+  "Retrieve the configuration for the current statusnet server."
+  (identica-http-get "statusnet" "config" nil
+		     'identica-http-get-config-sentinel))
+
+(defun identica-http-get-config-sentinel
+  (&optional status method-class method parameters success-message)
+  "Process configuration page retrieved from statusnet server."
+  (let ((error-object  (or (assoc :error status)
+			   (and (equal :error (car status))
+				(cadr status)))))
+	(unless error-object
+	  (let* ((body (identica-get-response-body))
+		 (site (xml-get-children (car body) 'site))
+		 (textlimit (xml-get-children (car site) 'textlimit))
+		 (textlimit-value (caddar textlimit)))
+	    (setq statusnet-server-textlimit (string-to-number textlimit-value)))))
+  (identica-start))
+
+(defun identica-get-config-url ()
+  "Generate configuration URL."
+  (format "http://%s/api/statusnet/config.xml" statusnet-server))
 
 ;; Icons
 ;;; ACTIVE/INACTIVE
