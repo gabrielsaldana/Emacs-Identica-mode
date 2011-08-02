@@ -229,6 +229,11 @@ If non-nil, dents over this amount will bre removed.")
   :type 'string
   :group 'identica-mode)
 
+(defcustom statusnet-server-textlimit 140
+  "Number of characters allowed in a status."
+  :type 'integer
+  :group 'identica-mode)
+
 (defvar oauth-access-token nil)
 
 (defcustom statusnet-port 80
@@ -624,7 +629,7 @@ of identica-stripe-face."
           (visual-line-mode t)
 	(if (fboundp 'longlines-mode)
 	    (longlines-mode t))))
-  (identica-start)
+  (identica-retrieve-configuration)
   (add-hook 'kill-buffer-hook 'identica-kill-buffer-function)
   (run-mode-hooks 'identica-mode-hook))
 
@@ -843,9 +848,7 @@ we adjust point within the right frame."
 (defun identica-http-get-default-sentinel
   (&optional status method-class method parameters success-message)
   (debug-print (window-buffer))
-  (let ((error-object (or (assoc :error status)
-			  (and (equal :error (car status))
-                               (cadr status))))
+  (let ((error-object (assoc-workaround :error status))
 	(active-p (eq (window-buffer) (identica-buffer))))
     (cond (error-object
 	   (let ((error-data (format "%s" (caddr error-object))))
@@ -1143,9 +1146,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 
 (defun identica-http-post-default-sentinel
   (&optional status method-class method parameters success-message)
-  (let ((error-object (or (assoc :error status)
-				 (and (equal :error (car status))
-                               (cadr status)))))
+  (let ((error-object (assoc-workaround :error status)))
     (cond  ((and
              error-object
 	   (y-or-n-p (format "Network error:%s %s Retry?"
@@ -1476,10 +1477,10 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
             (make-local-variable 'identica-update-status-edit-reply-to-id)
             (if (> (length parameters) 0)
                 (setq mode-line-format
-                      (cons (format "%s(%s) (%%i/140) " msgtype parameters)
+                      (cons (format "%s(%s) (%%i/%s) " msgtype parameters statusnet-server-textlimit)
                             mode-line-format))
               t (setq mode-line-format
-                      (cons (format "%s (%%i/140) " msgtype) mode-line-format)))))
+                      (cons (format "%s (%%i/%s) " msgtype statusnet-server-textlimit) mode-line-format)))))
       (setq identica-update-status-edit-method-class method-class)
       (setq identica-update-status-edit-method method)
       (setq identica-update-status-edit-parameters parameters)
@@ -1490,7 +1491,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 (defcustom identica-minibuffer-length-prompt-style nil
   "The preferred style of counting characters in the minibuffer
-  prompt; \"Down\" counts down from 140; \"Up\" counts
+  prompt; \"Down\" counts down from statusnet-server-textlimit; \"Up\" counts
   up from 0"
   :type '(choice (const :tag "Down" nil)
 		 (const :tag "Up" t))
@@ -1502,7 +1503,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
     (let* ((status-len (- (buffer-size) (minibuffer-prompt-width)))
 	   (mes (format "%d" (if identica-minibuffer-length-prompt-style
 				 status-len
-			       (- 140 status-len)))))
+			       (- statusnet-server-textlimit status-len)))))
       (if (<= 23 emacs-major-version)
 	  (minibuffer-message mes) ; Emacs23 or later
 	(minibuffer-message (concat " (" mes ")"))))))
@@ -1537,9 +1538,9 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	   (unwind-protect
            (while not-posted-p
              (setq status (read-from-minibuffer (concat msgtype ": ") status nil nil nil nil t))
-             (while (< 141 (length status))
+             (while (< (+ statusnet-server-textlimit 1) (length status))
                (setq status (read-from-minibuffer (format (concat msgtype "(%d): ")
-                                                          (- 140 (length status)))
+                                                          (- statusnet-server-textlimit (length status)))
                                                   status nil nil nil nil t)))
              (setq not-posted-p
                    (not (identica-update-status-if-not-blank method-class method status parameters reply-to-id))))
@@ -1555,8 +1556,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
     (longlines-encode-region (point-min) (point-max))
     (let* ((status (buffer-substring-no-properties (point-min) (point-max)))
            (status-len (length status)))
-      (if (< 140 status-len)
-          (message (format "Beyond 140 chars.  Remove %d chars." (- status-len 140)))
+      (if (< statusnet-server-textlimit status-len)
+          (message (format "Beyond %s chars.  Remove %d chars." statusnet-server-textlimit (- status-len statusnet-server-textlimit)))
         (if (identica-update-status-if-not-blank identica-update-status-edit-method-class
               identica-update-status-edit-method status identica-update-status-edit-parameters identica-update-status-edit-reply-to-id)
             (progn
@@ -1582,8 +1583,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 (defun identica-update-status-from-region (beg end)
   (interactive "r")
-  (if (> (- end beg) 140) (setq end (+ beg 140)))
-  (if (< (- end beg) -140) (setq beg (+ end 140)))
+  (if (> (- end beg) statusnet-server-textlimit) (setq end (+ beg statusnet-server-textlimit)))
+  (if (< (- end beg) -statusnet-server-textlimit) (setq beg (+ end statusnet-server-textlimit)))
   (identica-update-status-if-not-blank "statuses" "update" (buffer-substring beg end)))
 
 (defun identica-update-status-with-media (attachment &optional init-str method-class method parameters reply-to-id)
@@ -2058,6 +2059,12 @@ or remove current entry id from list if it is present."
       (setq end-pos (next-single-property-change pos 'face))
       (buffer-substring start-pos end-pos))))
 
+(defun assoc-workaround (tag array)
+  "Workaround odd semi-associative array returned by url-http."
+  (or (assoc tag array)
+      (and (equal tag (car array))
+	   (cadr array))))
+
 (defun identica-get-status-url (id)
   "Generate status URL."
   (format "https://%s/notice/%s" statusnet-server id))
@@ -2065,6 +2072,28 @@ or remove current entry id from list if it is present."
 (defun identica-get-context-url (id)
   "Generate status URL."
   (format "https://%s/conversation/%s" statusnet-server id))
+
+(defun identica-retrieve-configuration ()
+  "Retrieve the configuration for the current statusnet server."
+  (identica-http-get "statusnet" "config" nil
+		     'identica-http-get-config-sentinel))
+
+(defun identica-http-get-config-sentinel
+  (&optional status method-class method parameters success-message)
+  "Process configuration page retrieved from statusnet server."
+  (let ((error-object (assoc-workaround :error status)))
+	(unless error-object
+	  (let* ((body (identica-get-response-body))
+		 (site (xml-get-children (car body) 'site))
+		 (textlimit (xml-get-children (car site) 'textlimit))
+		 (textlimit-value (caddar textlimit)))
+	    (if textlimit-value
+		(setq statusnet-server-textlimit (string-to-number textlimit-value))))))
+  (identica-start))
+
+(defun identica-get-config-url ()
+  "Generate configuration URL."
+  (format "http://%s/api/statusnet/config.xml" statusnet-server))
 
 ;; Icons
 ;;; ACTIVE/INACTIVE
