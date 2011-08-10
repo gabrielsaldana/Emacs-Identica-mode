@@ -296,6 +296,11 @@ The available choices are:
   :type 'string
   :group 'identica-mode)
 
+(defcustom identica-blacklist '()
+  "List of regexes used to filter statuses, evaluated after status formatting is applied."
+  :type 'string
+  :group 'identica-mode)
+
 (defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r\n\n"
   "The format used to display the status updates"
   :type 'string
@@ -920,26 +925,32 @@ we are interested in."
       (erase-buffer)
       (when wrapped (funcall wrapped -1))
       (mapc (lambda (status)
-              (and identica-enable-striping (setq stripe-entry (not stripe-entry)))
-              (let ((before-status (point-marker)))
-		(insert (identica-format-status
-			 status identica-status-format))
-		(if (not wrapped)
-		    (progn
-		      (fill-region-as-paragraph
-		       (save-excursion (beginning-of-line -1) (point)) (point))))
-		(insert "\n")
-                (if (and identica-enable-highlighting (memq (assocref 'id status) identica-highlighted-entries))
-                    (merge-text-attribute before-status (point)
-                                          'identica-highlight-face :background)
-		(and stripe-entry
-		     (merge-text-attribute before-status (point)
-					   'identica-stripe-face :background)))
-		(if identica-oldest-first
-		    (goto-char (point-min)))))
-	    identica-timeline-data)
-      (if (and identica-image-stack window-system)
-	  (clear-image-cache))
+              (let ((before-status (point-marker))
+                    (blacklisted 'nil)
+                    (formatted-status (identica-format-status
+                                       status identica-status-format)))
+                (mapc (lambda (regex)
+                        (when (string-match-p regex formatted-status)
+                          (setq blacklisted 't)))
+                      identica-blacklist)
+                (unless blacklisted
+                  (when identica-enable-striping
+                    (setq stripe-entry (not stripe-entry)))
+                  (insert formatted-status)
+                  (when (not wrapped)
+                    (fill-region-as-paragraph
+                     (save-excursion (beginning-of-line -1) (point)) (point)))
+                  (insert "\n")
+                  (if (and identica-enable-highlighting 
+                           (memq (assocref 'id status) identica-highlighted-entries))
+                      (merge-text-attribute before-status (point)
+                                            'identica-highlight-face :background)
+                    (when stripe-entry
+                      (merge-text-attribute before-status (point)
+                                            'identica-stripe-face :background)))
+                  (when identica-oldest-first (goto-char (point-min))))))
+            identica-timeline-data)
+      (when (and identica-image-stack window-system) (clear-image-cache))
       (when wrapped (funcall wrapped 1))
       (setq buffer-read-only t)
       (debug-print (current-buffer))
