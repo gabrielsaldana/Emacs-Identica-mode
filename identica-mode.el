@@ -174,7 +174,7 @@ If non-nil, dents over this amount will bre removed.")
       ["Group timeline" identica-group-timeline t]
       ["Join to this group" identica-group-join t]
       ["Leave this group" identica-group-leave t]
-)))
+      )))
 
 (defcustom identica-idle-time 20
   "Idle time"
@@ -488,12 +488,12 @@ of identica-stripe-face."
 (if identica-mode-map
     (let ((km identica-mode-map))
       (define-key km "\C-c\C-f" 'identica-friends-timeline)
-;;      (define-key km "\C-c\C-i" 'identica-direct-messages-timeline)
+      ;;      (define-key km "\C-c\C-i" 'identica-direct-messages-timeline)
       (define-key km "\C-c\C-r" 'identica-replies-timeline)
       (define-key km "\C-c\C-a" 'identica-public-timeline)
       (define-key km "\C-c\C-g" 'identica-group-timeline)
-;;      (define-ley km "\C-c\C-j" 'identica-group-join)
-;;      (define-ley km "\C-c\C-l" 'identica-group-leave)
+      ;;      (define-ley km "\C-c\C-j" 'identica-group-join)
+      ;;      (define-ley km "\C-c\C-l" 'identica-group-leave)
       (define-key km "\C-c\C-t" 'identica-tag-timeline)
       (define-key km "\C-c\C-k" 'identica-stop)
       (define-key km "\C-c\C-u" 'identica-user-timeline)
@@ -699,7 +699,7 @@ enabling dynamic change of user authentication."
 
 (defun identica-ask-credentials ()
   "Asks for your username and password"
- (setq identica-username
+  (setq identica-username
 	(read-string (concat "Username [for " statusnet-server
 			     ":" (int-to-string statusnet-port) "]: ")
 		     nil nil identica-username)
@@ -715,8 +715,8 @@ authentication.
 When called with no arguments, user authentication parameters are
 read from identica-mode variables `identica-username'
 `identica-password' `statusnet-server' `statusnet-port'."
-  (if (or (not identica-username) (not identica-password))
-	(identica-ask-credentials))
+  (when (or (not identica-username) (not identica-password))
+    (identica-ask-credentials))
   (let* ((href (if (stringp url)
 		   (url-generic-parse-url url)
 		 url))
@@ -757,22 +757,21 @@ read from identica-mode variables `identica-username'
   "Get authentication token unless we have one stashed already.
 Shamelessly stolen from yammer.el"
   (let ((filename (concat "~/." statusnet-server "-" identica-username "-oauth-token")))
-    (if (file-exists-p filename)
-	(progn
-	  (save-excursion
-	    (find-file filename)
-	    (let ((str (buffer-substring (point-min) (point-max))))
-	      (if (string-match "\\([^:]*\\):\\(.*\\)"
-				(buffer-substring (point-min) (point-max)))
-		  (setq oauth-access-token
-			(make-oauth-access-token
-			 :consumer-key identica-mode-oauth-consumer-key
-			 :consumer-secret identica-mode-oauth-consumer-secret
-			 :auth-t (make-oauth-t
-				  :token (match-string 1 str)
-				  :token-secret (match-string 2 str))))))
-	    (save-buffer)
-	    (kill-this-buffer))))
+    (when (file-exists-p filename)
+      (save-excursion
+	(find-file filename)
+	(let ((str (buffer-substring (point-min) (point-max))))
+	  (if (string-match "\\([^:]*\\):\\(.*\\)"
+			    (buffer-substring (point-min) (point-max)))
+	      (setq oauth-access-token
+		    (make-oauth-access-token
+		     :consumer-key identica-mode-oauth-consumer-key
+		     :consumer-secret identica-mode-oauth-consumer-secret
+		     :auth-t (make-oauth-t
+			      :token (match-string 1 str)
+			      :token-secret (match-string 2 str))))))
+	(save-buffer)
+	(kill-this-buffer)))
     (unless oauth-access-token
       (setq oauth-access-token
 	    (oauth-authorize-app identica-mode-oauth-consumer-key
@@ -805,7 +804,7 @@ arguments (if any) of the SENTINEL procedure."
   (let ((url (concat "http://" statusnet-server "/api/"
 		     (when (not (string-equal method-class "none"))
 		       (concat method-class "/" ))
-		       method ".xml"
+		     method ".xml"
 		     (when parameters
 		       (concat "?"
 			       (mapconcat
@@ -965,22 +964,20 @@ we are interested in."
 	 (profile-image
 	  ()
 	  (let ((profile-image-url (attr 'user-profile-image-url)))
-	    (if (string-match "/\\([^/?]+\\)\\(?:\\?\\|$\\)" profile-image-url)
-		(let ((filename (match-string-no-properties 1 profile-image-url)))
-		  ;; download icons if does not exist
-		  (if (file-exists-p (concat identica-tmp-dir
-					     "/" filename))
-		      t
-		    (add-to-list 'identica-image-stack profile-image-url))
+	    (when (string-match "/\\([^/?]+\\)\\(?:\\?\\|$\\)" profile-image-url)
+	      (let ((filename (match-string-no-properties 1 profile-image-url)))
+		;; download icons if does not exist
+		(unless (file-exists-p (concat identica-tmp-dir "/" filename))
+		  (add-to-list 'identica-image-stack profile-image-url))
 
-		  (when identica-icon-mode
-                    (let ((avatar (create-image (concat identica-tmp-dir "/" filename))))
+		(when identica-icon-mode
+		  (let ((avatar (create-image (concat identica-tmp-dir "/" filename))))
 		    ;; Make sure the avatar is 48 pixels (which it should already be!, but hey...)
 		    ;; For offenders, the top left slice of 48 by 48 pixels is displayed
 		    ;; TODO: perhaps make this configurable?
-                      (insert-image avatar nil nil `(0 0 48 48)))
+		    (insert-image avatar nil nil `(0 0 48 48)))
 
-		    nil))))))
+		  nil))))))
     (let ((cursor 0)
 	  (result ())
 	  c
@@ -1123,27 +1120,27 @@ METHOD must be one of Identica API method which belongs to METHOD-CLASS.
 PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"6\")) => <URI>?mode=view&page=6"
   (or sentinel (setq sentinel 'identica-http-post-default-sentinel))
   (let ((url-request-method "POST")
-	 (url (concat "http://"statusnet-server "/api/" method-class "/" method ".xml"
-		      (when parameters
-			(concat "?"
-				(mapconcat
-				 (lambda (param-pair)
+	(url (concat "http://"statusnet-server "/api/" method-class "/" method ".xml"
+		     (when parameters
+		       (concat "?"
+			       (mapconcat
+				(lambda (param-pair)
 				  (format "%s=%s"
 					  (identica-percent-encode (car param-pair))
 					  (identica-percent-encode (cdr param-pair))))
-				 parameters
-				 "&")))))
-	 (url-package-name "emacs-identicamode")
-	 (url-package-version identica-mode-version)
-	 ;; (if (assoc `media parameters)
-	 ;; (url-request-extra-headers '(("Content-Type" . "multipart/form-data")))
-         (url-request-extra-headers '(("Content-Length" . "0")))
-	 (url-show-status nil))
+				parameters
+				"&")))))
+	(url-package-name "emacs-identicamode")
+	(url-package-version identica-mode-version)
+	;; (if (assoc `media parameters)
+	;; (url-request-extra-headers '(("Content-Type" . "multipart/form-data")))
+	(url-request-extra-headers '(("Content-Length" . "0")))
+	(url-show-status nil))
     (identica-set-proxy)
     (if (equal identica-auth-mode "oauth")
 	(or oauth-access-token
 	    (identica-initialize-oauth))
-        (identica-set-auth url))
+      (identica-set-auth url))
     (when (get-buffer-process identica-http-buffer)
       (delete-process identica-http-buffer)
       (kill-buffer identica-http-buffer))
@@ -1155,11 +1152,11 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
   (let ((error-object (assoc-workaround :error status)))
     (cond  ((and
              error-object
-	   (y-or-n-p (format "Network error:%s %s Retry?"
-			     (cadr error-object)
-			     (caddr error-object))))
-	  (identica-http-post method-class method parameters nil success-message))
-	 (identica-display-success-messages
+	     (y-or-n-p (format "Network error:%s %s Retry?"
+			       (cadr error-object)
+			       (caddr error-object))))
+	    (identica-http-post method-class method parameters nil success-message))
+	   (identica-display-success-messages
             (message (or success-message "Success: Post")))))
   (unless (get-buffer-process (current-buffer))
     (kill-buffer (current-buffer))))
@@ -1170,11 +1167,11 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
  If `buffer' is omitted, current-buffer is parsed."
   (or buffer
       (setq buffer (current-buffer)))
-    (set-buffer buffer)
-    (let ((end (or (and (search-forward-regexp "\r?\n\r?\n" (point-max) t)
-			(match-beginning 0))
-		   0)))
-      (and (> end 1)
+  (set-buffer buffer)
+  (let ((end (or (and (search-forward-regexp "\r?\n\r?\n" (point-max) t)
+		      (match-beginning 0))
+		 0)))
+    (and (> end 1)
          (buffer-substring (point-min) end))))
 
 (defun identica-get-response-body (&optional buffer)
@@ -1183,21 +1180,21 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
  If `buffer' is omitted, current-buffer is parsed."
   (or buffer
       (setq buffer (current-buffer)))
-    (set-buffer buffer)
-    (set-buffer-multibyte t)
-    (let ((start (save-excursion
-		  (goto-char (point-min))
-		  (and (re-search-forward "<\?xml" (point-max) t)
-		       (match-beginning 0)))))
-      (identica-clean-response-body)
-      (and start
+  (set-buffer buffer)
+  (set-buffer-multibyte t)
+  (let ((start (save-excursion
+		 (goto-char (point-min))
+		 (and (re-search-forward "<\?xml" (point-max) t)
+		      (match-beginning 0)))))
+    (identica-clean-response-body)
+    (and start
          (xml-parse-region start (point-max)))))
 
 (defun identica-clean-weird-chars (&optional buffer)
-;;(if (null buffer) (setq buffer (identica-http-buffer)))
-(with-current-buffer (identica-http-buffer)
-  (goto-char (point-min))
-  (while (re-search-forward "\
+  ;;(if (null buffer) (setq buffer (identica-http-buffer)))
+  (with-current-buffer (identica-http-buffer)
+    (goto-char (point-min))
+    (while (re-search-forward "\
 
 ?
 [0-9a-z]*\
@@ -1218,8 +1215,8 @@ in tags."
 (defun identica-cache-status-datum (status-datum &optional data-var)
   "Cache status datum into data-var(default identica-timeline-data)
 If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
-  (if (null data-var)
-      (setf data-var 'identica-timeline-data))
+  (when (null data-var)
+    (setf data-var 'identica-timeline-data))
   (let ((id (cdr (assq 'id status-datum))))
     (if (or (null (symbol-value data-var))
 	    (not (find-if
@@ -1320,10 +1317,10 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 			      (concat "https://" statusnet-server "/group/" group-name)
 			    (concat "https://" statusnet-server "/tag/" tag-name)))
 		   uri-in-text ,(if screen-name
-			    (concat "https://" statusnet-server "/" screen-name)
-			  (if group-name
-			      (concat "https://" statusnet-server "/group/" group-name)
-			    (concat "https://" statusnet-server "/tag/" tag-name)))
+				    (concat "https://" statusnet-server "/" screen-name)
+				  (if group-name
+				      (concat "https://" statusnet-server "/group/" group-name)
+				    (concat "https://" statusnet-server "/tag/" tag-name)))
                    tag ,tag-name
                    group ,group-name)
 	       `(mouse-face highlight
@@ -1335,24 +1332,24 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 
       ;; make source pretty and clickable
-      (if (string-match "<a href=\"\\(.*\\)\">\\(.*\\)</a>" source)
-	  (let ((uri (match-string-no-properties 1 source))
-		(caption (match-string-no-properties 2 source)))
-	    (setq source caption)
-	    (add-text-properties
-	     0 (length source)
-	     `(mouse-face highlight
-			  face identica-uri-face
-			  source ,source)
-	     source)))
+      (when (string-match "<a href=\"\\(.*\\)\">\\(.*\\)</a>" source)
+	(let ((uri (match-string-no-properties 1 source))
+	      (caption (match-string-no-properties 2 source)))
+	  (setq source caption)
+	  (add-text-properties
+	   0 (length source)
+	   `(mouse-face highlight
+			face identica-uri-face
+			source ,source)
+	   source)))
 
       ;; save last update time
       (setq identica-timeline-last-update created-at)
 
       ;; highlight replies
-      (if (string-match (concat "@" identica-username) text)
-	  (add-text-properties 0 (length text)
-			       `(face identica-reply-face) text))
+      (when (string-match (concat "@" identica-username) text)
+	(add-text-properties 0 (length text)
+			     `(face identica-reply-face) text))
       (mapcar
        (lambda (sym)
 	 `(,sym . ,(symbol-value sym)))
@@ -1371,17 +1368,17 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	  ;; On Emacs22, there may be blank strings
 	  (let ((ret nil) (statuses (reverse (cddr (car xmltree)))))
 	    (while statuses
-	      (if (consp (car statuses))
-		  (setq ret (cons (car statuses) ret)))
+	      (when (consp (car statuses))
+		(setq ret (cons (car statuses) ret)))
 	      (setq statuses (cdr statuses)))
 	    ret)))
 
 (defun identica-percent-encode (str &optional coding-system)
   (if (equal identica-auth-mode "oauth")
       (oauth-hexify-string str)
-    (if (or (null coding-system)
-	    (not (coding-system-p coding-system)))
-	(setq coding-system 'utf-8))
+    (when (or (null coding-system)
+	      (not (coding-system-p coding-system)))
+      (setq coding-system 'utf-8))
     (mapconcat
      (lambda (c)
        (cond
@@ -1441,7 +1438,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 			    `(("status" . ,status)
 			      ("source" . ,identica-source)
 			      ,@(if (assoc `media parameters)
-				  `(("media" . ,(cdr (assoc `media parameters))))
+				    `(("media" . ,(cdr (assoc `media parameters))))
 				  nil)
 			      ,@(if reply-to-id
 				    `(("in_reply_to_status_id"
@@ -1471,22 +1468,22 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (let ((buf (get-buffer-create "*identica-status-update-edit*")))
     (pop-to-buffer buf)
     (with-current-buffer buf
-      (if (not (equal major-mode 'identica-update-status-edit-mode))
-          (progn
-            (identica-update-status-edit-mode)
-	    (if identica-soft-wrap-status
-		(if (fboundp 'visual-line-mode)
-		    (visual-line-mode t)))
-            (make-local-variable 'identica-update-status-edit-method-class)
-            (make-local-variable 'identica-update-status-edit-method)
-            (make-local-variable 'identica-update-status-edit-parameters)
-            (make-local-variable 'identica-update-status-edit-reply-to-id)
-            (if (> (length parameters) 0)
-                (setq mode-line-format
-                      (cons (format "%s(%s) (%%i/%s) " msgtype parameters statusnet-server-textlimit)
-                            mode-line-format))
-              t (setq mode-line-format
-                      (cons (format "%s (%%i/%s) " msgtype statusnet-server-textlimit) mode-line-format)))))
+      (when (not (equal major-mode 'identica-update-status-edit-mode))
+	(progn
+	  (identica-update-status-edit-mode)
+	  (when identica-soft-wrap-status
+	    (when (fboundp 'visual-line-mode)
+	      (visual-line-mode t)))
+	  (make-local-variable 'identica-update-status-edit-method-class)
+	  (make-local-variable 'identica-update-status-edit-method)
+	  (make-local-variable 'identica-update-status-edit-parameters)
+	  (make-local-variable 'identica-update-status-edit-reply-to-id)
+	  (if (> (length parameters) 0)
+	      (setq mode-line-format
+		    (cons (format "%s(%s) (%%i/%s) " msgtype parameters statusnet-server-textlimit)
+			  mode-line-format))
+	    t (setq mode-line-format
+		    (cons (format "%s (%%i/%s) " msgtype statusnet-server-textlimit) mode-line-format)))))
       (setq identica-update-status-edit-method-class method-class)
       (setq identica-update-status-edit-method method)
       (setq identica-update-status-edit-parameters parameters)
@@ -1522,7 +1519,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
   (remove-hook 'post-command-hook 'identica-show-minibuffer-length t))
 
 (defun identica-update-status (update-input-method &optional init-str reply-to-id method-class method parameters)
-  (if (null init-str) (setq init-str ""))
+  (when (null init-str) (setq init-str ""))
   (let ((msgtype "")
 	(status init-str)
 	(not-posted-p t)
@@ -1542,16 +1539,16 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	   (add-hook 'minibuffer-setup-hook 'identica-setup-minibuffer t)
 	   (add-hook 'minibuffer-exit-hook 'identica-finish-minibuffer t)
 	   (unwind-protect
-           (while not-posted-p
-             (setq status (read-from-minibuffer (concat msgtype ": ") status nil nil nil nil t))
-             (while (< (+ statusnet-server-textlimit 1) (length status))
-               (setq status (read-from-minibuffer (format (concat msgtype "(%d): ")
-                                                          (- statusnet-server-textlimit (length status)))
-                                                  status nil nil nil nil t)))
-             (setq not-posted-p
-                   (not (identica-update-status-if-not-blank method-class method status parameters reply-to-id))))
-	   (remove-hook 'minibuffer-setup-hook 'identica-setup-minibuffer)
-	   (remove-hook 'minibuffer-exit-hook 'identica-finish-minibuffer)))
+	       (while not-posted-p
+		 (setq status (read-from-minibuffer (concat msgtype ": ") status nil nil nil nil t))
+		 (while (< (+ statusnet-server-textlimit 1) (length status))
+		   (setq status (read-from-minibuffer (format (concat msgtype "(%d): ")
+							      (- statusnet-server-textlimit (length status)))
+						      status nil nil nil nil t)))
+		 (setq not-posted-p
+		       (not (identica-update-status-if-not-blank method-class method status parameters reply-to-id))))
+	     (remove-hook 'minibuffer-setup-hook 'identica-setup-minibuffer)
+	     (remove-hook 'minibuffer-exit-hook 'identica-finish-minibuffer)))
           ((eq update-input-method 'edit-buffer)
            (identica-update-status-edit-in-edit-buffer init-str msgtype method-class method parameters reply-to-id))
           (t (error "Unknown update-input-method in identica-update-status: %S" update-input-method)))))
@@ -1565,7 +1562,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (if (< statusnet-server-textlimit status-len)
           (message (format "Beyond %s chars.  Remove %d chars." statusnet-server-textlimit (- status-len statusnet-server-textlimit)))
         (if (identica-update-status-if-not-blank identica-update-status-edit-method-class
-              identica-update-status-edit-method status identica-update-status-edit-parameters identica-update-status-edit-reply-to-id)
+						 identica-update-status-edit-method status identica-update-status-edit-parameters identica-update-status-edit-reply-to-id)
             (progn
               (erase-buffer)
               (bury-buffer))
@@ -1589,8 +1586,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 (defun identica-update-status-from-region (beg end)
   (interactive "r")
-  (if (> (- end beg) statusnet-server-textlimit) (setq end (+ beg statusnet-server-textlimit)))
-  (if (< (- end beg) -statusnet-server-textlimit) (setq beg (+ end statusnet-server-textlimit)))
+  (when (> (- end beg) statusnet-server-textlimit) (setq end (+ beg statusnet-server-textlimit)))
+  (when (< (- end beg) -statusnet-server-textlimit) (setq beg (+ end statusnet-server-textlimit)))
   (identica-update-status-if-not-blank "statuses" "update" (buffer-substring beg end)))
 
 (defun identica-update-status-with-media (attachment &optional init-str method-class method parameters reply-to-id)
@@ -1611,10 +1608,10 @@ this dictionary, only if identica-urlshortening-service is 'google.
 (defun identica-ur1ca-get (api longurl)
   "Shortens url through ur1.ca free service 'as in freedom'"
   (let* ((url-request-method "POST")
-	(url-request-extra-headers
-	 '(("Content-Type" . "application/x-www-form-urlencoded")))
-	(url-request-data (concat "longurl=" (url-hexify-string longurl)))
-	(buffer (url-retrieve-synchronously api)))
+	 (url-request-extra-headers
+	  '(("Content-Type" . "application/x-www-form-urlencoded")))
+	 (url-request-data (concat "longurl=" (url-hexify-string longurl)))
+	 (buffer (url-retrieve-synchronously api)))
     (with-current-buffer buffer
       (goto-char (point-min))
       (prog1
@@ -1622,7 +1619,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
 		(if (search-forward-regexp "Your .* is: .*>\\(http://ur1.ca/[0-9A-Za-z].*\\)</a>" nil t)
 		    (match-string-no-properties 1)
 		  (error "URL shortening service failed: %s" longurl)))
-	    (kill-buffer buffer)))))
+	(kill-buffer buffer)))))
 
 (defun identica-shortenurl-get (longurl)
   "Shortens url through a url shortening service"
@@ -1630,23 +1627,23 @@ this dictionary, only if identica-urlshortening-service is 'google.
 			 identica-urlshortening-services-map))))
     (unless api
       (error "`identica-urlshortening-service' was invalid. try one of %s"
-	      (mapconcat (lambda (x)
-			   (symbol-name (car x)))
-			 identica-urlshortening-services-map ", ")
-	      "."))
+	     (mapconcat (lambda (x)
+			  (symbol-name (car x)))
+			identica-urlshortening-services-map ", ")
+	     "."))
     (if longurl
 	(if (or (eq identica-urlshortening-service 'ur1ca) (eq identica-urlshortening-service 'tighturl))
 	    (identica-ur1ca-get api longurl)
 	  (let ((buffer (url-retrieve-synchronously (concat api longurl))))
 	    (with-current-buffer buffer
-	    (goto-char (point-min))
-	    (prog1
-                (identica-tinyurl-unjson-google
-                 (if (search-forward-regexp "\n\r?\n\\([^\n\r]*\\)" nil t)
-                     (match-string-no-properties 1)
-                   (error "URL shortening service failed: %s" longurl)))
-	      (kill-buffer buffer))))
-      nil))))
+	      (goto-char (point-min))
+	      (prog1
+		  (identica-tinyurl-unjson-google
+		   (if (search-forward-regexp "\n\r?\n\\([^\n\r]*\\)" nil t)
+		       (match-string-no-properties 1)
+		     (error "URL shortening service failed: %s" longurl)))
+		(kill-buffer buffer))))
+	  nil))))
 
 (defun identica-shortenurl-replace-at-point ()
   "Replace the url at point with a tiny version."
@@ -1675,10 +1672,10 @@ this dictionary, only if identica-urlshortening-service is 'google.
 	    (narrow-to-region (car url-bounds) (cdr url-bounds))
 	    (delete-region (point-min) (point-max))
 	    (add-text-properties 0 (length uri)
-	       `(mouse-face highlight
-			    face identica-uri-face
-			    uri ,uri
-			    uri-in-text ,uri) uri)
+				 `(mouse-face highlight
+					      face identica-uri-face
+					      uri ,uri
+					      uri-in-text ,uri) uri)
 	    (insert uri)
             (message (concat "Expanded Short URL " original-url "to Long URL: " uri))
 	    (setq buffer-read-only t)))))))
@@ -1686,20 +1683,20 @@ this dictionary, only if identica-urlshortening-service is 'google.
 (defun identica-expand-shorturl (url)
   "Return the redirected url, or the original url if not found"
   (let ((temp-buf (get-buffer-create "*HTTP headers*")))
-  (set-buffer temp-buf)
-  (erase-buffer)
-  (goto-char 0)
-  (setq url (replace-regexp-in-string "http://" "" url))
-  (setq host (substring url 0 (string-match "/" url)))
-  (if (string-match "/" url)
-      (setq file (substring url (string-match "/" url)))
-    (setq file "/"))
-  (setq tcp-connection
-	(open-network-stream
-	 "Identica URLExpand"
-	 temp-buf
-	 host
-	 80))
+    (set-buffer temp-buf)
+    (erase-buffer)
+    (goto-char 0)
+    (setq url (replace-regexp-in-string "http://" "" url))
+    (setq host (substring url 0 (string-match "/" url)))
+    (if (string-match "/" url)
+	(setq file (substring url (string-match "/" url)))
+      (setq file "/"))
+    (setq tcp-connection
+	  (open-network-stream
+	   "Identica URLExpand"
+	   temp-buf
+	   host
+	   80))
     (set-marker (process-mark tcp-connection) (point-min))
     (set-process-sentinel tcp-connection 'identica-http-headers-sentinel)
     (setq request (concat "GET http://" url " HTTP/1.1\r\n"
@@ -1710,8 +1707,8 @@ this dictionary, only if identica-urlshortening-service is 'google.
     (process-send-string tcp-connection request)
     (sit-for 2)
     (let ((location (identica-get-location-from-header (concat "http://" host file) tcp-connection)))
-    (delete-process tcp-connection)
-    (kill-buffer temp-buf)
+      (delete-process tcp-connection)
+      (kill-buffer temp-buf)
       location)))
 
 (defun identica-http-headers-sentinel (process string)
@@ -1739,8 +1736,8 @@ this dictionary, only if identica-urlshortening-service is 'google.
 
 (defun identica-start (&optional action)
   (interactive)
-  (if (null action)
-      (setq action #'identica-current-timeline))
+  (when (null action)
+    (setq action #'identica-current-timeline))
   (if identica-timer
       nil
     (setq identica-timer
@@ -1751,7 +1748,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (identica-update-mode-line))
 
 (defun identica-stop ()
-"Stop Current network activitiy (if any) and the reload-timer."
+  "Stop Current network activitiy (if any) and the reload-timer."
   (interactive)
   (when (get-buffer-process identica-http-buffer)
     (delete-process identica-http-buffer)
@@ -1765,15 +1762,15 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (identica-update-mode-line))
 
 (defun identica-get-timeline ()
-  (if (not (eq identica-last-timeline-retrieved identica-method))
-      (setq identica-timeline-last-update nil
-	    identica-timeline-data nil))
+  (when (not (eq identica-last-timeline-retrieved identica-method))
+    (setq identica-timeline-last-update nil
+	  identica-timeline-data nil))
   (let ((buf (get-buffer identica-buffer)))
     (if (not buf)
 	(identica-stop)
       (progn
-	(if (not identica-method)
-	    (setq identica-method "friends_timeline"))
+	(when (not identica-method)
+	  (setq identica-method "friends_timeline"))
 	(identica-http-get identica-method-class identica-method))))
   (if identica-icon-mode
       (if (and identica-image-stack window-system)
@@ -1791,7 +1788,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
 	     proc
 	     (lambda (proc stat)
 	       (clear-image-cache)
-	      ))))))
+	       ))))))
 
 (defun identica-friends-timeline ()
   (interactive)
@@ -1863,16 +1860,14 @@ this dictionary, only if identica-urlshortening-service is 'google.
 (defun identica-erase-old-statuses ()
   (interactive)
   (setq identica-timeline-data nil)
-  (if (not identica-last-timeline-retrieved)
-      (setq identica-last-timeline-retrieved identica-method))
-      (identica-http-get "statuses" identica-last-timeline-retrieved)
-      )
+  (when (not identica-last-timeline-retrieved)
+    (setq identica-last-timeline-retrieved identica-method))
+  (identica-http-get "statuses" identica-last-timeline-retrieved))
 
 (defun identica-click ()
   (interactive)
   (let ((uri (get-text-property (point) 'uri)))
-    (if uri
-	(browse-url uri))))
+    (when uri (browse-url uri))))
 
 (defun identica-enter ()
   (interactive)
@@ -1885,20 +1880,20 @@ this dictionary, only if identica-urlshortening-service is 'google.
       (if tag (identica-tag-timeline tag)
         (if uri (browse-url uri)
           (if username
-              (identica-update-status identica-update-status-method
-                                      (concat "@" username " ") id)))))))
+	      (identica-update-status identica-update-status-method
+				      (concat "@" username " ") id)))))))
 
 (defun identica-next-link nil
   (interactive)
   (goto-char (next-single-property-change (point) 'uri))
-  (if (not (get-text-property (point) 'uri))
-      (goto-char (next-single-property-change (point) 'uri))))
+  (when (not (get-text-property (point) 'uri))
+    (goto-char (next-single-property-change (point) 'uri))))
 
 (defun identica-prev-link nil
   (interactive)
   (goto-char (previous-single-property-change (point) 'uri))
-  (if (not (get-text-property (point) 'uri))
-      (goto-char (previous-single-property-change (point) 'uri))))
+  (when (not (get-text-property (point) 'uri))
+    (goto-char (previous-single-property-change (point) 'uri))))
 
 (defun identica-follow (&optional remove)
   (interactive)
@@ -1918,7 +1913,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (identica-follow t))
 
 (defun identica-group-join (&optional leaving)
-"Simple functions to join/leave a group we are visiting."
+  "Simple functions to join/leave a group we are visiting."
   (setq identica-method-class "statusnet/groups")
   (string-match "\\([^\\]*\\)\\(/.*\\)" identica-method)
   (setq group-method (replace-match
@@ -1931,23 +1926,22 @@ this dictionary, only if identica-urlshortening-service is 'google.
 
 (defun identica-favorite ()
   (interactive)
-    (if (y-or-n-p "Do you want to favor this notice? ")
-	(let ((id (get-text-property (point) 'id)))
-	  (identica-http-post "favorites/create" (number-to-string id))
-	  (message "Notice saved as favorite"))))
+  (when (y-or-n-p "Do you want to favor this notice? ")
+    (let ((id (get-text-property (point) 'id)))
+      (identica-http-post "favorites/create" (number-to-string id))
+      (message "Notice saved as favorite"))))
 
 (defun identica-repeat ()
   (interactive)
-    (if (y-or-n-p "Do you want to repeat this notice? ")
-	(let ((id (get-text-property (point) 'id)))
-	  (identica-http-post "statuses/retweet" (number-to-string id))
-	  (message "Notice repeated"))))
+  (when (y-or-n-p "Do you want to repeat this notice? ")
+    (let ((id (get-text-property (point) 'id)))
+      (identica-http-post "statuses/retweet" (number-to-string id))
+      (message "Notice repeated"))))
 
 (defun identica-view-user-page ()
   (interactive)
   (let ((uri (get-text-property (point) 'uri)))
-    (if uri
-	(browse-url uri))))
+    (when uri (browse-url uri))))
 
 (defun identica-redent ()
   (interactive)
@@ -1955,15 +1949,15 @@ this dictionary, only if identica-urlshortening-service is 'google.
 	(id (get-text-property (point) 'id))
 	(text (replace-regexp-in-string "!\\(.\\)" "#\\1" (get-text-property (point) 'text))))
     (when username
-       (identica-update-status identica-update-status-method
-        (concat identica-redent-format " @" username ": " text) id))))
+      (identica-update-status identica-update-status-method
+			      (concat identica-redent-format " @" username ": " text) id))))
 
 (defun identica-reply-to-user ()
   (interactive)
   (let ((username (get-text-property (point) 'username))
 	(id (get-text-property (point) 'id)))
-    (if username
-	(identica-update-status identica-update-status-method (concat "@" username " ") id))))
+    (when username
+      (identica-update-status identica-update-status-method (concat "@" username " ") id))))
 
 (defun identica-get-password ()
   (or identica-password
@@ -1979,7 +1973,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
       (message "End of status."))))
 
 (defun identica-toggle-highlight (&optional arg)
-"With arg (or prefix, if interactive), set highlighted entries list to contain only
+  "With arg (or prefix, if interactive), set highlighted entries list to contain only
 the id of entry at point, With no arg or prefix, add current entry id to list if not present,
 or remove current entry id from list if it is present."
   (interactive "P")
@@ -2088,13 +2082,13 @@ or remove current entry id from list if it is present."
   (&optional status method-class method parameters success-message)
   "Process configuration page retrieved from statusnet server."
   (let ((error-object (assoc-workaround :error status)))
-	(unless error-object
-	  (let* ((body (identica-get-response-body))
-		 (site (xml-get-children (car body) 'site))
-		 (textlimit (xml-get-children (car site) 'textlimit))
-		 (textlimit-value (caddar textlimit)))
-	    (if textlimit-value
-		(setq statusnet-server-textlimit (string-to-number textlimit-value))))))
+    (unless error-object
+      (let* ((body (identica-get-response-body))
+	     (site (xml-get-children (car body) 'site))
+	     (textlimit (xml-get-children (car site) 'textlimit))
+	     (textlimit-value (caddar textlimit)))
+	(when textlimit-value
+	  (setq statusnet-server-textlimit (string-to-number textlimit-value))))))
   (identica-start))
 
 (defun identica-get-config-url ()
@@ -2197,8 +2191,8 @@ static char * statusnet_off_xpm[] = {
 	       `(display ,identica-inactive-indicator-image ,@props))
       "INACTIVE")))
 
-  (make-local-variable 'identica-active-mode)
-  (setq identica-active-mode t)
+(make-local-variable 'identica-active-mode)
+(setq identica-active-mode t)
 
 (defun identica-toggle-activate-buffer ()
   (interactive)
