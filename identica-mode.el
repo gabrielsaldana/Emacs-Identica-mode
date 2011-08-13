@@ -87,7 +87,6 @@
 (require 'url-http)
 (require 'json)
 (require 'image)
-(require 'oauth)
 
 (defconst identica-mode-version "1.1")
 
@@ -105,10 +104,6 @@
 
 If non-nil, indicates that url-unhex-string is broken and
 must be worked around when using oauth.")
-
-(unless (eq (url-unhex-string (url-hexify-string "²")) "²")
-  (setq identica-unhex-broken t)
-  (require 'w3m))
 
 (defgroup identica-mode nil
   "Identica Mode for microblogging"
@@ -201,6 +196,16 @@ If non-nil, dents over this amount will bre removed.")
   "Authorization mode used, options are password and oauth"
   :type 'string
   :group 'identica-mode)
+
+(defun identica-enable-oauth ()
+  "Enables oauth for identica-mode."
+  (interactive)
+  (require 'oauth)
+  ;Test if we're running on an emacs version with broken unhex and apply workaround.
+  (unless (eq (url-unhex-string (url-hexify-string "²")) "²")
+    (setq identica-unhex-broken t)
+    (require 'w3m))
+  (setq identica-auth-mode "oauth"))
 
 (defcustom statusnet-server "identi.ca"
   "Statusnet instance url"
