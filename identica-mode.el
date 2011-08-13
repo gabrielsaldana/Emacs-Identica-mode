@@ -53,6 +53,7 @@
 ;; json.el is part of Emacs23
 ;; To use the OAuth support, you need oauth.el
 ;; Downloadable from http://github.com/psanford/emacs-oauth/
+;; If using Oauth with Emacs earlier than 23.3 or so, you also need w3m.
 
 ;; Installation
 
