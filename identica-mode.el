@@ -894,9 +894,7 @@ we adjust point within the right frame."
 				  identica-timeline-data nil))
 	       (if active-p
 		   (identica-render-pending-dents)
-		 (identica-set-mode-string "pending")))))))
-  (unless (get-buffer-process (current-buffer))
-    (kill-buffer (current-buffer))))
+		 (identica-set-mode-string "pending"))))))))
 
 (defun merge-text-attribute (start end new-face attribute)
   "If we just add the new face its attributes somehow get overridden by
