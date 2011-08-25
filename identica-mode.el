@@ -1953,7 +1953,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (interactive)
   (let ((username (get-text-property (point) 'username))
 	(id (get-text-property (point) 'id))
-	(text (replace-regexp-in-string "!\\(.\\)" "#\\1" (get-text-property (point) 'text))))
+	(text (replace-regexp-in-string "!\\(\\b\\)" "#\\1" (get-text-property (point) 'text))))
     (when username
       (identica-update-status identica-update-status-method
 			      (concat identica-redent-format " @" username ": " text) id))))
