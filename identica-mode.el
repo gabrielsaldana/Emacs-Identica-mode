@@ -622,6 +622,8 @@ of identica-stripe-face."
   "Major mode for Identica
 \\{identica-mode-map}"
   (interactive)
+  (autoload 'oauth-hexify-string "oauth")
+  (autoload 'make-oauth-access-token "oauth")
   (switch-to-buffer (identica-buffer))
   (buffer-disable-undo (identica-buffer))
   (kill-all-local-variables)
