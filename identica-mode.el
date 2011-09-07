@@ -274,7 +274,7 @@ If non-nil, dents over this amount will bre removed.")
   :type 'boolean
   :group 'identica-mode)
 
-(defcustom identica-soft-wrap-status nil
+(defcustom identica-soft-wrap-status t
   "If non-nil, don't fill status messages in the timeline as
   paragraphs. Instead, use visual-line-mode or longlines-mode if
   available to wrap messages.  This may work better for narrow
