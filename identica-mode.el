@@ -253,6 +253,11 @@ If non-nil, dents over this amount will bre removed.")
   :options '("friends_timeline" "public_timeline" "replies")
   :group 'identica-mode)
 
+(defcustom identica-statuses-count 20
+  "Default number of statuses to retrieve"
+  :type 'integer
+  :group 'identica-mode)
+
 (defcustom identica-display-success-messages nil
   "Display messages when the timeline is successfully retrieved"
   :type 'boolean
@@ -1782,7 +1787,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
       (progn
 	(when (not identica-method)
 	  (setq identica-method "friends_timeline"))
-	(identica-http-get identica-method-class identica-method))))
+	(identica-http-get identica-method-class identica-method `(("count" . ,(int-to-string identica-statuses-count)))))))
   (if identica-icon-mode
       (if (and identica-image-stack window-system)
 	  (let ((proc
