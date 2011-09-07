@@ -263,7 +263,7 @@ If non-nil, dents over this amount will bre removed.")
   :type 'boolean
   :group 'identica-mode)
 
-(defcustom identica-oldest-first nil
+(defcustom identica-oldest-first t
   "If t, display older messages before newer ones"
   :type 'boolean
   :group 'identica-mode)
@@ -1986,7 +1986,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
     (setq pos (identica-get-next-username-face-pos (point)))
     (if pos
 	(goto-char pos)
-      (message "End of status."))))
+      (progn (goto-char (buffer-end 1)) (message "End of status.")))))
 
 (defun identica-toggle-highlight (&optional arg)
   "With arg (or prefix, if interactive), set highlighted entries list to contain only
