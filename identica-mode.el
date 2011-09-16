@@ -1101,7 +1101,8 @@ we are interested in."
 	(add-text-properties 0 (length formatted-status)
 			     `(username ,(attr 'user-screen-name)
 					id, (attr 'id)
-					text ,(attr 'text))
+					text ,(attr 'text)
+                                        conversation-id, (attr 'conversation-id))
 			     formatted-status)
 	formatted-status))))
 
