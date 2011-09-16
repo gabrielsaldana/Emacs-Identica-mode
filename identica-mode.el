@@ -1377,6 +1377,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
        '(id text source created-at truncated
 	    in-reply-to-status-id
 	    in-reply-to-screen-name
+	    conversation-id
 	    user-id user-name user-screen-name user-location
 	    user-description
 	    user-profile-image-url
