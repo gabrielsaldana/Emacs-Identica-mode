@@ -1274,6 +1274,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (setq in-reply-to-screen-name
 	    (identica-decode-html-entities
 	     (assq-get 'in_reply_to_screen_name status-data)))
+      (setq conversation-id (or (assq-get 'statusnet:conversation_id status-data) "0"))
       (setq user-id (string-to-number (assq-get 'id user-data)))
       (setq user-name (identica-decode-html-entities
 		       (assq-get 'name user-data)))
