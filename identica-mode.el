@@ -1094,6 +1094,8 @@ we are interested in."
 	   (list-push (attr 'source) result))
 	  ((?#)                         ; %# - id
 	   (list-push (format "%d" (attr 'id)) result))
+	  ((?x)                         ; %x - conversation id (conteXt) - default 0
+	   (list-push (attr 'conversation-id) result))
 	  (t
 	   (list-push (char-to-string c) result))))
       (list-push (substring format-str cursor) result)
