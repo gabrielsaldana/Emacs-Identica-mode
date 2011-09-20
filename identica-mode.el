@@ -1368,7 +1368,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (setq identica-timeline-last-update created-at)
 
       ;; highlight replies
-      (when (string-match (concat "@" identica-username) text)
+      (when (or (string-match identica-username in-reply-to-screen-name) (string-match (concat "@" identica-username) text))
 	(add-text-properties 0 (length text)
 			     `(face identica-reply-face) text))
       (mapcar
