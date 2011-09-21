@@ -521,6 +521,7 @@ of identica-stripe-face."
       (define-key km "\C-c\C-t" 'identica-tag-timeline)
       (define-key km "\C-c\C-k" 'identica-stop)
       (define-key km "\C-c\C-u" 'identica-user-timeline)
+      (define-key km "\C-c\C-c" 'identica-conversation-timeline)
       (define-key km "\C-c\C-s" 'identica-update-status-interactive)
       (define-key km "\C-c\C-d" 'identica-direct-message-interactive)
       (define-key km "\C-c\C-m" 'identica-redent)
@@ -1121,6 +1122,8 @@ we are interested in."
 	   (list-push (attr 'source) result))
 	  ((?#)                         ; %# - id
 	   (list-push (format "%d" (attr 'id)) result))
+	  ((?x)                         ; %x - conversation id (conteXt) - default 0
+	   (list-push (attr 'conversation-id) result))
 	  (t
 	   (list-push (char-to-string c) result))))
       (list-push (substring format-str cursor) result)
@@ -1128,7 +1131,8 @@ we are interested in."
 	(add-text-properties 0 (length formatted-status)
 			     `(username ,(attr 'user-screen-name)
 					id, (attr 'id)
-					text ,(attr 'text))
+					text ,(attr 'text)
+                                        conversation-id, (attr 'conversation-id))
 			     formatted-status)
 	formatted-status))))
 
@@ -1301,6 +1305,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (setq in-reply-to-screen-name
 	    (identica-decode-html-entities
 	     (assq-get 'in_reply_to_screen_name status-data)))
+      (setq conversation-id (or (assq-get 'statusnet:conversation_id status-data) "0"))
       (setq user-id (string-to-number (assq-get 'id user-data)))
       (setq user-name (identica-decode-html-entities
 		       (assq-get 'name user-data)))
@@ -1390,7 +1395,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (setq identica-timeline-last-update created-at)
 
       ;; highlight replies
-      (when (string-match (concat "@" identica-username) text)
+      (when (or (string-match identica-username in-reply-to-screen-name) (string-match (concat "@" identica-username) text))
 	(add-text-properties 0 (length text)
 			     `(face identica-reply-face) text))
       (mapcar
@@ -1399,6 +1404,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
        '(id text source created-at truncated
 	    in-reply-to-status-id
 	    in-reply-to-screen-name
+	    conversation-id
 	    user-id user-name user-screen-name user-location
 	    user-description
 	    user-profile-image-url
@@ -1884,6 +1890,13 @@ this dictionary, only if identica-urlshortening-service is 'google.
     (if (string-equal from-user "")
         (setq identica-method "user_timeline")
       (setq identica-method (concat "user_timeline/" from-user))))
+  (identica-get-timeline))
+
+(defun identica-conversation-timeline ()
+  (interactive)
+  (let ((context-id (get-text-property (point) 'conversation-id)))
+    (setq identica-method-class "statusnet")
+    (setq identica-method (concat "conversation/" context-id)))
   (identica-get-timeline))
 
 (defun identica-current-timeline ()
