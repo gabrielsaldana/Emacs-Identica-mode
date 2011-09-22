@@ -95,10 +95,6 @@
 
 (defconst identica-mode-version "1.1")
 
-(defvar identica-mode-oauth-consumer-key "53e8e7bf7d1be8e58ef1024b31478d2b")
-
-(defvar identica-mode-oauth-consumer-secret "1ab0876f14bd82c4eb450f720a0e84ae")
-
 ;;url-basepath fix for emacs22
 (unless (fboundp 'url-basepath)
   (defalias 'url-basepath 'url-file-directory))
@@ -211,6 +207,12 @@ If non-nil, dents over this amount will bre removed.")
     (setq identica-unhex-broken t)
     (require 'w3m))
   (setq identica-auth-mode "oauth"))
+
+(defvar identica-mode-oauth-consumer-key
+  "53e8e7bf7d1be8e58ef1024b31478d2b")
+
+(defvar identica-mode-oauth-consumer-secret
+  "1ab0876f14bd82c4eb450f720a0e84ae")
 
 (defcustom statusnet-server "identi.ca"
   "Statusnet instance url"
