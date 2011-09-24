@@ -1232,6 +1232,11 @@ in tags."
   (while (re-search-forward "\r?\n[0-9a-z]+\r?\n" nil t)
     (replace-match "")))
 
+(defun identica-compare-statuses (a b)
+  "Compare a pair of statuses.
+For use as a predicate for sort."
+  (< (assocref 'id b) (assocref 'id a)))
+
 (defun identica-cache-status-datum (status-datum &optional data-var)
   "Cache status datum into data-var(default identica-timeline-data)
 If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
@@ -1244,7 +1249,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		    (eql id (cdr (assq 'id item))))
 		  (symbol-value data-var))))
 	(progn
-	  (set data-var (cons status-datum (symbol-value data-var)))
+	  (set data-var (sort (cons status-datum (symbol-value data-var))
+			      'identica-compare-statuses))
 	  t)
       nil)))
 
