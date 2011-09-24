@@ -1816,7 +1816,8 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (setq identica-active-mode nil)
   (identica-update-mode-line))
 
-(defun identica-get-timeline ()
+(defun identica-get-timeline (&optional parameters)
+  (unless parameters (setq parameters `(("count" . ,(int-to-string identica-statuses-count)))))
   (when (not (eq identica-last-timeline-retrieved identica-method))
     (setq identica-timeline-last-update nil
 	  identica-timeline-data nil))
@@ -1826,7 +1827,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
       (progn
 	(when (not identica-method)
 	  (setq identica-method "friends_timeline"))
-	(identica-http-get identica-method-class identica-method `(("count" . ,(int-to-string identica-statuses-count)))))))
+	(identica-http-get identica-method-class identica-method parameters))))
   (if identica-icon-mode
       (if (and identica-image-stack window-system)
 	  (let ((proc
