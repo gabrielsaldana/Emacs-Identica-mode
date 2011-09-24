@@ -1906,11 +1906,15 @@ this dictionary, only if identica-urlshortening-service is 'google.
     (setq identica-method (concat "conversation/" context-id)))
   (identica-get-timeline))
 
-(defun identica-current-timeline ()
-  (interactive)
+(defun identica-current-timeline (&optional count)
+  "Load newer notices, with an argument load older notices, and with a numeric argument load that number of older notices."
+  (interactive "P")
   (if (> identica-new-dents-count 0)
       (identica-render-pending-dents)
-    (identica-get-timeline)))
+    (identica-get-timeline (if count
+                               (cons `("count" . ,(int-to-string (if (listp count) identica-statuses-count count)))
+                                     `(("max_id" . ,(int-to-string (- (assocref 'id (car (last identica-timeline-data))) 1)))))
+                             nil))))
 
 (defun identica-update-status-interactive ()
   (interactive)
