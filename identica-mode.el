@@ -1006,13 +1006,16 @@ we are interested in."
 	  ()
 	  (let ((profile-image-url (attr 'user-profile-image-url)))
 	    (when (string-match "/\\([^/?]+\\)\\(?:\\?\\|$\\)" profile-image-url)
-	      (let ((filename (match-string-no-properties 1 profile-image-url)))
+	      (let ((filename (match-string-no-properties 1 profile-image-url))
+		    (xfilename (match-string-no-properties 0 profile-image-url)))
 		;; download icons if does not exist
-		(unless (file-exists-p (concat identica-tmp-dir "/" filename))
-		  (add-to-list 'identica-image-stack profile-image-url))
-
-		(when identica-icon-mode
-		  (let ((avatar (create-image (concat identica-tmp-dir "/" filename))))
+		(unless (file-exists-p (concat identica-tmp-dir filename))
+		  (if (file-exists-p (concat identica-tmp-dir xfilename))
+		      (setq filename xfilename)
+		    (setq filename nil)
+		    (add-to-list 'identica-image-stack profile-image-url)))
+		(when (and identica-icon-mode filename)
+		  (let ((avatar (create-image (concat identica-tmp-dir filename))))
 		    ;; Make sure the avatar is 48 pixels (which it should already be!, but hey...)
 		    ;; For offenders, the top left slice of 48 by 48 pixels is displayed
 		    ;; TODO: perhaps make this configurable?
