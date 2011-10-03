@@ -92,6 +92,7 @@
 (require 'url-http)
 (require 'json)
 (require 'image)
+(require 'identica-friends)
 
 (defconst identica-mode-version "1.1")
 
@@ -1864,6 +1865,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (interactive)
   (let ((from-user (read-from-minibuffer "User [Empty for mine]: "
                                          nil nil nil nil nil t)))
+    (setq identica-method-class "statuses")
     (if (string-equal from-user "")
         (setq identica-method "user_timeline")
       (setq identica-method (concat "user_timeline/" from-user))))
