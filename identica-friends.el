@@ -58,10 +58,13 @@
 (require 'xml)
 
 (defvar identica-friends-buffer nil
-  "Friend's Buffer"
+  "Friend's Buffer. Internal use of identica-friends.el."
   )
 
 (defvar identica-friends-buffer-name "*identica-friends*"
+  "Friends buffer's name. Changing this variable will effect after you
+recall identica-friends functions.
+Be aware of no function or actual buffers exists. Reboot all identica-friends functions."
   )
 
 
