@@ -28,6 +28,10 @@
 ;; If you want to check who are following you, type:
 ;; M-x identica-show-followers
 ;;
+;; I divided the code into sections. This sections are tabbed asside 
+;; and commented by an only one ";". Also are overlined and underlined
+;; so, they are very visible.
+;;
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -57,6 +61,12 @@
 
 (require 'xml)
 
+					; ____________________
+					;
+					; Variables
+					; ____________________
+
+
 (defvar identica-friends-buffer nil
   "Friend's Buffer. Internal use of identica-friends.el."
   )
@@ -67,6 +77,48 @@ recall identica-friends functions.
 Be aware of no function or actual buffers exists. Reboot all identica-friends functions."
   )
 
+					; ----
+					; Hooks Variables
+					; ----
+
+(defcustom identica-friends-mode-hooks
+  'nil
+  "These functions are called as soon as the `identica-friends-mode' functions finnish."
+  :type '(hook)
+  )
+
+
+(defcustom identica-show-friends-hooks
+  'nil
+  "These functions are called as soon as the `identica-show-friends' functions finnish."
+  :type '(hook)
+  )
+
+(defcustom identica-show-followers-hooks
+  'nil
+  "These functions are called as soon as the `identica-show-followers' functions finnish."
+  :type '(hook)
+  )
+
+(defcustom identica-friends-next-user-hooks
+  'nil
+  "These functions are called as soon as the `identica-friends-next-user' functions finnish."
+  :type '(hook)
+  )
+
+(defcustom identica-friends-prev-user-hooks
+  'nil
+  "These functions are called as soon as the `identica-friends-prev-user' functions finnish."
+  :type '(hook)
+  )
+
+
+
+
+					; ____________________
+					; 
+					; Faces and font-lock
+					; ____________________
 
 (defface identica-friends-mode-id
   '(
@@ -118,23 +170,28 @@ Be aware of no function or actual buffers exists. Reboot all identica-friends fu
   "Font lock for `identica-friends--mode'"
   )
 
+					; ____________________
+					;
+					; Keymaps
+					; ____________________
 
-;; KEYMAPS
-;; _______
+;; Keymaps calls functions from the "Interactive API Commands" sections(see below).
 
 (defvar identica-friends-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "q" 'bury-buffer)
+    (define-key map "n" 'identica-friends-next-user)
+    (define-key map "p" 'identica-friends-prev-user)
     map)
   "Keymap for `identica-friends-mode'."
   )
 
-(defun identica-friends-buffer ()
-  "Show a new buffer with all the friends. "
-  (setq identica-friends-buffer (get-buffer-create identica-friends-buffer-name))
-  (switch-to-buffer identica-friends-buffer)
-  (identica-friends-mode)
-  )
+
+					; ____________________
+					;
+					; Major Mode
+					; ____________________
+
 
 (define-derived-mode identica-friends-mode nil "Identica-friends-mode"
   "Major mode for identica-friends buffer.
@@ -144,61 +201,47 @@ Use `identica-show-friends' to call this buffer."
        identica-friends-mode-font-lock)
   (set (make-local-variable 'buffer-read-only) t)
   (make-local-variable 'inhibit-read-only)
+  (run-hooks identica-friends-mode-hooks)
   )
 
 
-                                        ; ----------
-                                        ; Followers
-                                        ;
+					; ________________________________________
+					;
+					; Interactive API Commands
+					; ________________________________________
+
+
+(defun identica-friends-next-user ()
+  "Put the pointer in the next friend or follower in the identica-friend buffer."
+  (interactive)
+  (with-current-buffer identica-friends-buffer
+    (goto-char (identica-friends-find-next-user-position))
+    )
+  (run-hooks identica-friends-next-user-hooks)
+  )
+
+(defun identica-friends-prev-user ()
+  "Put the pointer in the previous friend or follower in the identica-friend buffer."
+  (interactive)
+  (with-current-buffer identica-friends-buffer
+    (goto-char (identica-friends-find-prev-user-position))
+    )
+  (run-hooks identica-friends-prev-user-hooks)
+  )
+					;
+                                        ; Followers Commands
+					;
+
 
 (defun identica-show-followers()
   (interactive)
   (identica-http-get "statuses" "followers" nil 'identica-show-user-sentinel '("follower"))
+  (run-hooks identica-show-followers-hooks)
   )
 
 
-(defun identica-get-follower-data (usr-lst)
-  "Parse the list and make a more easy-to-read list. The final list will have the following form suitable
-for writing in a buffer with the function `identica-write-user'.
-  (id . name . screen_name . location . description )."
-
-  (setq lst '())
-
-  ;; Put the desription
-  (push
-   (nth 2 (nth 11 usr-lst))
-   lst
-   )
-
-  ;; Put the location
-  (push
-   (nth 2 (nth 9 usr-lst))
-   lst
-   )
-
-  ;; Put the screen-name
-  (push
-   (nth 2 (nth 7 usr-lst))
-   lst)
-
-  ;; Put the name
-  (push
-   (nth 2 (nth 5 usr-lst))
-   lst)
-
-  ;; Put the id
-  (push
-   (nth 2 (nth 3 usr-lst))
-   lst)
-
-
-  ;; Replace nils into strings...
-  (replace-nils lst "")
-  )
-
-
-                                        ;----------
-                                        ; Friends
+                                        ;
+                                        ; Friends Commands
                                         ;
 
 
@@ -208,71 +251,87 @@ for writing in a buffer with the function `identica-write-user'.
 ;  (setq identica-method "friends")
 ;  (identica-http-get identica-method-class identica-method identica-show-friend-sentinel)
   (identica-http-get "statuses" "friends" nil 'identica-show-user-sentinel '("friend"))
-  )
-
-(defun identica-get-friend-data (usr-lst)
-  "Parse the list and make a list more easy to read. The list has the following form:
-  (id . name . screen_name . location . description ).
-
-This form is suitable for the function `identica-write-user'.
-"
-
-  (setq lst '())
-
-  ;; Put the desription
-  (push
-   (nth 2 (nth 11 usr-lst))
-   lst
-   )
-
-  ;; Put the location
-  (push
-   (nth 2 (nth 9 usr-lst))
-   lst
-   )
-
-  ;; Put the screen name
-  (push
-   (nth 2 (nth 7 usr-lst))
-   lst
-   )
-
-
-  ;; Put the name
-  (push
-   (nth 2 (nth 5 usr-lst))
-   lst
-   )
-
-
-  ;; Put the id
-  (push
-   (nth 2 (nth 3 usr-lst))
-   lst
-   )
-
-  ;; Replace nils into strings...
-  (replace-nils lst "")
+  (run-hooks identica-show-friends-hooks)
   )
 
 
-                                        ; ----------
-                                        ; Common
-                                        ;
+					; ____________________
+					; 
+					; Auxiliary Functions
+					; ____________________
 
 
-;; Are there any function to replace anything from a list?
-(defun replace-nils (lst elt)
-  "Replace nils with an element elt."
-  (unless (null lst)
-    (if (null (car lst))
-        (cons elt (replace-nils (cdr lst) elt))
-      (cons (car lst) (replace-nils (cdr lst) elt))
+(defun identica-friends-buffer ()
+  "Show a new buffer with all the friends. "
+  (setq identica-friends-buffer (get-buffer-create identica-friends-buffer-name))
+  (switch-to-buffer identica-friends-buffer)
+  (identica-friends-mode)
+  )
+
+
+(defun identica-friends-get-current-user ()
+  "Return the current user(friend or follower) that we are pointing now in the *identica-buffer*.
+This will be returned as a list wich components are in these order:
+ (NICK NAME DESCRIPTION LOCATION)"
+
+  (setq usr '())
+  (save-excursion
+    ;; Position at the beginning of the user.
+    (search-backward-regexp "^--------------------$" nil t)
+    (goto-char (match-beginning 0))
+    
+    (setq usr (cons (identica-friends-get-location) usr))
+    (setq usr (cons (identica-friends-get-desc) usr))
+
+    (setq usr (cons (identica-friends-get-name) usr))
+    (setq usr (cons (identica-friends-get-nick) usr))
+    )
+  usr
+  )
+
+(defun identica-friends-get-nick ()
+  "Get the *next* user(friend or follower) nick.
+If there are no user, return nil."
+  (with-current-buffer identica-friends-buffer
+    (save-excursion
+      (search-forward-regexp "Nick: \\(.*\\)$" nil t)
+      (match-string-no-properties 1)
       )
     )
   )
 
+(defun identica-friends-get-name ()
+  "Get the *next* user(friend or follower) nick.
+If there are no user, return nil."
+  (with-current-buffer identica-friends-buffer
+    (save-excursion
+      (search-forward-regexp "Name: \\(.*\\)$" nil t)
+      (match-string-no-properties 1)
+      )
+    )
+  ) 
 
+(defun identica-friends-get-desc ()
+  "Get the current user(friend or follower) nick.
+If there are no user, return nil."
+  (with-current-buffer identica-friends-buffer
+    (save-excursion
+      (search-forward-regexp "Description: \\(.*\\)$" nil t)
+      (match-string-no-properties 1)
+      )
+    )
+  ) 
+
+(defun identica-friends-get-location ()
+  "Get the current user(friend or follower) nick.
+If there are no user, return nil."
+  (with-current-buffer identica-friends-buffer
+    (save-excursion
+      (search-forward-regexp "Location: \\(.*\\)$" nil t)
+      (match-string-no-properties 1)
+      )
+    )
+  ) 
 
 (defun identica-show-user-sentinel
   (&optional status method-class method parameters success-message type-of-user)
@@ -347,9 +406,169 @@ or `identica-get-follower-data':
     )
   )
 
-                                        ; ----------
+;; *****
+;; ** Comment about `identica-get-follower-data' and `identica-get-friend-data':
+;; 
+;;   These parsers must be changed to a most suitable way of finding the members.
+;;   Maybe using the "member" function or any simmilar makes a more reliable way of finding the attributes 
+;; than going to the nth element of the list.
+;;
+;;   This is because if we change the structure of the XML, or just alternate some items(for example: instead
+;; using the description before the location, in the future the description comes after the location) this 
+;; functions won't work properly. Also, they aren't readable and easy to change.
+;;
+;; *****
+
+(defun identica-get-follower-data (usr-lst)
+  "Parse the list and make a more easy-to-read list. The final list will have the following form suitable
+for writing in a buffer with the function `identica-write-user'.
+  (id . name . screen_name . location . description )."
+
+  (setq lst '())
+
+  ;; Put the desription
+  (push
+   (nth 2 (nth 11 usr-lst))
+   lst
+   )
+
+  ;; Put the location
+  (push
+   (nth 2 (nth 9 usr-lst))
+   lst
+   )
+
+  ;; Put the screen-name
+  (push
+   (nth 2 (nth 7 usr-lst))
+   lst)
+
+  ;; Put the name
+  (push
+   (nth 2 (nth 5 usr-lst))
+   lst)
+
+  ;; Put the id
+  (push
+   (nth 2 (nth 3 usr-lst))
+   lst)
+
+
+  ;; Replace nils into strings...
+  (replace-nils lst "")
+  )
+
+
+(defun identica-get-friend-data (usr-lst)
+  "Parse the list and make a list more easy to read. The list has the following form:
+  (id . name . screen_name . location . description ).
+
+This form is suitable for the function `identica-write-user'.
+"
+
+  (setq lst '())
+
+  ;; Put the desription
+  (push
+   (nth 2 (nth 11 usr-lst))
+   lst
+   )
+
+  ;; Put the location
+  (push
+   (nth 2 (nth 9 usr-lst))
+   lst
+   )
+
+  ;; Put the screen name
+  (push
+   (nth 2 (nth 7 usr-lst))
+   lst
+   )
+
+
+  ;; Put the name
+  (push
+   (nth 2 (nth 5 usr-lst))
+   lst
+   )
+
+
+  ;; Put the id
+  (push
+   (nth 2 (nth 3 usr-lst))
+   lst
+   )
+
+  ;; Replace nils into strings...
+  (replace-nils lst "")
+  )
+
+(defun identica-friends-find-next-user-position ()
+  "Find the position in the *identica-friend-buffer* of the next user. If there are no next user(we are at the end of the list)
+return the first one.
+This function return nil when there are any friend in the buffer."
+  (with-current-buffer identica-friends-buffer
+    ;; We have to put one char forward so, we cannot detect the actual "Nick: "
+    (forward-char 1)
+    (if (search-forward-regexp "Nick: " nil t)
+	(match-beginning 0)
+      (progn
+	;; Not found! Maybe we are at the end? 
+	;; Go to the beginning of the buffer and search again, if fails, this user has no friends!
+	(goto-char (point-min))
+	(if (search-forward-regexp "Nick: " nil t)
+	    (match-beginning 0) ; Yes, he has friends... the pointer was at the end of buffer
+	  'nil ; Wow... he has no friends!
+	  )
+	)
+      )
+    )
+  )
+(defun identica-friends-find-prev-user-position ()
+  "Find the position in the *identica-friend-buffer* of the previous user. If there are no previous user(we are at the begin of the list)
+return the last one.
+This function return nil when there are any friend in the buffer."
+  (with-current-buffer identica-friends-buffer
+    (if (search-backward-regexp "Nick: " nil t)
+	(match-beginning 0)
+      (progn
+	;; Not found! Maybe we are at the end? 
+	;; Go to the beginning of the buffer and search again, if fails, this user has no friends!
+	(goto-char (point-max))
+	(if (search-backward-regexp "Nick: " nil t)
+	    (match-beginning 0) ; Yes, he has friends... the pointer was at the end of buffer
+	  'nil ; Wow... he has no friends!
+	  )
+	)
+      )
+    )
+  )
+                                        ; ____________________
+					;
+                                        ; Commons Functions
+                                        ; ____________________
+
+
+;; Are there any function to replace anything from a list?
+(defun replace-nils (lst elt)
+  "Replace nils with an element elt."
+  (unless (null lst)
+    (if (null (car lst))
+        (cons elt (replace-nils (cdr lst) elt))
+      (cons (car lst) (replace-nils (cdr lst) elt))
+      )
+    )
+  )
+
+
+
+
+                                        ; 
                                         ; For debugging purpose
                                         ;
+
+
 
 (defvar identica-http-debug "*identica-http*"
   "Buffer to the http requests")
