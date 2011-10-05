@@ -1237,6 +1237,11 @@ in tags."
   (while (re-search-forward "\r?\n[0-9a-z]+\r?\n" nil t)
     (replace-match "")))
 
+(defun identica-compare-statuses (a b)
+  "Compare a pair of statuses.
+For use as a predicate for sort."
+  (< (assocref 'id b) (assocref 'id a)))
+
 (defun identica-cache-status-datum (status-datum &optional data-var)
   "Cache status datum into data-var(default identica-timeline-data)
 If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
@@ -1249,7 +1254,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		    (eql id (cdr (assq 'id item))))
 		  (symbol-value data-var))))
 	(progn
-	  (set data-var (cons status-datum (symbol-value data-var)))
+          (set data-var (sort (cons status-datum (symbol-value data-var))
+                              'identica-compare-statuses))
 	  t)
       nil)))
 
@@ -1788,7 +1794,8 @@ this dictionary, only if identica-urlshortening-service is 'google.
   (setq identica-active-mode nil)
   (identica-update-mode-line))
 
-(defun identica-get-timeline ()
+(defun identica-get-timeline (&optional parameters)
+  (unless parameters (setq parameters `(("count" . ,(int-to-string identica-statuses-count)))))
   (when (not (eq identica-last-timeline-retrieved identica-method))
     (setq identica-timeline-last-update nil
 	  identica-timeline-data nil))
@@ -1798,7 +1805,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
       (progn
 	(when (not identica-method)
 	  (setq identica-method "friends_timeline"))
-	(identica-http-get identica-method-class identica-method `(("count" . ,(int-to-string identica-statuses-count)))))))
+        (identica-http-get identica-method-class identica-method parameters))))
   (if identica-icon-mode
       (if (and identica-image-stack window-system)
 	  (let ((proc
@@ -1878,11 +1885,15 @@ this dictionary, only if identica-urlshortening-service is 'google.
     (setq identica-method (concat "conversation/" context-id)))
   (identica-get-timeline))
 
-(defun identica-current-timeline ()
-  (interactive)
+(defun identica-current-timeline (&optional count)
+  "Load newer notices, with an argument load older notices, and with a numeric argument load that number of older notices."
+  (interactive "P")
   (if (> identica-new-dents-count 0)
       (identica-render-pending-dents)
-    (identica-get-timeline)))
+    (identica-get-timeline (if count
+                               (cons `("count" . ,(int-to-string (if (listp count) identica-statuses-count count)))
+                                     `(("max_id" . ,(int-to-string (- (assocref 'id (car (last identica-timeline-data))) 1)))))
+                             nil))))
 
 (defun identica-update-status-interactive ()
   (interactive)
