@@ -81,6 +81,13 @@ Be aware of no function or actual buffers exists. Reboot all identica-friends fu
 					; Hooks Variables
 					; ----
 
+(defcustom identica-friends-good-bye-hooks
+  'nil
+  "These functions are called as soon as the `identica-friends-good-bye' functions finnish."
+  :type '(hook)
+  )
+
+
 (defcustom identica-friends-mode-hooks
   'nil
   "These functions are called as soon as the `identica-friends-mode' functions finnish."
@@ -179,7 +186,7 @@ Be aware of no function or actual buffers exists. Reboot all identica-friends fu
 
 (defvar identica-friends-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "q" 'bury-buffer)
+    (define-key map "q" 'identica-friends-good-bye)
     (define-key map "n" 'identica-friends-next-user)
     (define-key map "p" 'identica-friends-prev-user)
     map)
@@ -201,7 +208,7 @@ Use `identica-show-friends' to call this buffer."
        identica-friends-mode-font-lock)
   (set (make-local-variable 'buffer-read-only) t)
   (make-local-variable 'inhibit-read-only)
-  (run-hooks identica-friends-mode-hooks)
+  (run-hooks 'identica-friends-mode-hooks)
   )
 
 
@@ -211,13 +218,22 @@ Use `identica-show-friends' to call this buffer."
 					; ________________________________________
 
 
+(defun identica-friends-good-bye ()
+  "Bury the *identica-friends* buffer"
+  (interactive)
+  (with-current-buffer identica-friends-buffer
+    (bury-buffer)
+    (run-hooks 'identica-friends-good-bye-hooks)
+    )
+  )
+
 (defun identica-friends-next-user ()
   "Put the pointer in the next friend or follower in the identica-friend buffer."
   (interactive)
   (with-current-buffer identica-friends-buffer
     (goto-char (identica-friends-find-next-user-position))
     )
-  (run-hooks identica-friends-next-user-hooks)
+  (run-hooks 'identica-friends-next-user-hooks)
   )
 
 (defun identica-friends-prev-user ()
@@ -226,7 +242,7 @@ Use `identica-show-friends' to call this buffer."
   (with-current-buffer identica-friends-buffer
     (goto-char (identica-friends-find-prev-user-position))
     )
-  (run-hooks identica-friends-prev-user-hooks)
+  (run-hooks 'identica-friends-prev-user-hooks)
   )
 					;
                                         ; Followers Commands
@@ -236,7 +252,7 @@ Use `identica-show-friends' to call this buffer."
 (defun identica-show-followers()
   (interactive)
   (identica-http-get "statuses" "followers" nil 'identica-show-user-sentinel '("follower"))
-  (run-hooks identica-show-followers-hooks)
+  (run-hooks 'identica-show-followers-hooks)
   )
 
 
@@ -251,7 +267,7 @@ Use `identica-show-friends' to call this buffer."
 ;  (setq identica-method "friends")
 ;  (identica-http-get identica-method-class identica-method identica-show-friend-sentinel)
   (identica-http-get "statuses" "friends" nil 'identica-show-user-sentinel '("friend"))
-  (run-hooks identica-show-friends-hooks)
+  (run-hooks 'identica-show-friends-hooks)
   )
 
 

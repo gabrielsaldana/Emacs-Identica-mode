@@ -145,17 +145,34 @@ Adding into the BBDB means:
   ;; Our idea is to show the user if founded...
   ;; Search for the *first mach* in the BBDB:
   (setq record 
-	(car (bbdb-search (bbdb-records) (nth 2 usr)))
+	(let ((usr-name (nth 1 usr)))
+	  (car (bbdb-search (bbdb-records) usr-name))
+	  )
 	)
-  
+ 
   ;; check if exist, if not add it(or query to add it).
   (if record 
-      (if (bbdb-identica-check-record record usr)
+      (progn 
+	(bbdb-display-records (cons record '()))
+	(unless (bbdb-identica-check-record record usr)
 	  ;; It has to be updated!
 	  (bbdb-identica-query-update-record record usr)
+	  (bbdb-display-records (cons record '()))
+	  )
 	)
-    ;; No record available... query to add it..
-    (bbdb-identica-query-add-record record usr)
+    (progn
+      ;; No record available... query to add it..
+      (bbdb-identica-query-add-record record usr)
+      ;; Show new record...
+      (setq record 
+	    (let ((usr-name (nth 1 usr)))
+	      (car (bbdb-search (bbdb-records) usr-name))
+	      )
+	    )
+      (when record
+	(bbdb-display-records (cons record '()))
+	)
+      )
     )
   )
 
@@ -163,30 +180,61 @@ Adding into the BBDB means:
   "Query the user if she/he wants to update the BBDB record.
 If she/he answer \"yes\", update it.
 If she/he answer \"no\", do nothing."
-  ;; TODO
-  ;; Don't know if the record parameter is necesary...
+  (when (bbdb-identica-prompt-yepnop "Do you want to update this record?(y/n)")
+    (bbdb-identica-update-record record usr)
+    )				     
 )
 
 (defun bbdb-identica-update-record (record usr)
   "Update the record usr with new values:
 1) Update the \"identica\" field.
 2) No need to update anything else..."
-  ;; TODO
-  ;; Don't know if the record parameter is necesary
+  (bbdb-record-set-note record 'identica (nth 0 usr))
   )
+
+(defun bbdb-identica-prompt-yepnop (prompt)
+  "Ask a question to the user for a yes-no answer.
+Return t when user answer yes.
+Return nil when user answer no."
+  (let (
+	(yepnop (read-char prompt)))
+    (cond
+     ((eq ?y yepnop)
+      t)
+     ((eq ?n yepnop)
+      nil)
+     (t 
+      (message "Please, answer 'y' or 'n'.")
+      (bbdb-identica-prompt-yepnop prompt))
+     )
+    )
+  )
+
 
 (defun bbdb-identica-query-add-record (record usr)
   "Query the user if she/he wants to add this identica user into BBDB.
 If she/he answer \"yes\", add it.
 If she/he answer \"no\", don't add it of course."
-  ;; TODO
-  ;; Don't know if the record parameter is necesary
+  (when (bbdb-identica-prompt-yepnop "Do you want to add this user and identica nick?(y/n)")
+    (bbdb-identica-add-record usr)
+    )	     
   )
 
-(defun bbdb-identica-add-record (record usr)
-  "Add friend/follower into BBDB."
-  ;; TODO
-  ;; Don't know if the record parameter is necesary
+(defun bbdb-identica-add-record (usr)
+  "Add friend/follower into BBDB."  
+  (bbdb-create-internal 
+   (nth 1 usr) ;;name
+   nil ;; affix
+   nil ;; aka
+   nil ;; organizations
+   nil ;; mail
+   nil ;; phones
+   nil ;; addresses
+   (cons 
+    (cons 'identica (nth 0 usr))
+    '()
+    ) ;; notes
+   )
   )
 
 (defun bbdb-identica-check-record (record usr)
@@ -195,11 +243,29 @@ If it is the same return t.
 If it is different return nil.
 If the \"identica\" field does not exists return nil(it means it has different value).
 "
-  ;; *TODO*
+  ;; Get if exists the field 
+  (if (and 
+       record
+       usr)
+      (string= 
+       (bbdb-record-note record 'identica)
+       (car usr)
+       )
+    nil
+    )
   )
 
+(defun bbdb-identica-ask-for-save ()
+  "This is intended when the user wants to quit identica.
+As soon he/she wants to quit, is necessary to ask if she/he wants to update BBDB database."
+  (bbdb-save t t)
+  )
 
-
+(eval-and-compile
+  (add-hook 'identica-friends-good-bye-hooks 'bbdb-identica-ask-for-save)
+  (add-hook 'identica-friends-next-user-hooks 'bbdb-identica-next-usr)
+  (add-hook 'identica-friends-prev-user-hooks 'bbdb-identica-next-usr)
+  )
 
 (provide 'bbdb-identica)
 
