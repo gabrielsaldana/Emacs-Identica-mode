@@ -133,7 +133,7 @@ A function which returns one of the above values."
 
 					; ____________________
 
-(defun bbdb-identica-next-usr ()
+(defun bbdb-identica-friends-next-usr ()
   "This function is supposed to be used as a hook to the function `identica-friends-next-user'.
 Check if the actual user is in BBDB. If not, add it *without query the user*. 
 
@@ -263,8 +263,116 @@ As soon he/she wants to quit, is necessary to ask if she/he wants to update BBDB
 
 (eval-and-compile
   (add-hook 'identica-friends-good-bye-hooks 'bbdb-identica-ask-for-save)
-  (add-hook 'identica-friends-next-user-hooks 'bbdb-identica-next-usr)
-  (add-hook 'identica-friends-prev-user-hooks 'bbdb-identica-next-usr)
+  (add-hook 'identica-friends-next-user-hooks 'bbdb-identica-friends-next-usr)
+  (add-hook 'identica-friends-prev-user-hooks 'bbdb-identica-friends-next-usr)
+  )
+
+(defun bbdb-identica-next-usr ()
+  "Go to next identica user in the identica buffer, find its BBDB record and show it if exists."
+  (interactive)
+  (save-excursion
+    (goto-char (bbdb-identica-find-next-usr-pos))
+    ;; Get user nick
+    (save-excursion
+      (search-forward-regexp "[^[:blank:]]+" nil t)
+      (setq usrnick (match-string-no-properties 0))
+      )
+    ;; Remove the '@'
+    (when (string= "@" (substring usrnick 0 1))
+      ;;Has a '@', take it out.
+      (setq usrnick (substring usrnick 0 1))
+      )
+    ;; Remove the ','
+    (when (string= "," (substring usrnick -1))
+      (setq usrnick (substring usrnick 0 -1))
+      )  
+    
+    ;; Find usrnick in the BBDB
+    (bbdb-search-notes "identica" usrnick)
+    )
+  )
+
+
+(defun bbdb-identica-find-next-usr-1-pos ()
+  "Find the next identica nick starting with '@'."
+  (with-current-buffer identica-buffer
+    (save-excursion
+      (search-forward-regexp "@[^[:blank:]]*" nil t)
+      (match-beginning 0)
+      )
+    )
+  )
+
+(defun bbdb-identica-find-next-usr-2-pos ()
+  "Find the next identica nick as the first element that appear of a status. For example:
+
+_
+ rms,  10:26  septiembre 26, 2011:
+  hola, esto es un estado // from web [algúnlado] in reply to someone
+
+in this case the return value is 'rms'."
+  (with-current-buffer identica-buffer
+    (identica-get-next-username-face-pos (point))     
+    )
+  )
+
+(defun bbdb-identica-find-next-usr-pos ()
+  "Return the position of the first identica nick after the current point, no matters if it is a '@user' form or just
+the name of the status's remitent."
+  (let ((usr1 (bbdb-identica-find-next-usr-1-pos))
+	(usr2 (bbdb-identica-find-next-usr-2-pos))
+	)
+    ;; Look wich one is first, and return that one
+    (if (< usr1 usr2)
+	usr1
+      usr2
+      )
+    )
+  )
+
+(defun bbdb-identica-down-key ()
+  "Go to down, and then show the next possible nick BBDB record."
+  (interactive)
+  (next-line)
+  (bbdb-identica-next-usr)
+  )
+
+(defun bbdb-identica-up-key ()
+  "Go to up and then show the next possible nick BBDB record."
+  (interactive)
+  (previous-line)
+  (bbdb-identica-next-usr)
+  )
+
+;; I see that this could be a bit destructive.
+;; If down or up key are setted to other functions, this will make identica to ignore them!
+
+(eval-and-compile 
+  ;; If you want, at every position, to search for BBDB uncomment this:
+  ;;(define-key identica-mode-map [down] 'bbdb-identica-down-key)
+  ;;(define-key identica-mode-map [up] 'bbdb-identica-up-key)
+  )
+
+;; This is better: at each j and k key(identica-goto-next-status) search for its BBDB record.
+(defadvice identica-goto-next-status (after bbdb-identica-next-status)
+  "Search for BBDB record of the next nearest nick."
+  (save-excursion
+    (backward-char)
+    (bbdb-identica-next-usr)
+    )
+  )
+
+(defadvice identica-goto-previous-status (after bbdb-identica-next-status)
+  "Search for BBDB record of the next nearest nick."
+  (save-excursion
+    (backward-char)
+    (bbdb-identica-next-usr)
+    )
+  )
+
+(eval-and-compile
+  (ad-activate 'identica-goto-next-status)
+  (ad-activate 'identica-goto-previous-status)
   )
 
 (provide 'bbdb-identica)
