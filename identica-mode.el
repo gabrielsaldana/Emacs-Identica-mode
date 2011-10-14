@@ -2272,4 +2272,6 @@ static char * statusnet_off_xpm[] = {
   (identica-mode))
 
 (provide 'identica-mode)
+(add-hook 'identica-load-hook 'identica-autoload-oauth)
+(run-hooks 'identica-load-hook)
 ;;; identica.el ends here
