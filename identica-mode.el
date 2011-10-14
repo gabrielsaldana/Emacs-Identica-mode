@@ -623,6 +623,11 @@ of identica-stripe-face."
 (defvar identica-mode-hook nil
   "Identica-mode hook.")
 
+(defcustom identica-load-hook nil
+  "Hook that is run after identica-mode.el has been loaded."
+  :group 'identica
+  :type 'hook)
+
 (defun identica-kill-buffer-function ()
   (when (eq major-mode 'identica-mode)
     (identica-stop)))
