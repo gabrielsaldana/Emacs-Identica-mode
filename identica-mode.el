@@ -632,12 +632,16 @@ of identica-stripe-face."
   (when (eq major-mode 'identica-mode)
     (identica-stop)))
 
+(defun identica-autoload-oauth ()
+  "Autoloads oauth.el when needed"
+  (autoload 'oauth-hexify-string "oauth")
+  (autoload 'make-oauth-access-token "oauth"))
+
 (defun identica-mode ()
   "Major mode for Identica
 \\{identica-mode-map}"
   (interactive)
-  (autoload 'oauth-hexify-string "oauth")
-  (autoload 'make-oauth-access-token "oauth")
+  (identica-autoload-oauth)
   (switch-to-buffer (identica-buffer))
   (buffer-disable-undo (identica-buffer))
   (kill-all-local-variables)
