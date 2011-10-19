@@ -352,7 +352,7 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 (defun identica-buffer (&optional method)
   (unless method
     (setq method "friends_timeline"))
-  (identica-get-or-generate-buffer identica-buffer))
+  (get-buffer-create identica-buffer))
 
 (defvar identica-http-buffer nil
   "Pointer to the current http response buffer.")
@@ -379,15 +379,6 @@ of identica-stripe-face."
 (defvar identica-reply-face 'identica-reply-face)
 (defvar identica-stripe-face 'identica-stripe-face)
 (defvar identica-highlight-face 'identica-highlight-face)
-
-(defun identica-get-or-generate-buffer (buffer)
-  (if (bufferp buffer)
-      (if (buffer-live-p buffer)
-	  buffer
-	(generate-new-buffer (buffer-name buffer)))
-    (if (stringp buffer)
-	(or (get-buffer buffer)
-	    (generate-new-buffer buffer)))))
 
 (defun assocref (item alist)
   (cdr (assoc item alist)))
@@ -477,7 +468,7 @@ of identica-stripe-face."
 (defvar identica-debug-mode nil)
 (defvar identica-debug-buffer "*identica-debug*")
 (defun identica-debug-buffer ()
-  (identica-get-or-generate-buffer identica-debug-buffer))
+  (get-buffer-create identica-debug-buffer))
 (defmacro debug-print (obj)
   (let ((obsym (gensym)))
     `(let ((,obsym ,obj))
