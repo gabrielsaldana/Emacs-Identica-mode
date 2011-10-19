@@ -380,8 +380,6 @@ of identica-stripe-face."
 (defvar identica-stripe-face 'identica-stripe-face)
 (defvar identica-highlight-face 'identica-highlight-face)
 
-(defun assocref (item alist)
-  (cdr (assoc item alist)))
 (defmacro list-push (value listvar)
   `(setq ,listvar (cons ,value ,listvar)))
 
@@ -961,7 +959,7 @@ we are interested in."
                      (save-excursion (beginning-of-line -1) (point)) (point)))
                   (insert "\n")
                   (if (and identica-enable-highlighting
-                           (memq (assocref 'id status) identica-highlighted-entries))
+                           (memq (aget status 'id) identica-highlighted-entries))
                       (merge-text-attribute before-status (point)
                                             'identica-highlight-face :background)
                     (when stripe-entry
@@ -980,7 +978,7 @@ we are interested in."
 
 (defun identica-format-status (status format-str)
   (flet ((attr (key)
-	       (assocref key status))
+	       (aget status key))
 	 (profile-image
 	  ()
 	  (let ((profile-image-url (attr 'user-profile-image-url)))
@@ -1240,7 +1238,7 @@ in tags."
 (defun identica-compare-statuses (a b)
   "Compare a pair of statuses.
 For use as a predicate for sort."
-  (< (assocref 'id b) (assocref 'id a)))
+  (< (aget b 'id) (aget a 'id)))
 
 (defun identica-cache-status-datum (status-datum &optional data-var)
   "Cache status datum into data-var(default identica-timeline-data)
@@ -1892,7 +1890,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
       (identica-render-pending-dents)
     (identica-get-timeline (if count
                                (cons `("count" . ,(int-to-string (if (listp count) identica-statuses-count count)))
-                                     `(("max_id" . ,(int-to-string (- (assocref 'id (car (last identica-timeline-data))) 1)))))
+                                     `(("max_id" . ,(int-to-string (- (aget (car (last identica-timeline-data)) 'id) 1)))))
                              nil))))
 
 (defun identica-update-status-interactive ()
