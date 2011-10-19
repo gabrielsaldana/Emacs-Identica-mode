@@ -380,9 +380,6 @@ of identica-stripe-face."
 (defvar identica-stripe-face 'identica-stripe-face)
 (defvar identica-highlight-face 'identica-highlight-face)
 
-(defmacro list-push (value listvar)
-  `(setq ,listvar (cons ,value ,listvar)))
-
 ;;; Proxy
 (defvar identica-proxy-use nil)
 (defvar identica-proxy-server nil)
@@ -1007,29 +1004,29 @@ we are interested in."
       (while (setq found-at (string-match "%\\(C{\\([^}]+\\)}\\|[A-Za-z#@']\\)" format-str cursor))
 	(setq c (string-to-char (match-string-no-properties 1 format-str)))
 	(if (> found-at cursor)
-	    (list-push (substring format-str cursor found-at) result)
+	    (push (substring format-str cursor found-at) result)
 	  "|")
 	(setq cursor (match-end 1))
 
 	(case c
 	  ((?s)                         ; %s - screen_name
-	   (list-push (attr 'user-screen-name) result))
+	   (push (attr 'user-screen-name) result))
 	  ((?S)                         ; %S - name
-	   (list-push (attr 'user-name) result))
+	   (push (attr 'user-name) result))
 	  ((?i)                         ; %i - profile_image
-	   (list-push (profile-image) result))
+	   (push (profile-image) result))
 	  ((?d)                         ; %d - description
-	   (list-push (attr 'user-description) result))
+	   (push (attr 'user-description) result))
 	  ((?l)                         ; %l - location
-	   (list-push (attr 'user-location) result))
+	   (push (attr 'user-location) result))
 	  ((?L)                         ; %L - " [location]"
 	   (let ((location (attr 'user-location)))
 	     (unless (or (null location) (string= "" location))
-	       (list-push (concat " [" location "]") result)) ))
+	       (push (concat " [" location "]") result)) ))
 	  ((?u)                         ; %u - url
-	   (list-push (attr 'user-url) result))
+	   (push (attr 'user-url) result))
 	  ((?j)                         ; %j - user.id
-	   (list-push (format "%d" (attr 'user-id)) result))
+	   (push (format "%d" (attr 'user-id)) result))
 	  ((?r)                         ; %r - in_reply_to_status_id
 	   (let ((reply-id (attr 'in-reply-to-status-id))
 		 (reply-name (attr 'in-reply-to-screen-name)))
@@ -1043,15 +1040,15 @@ we are interested in."
 			       face identica-uri-face
 			       uri ,url)
 		  in-reply-to-string)
-		 (list-push (concat " " in-reply-to-string) result)))))
+		 (push (concat " " in-reply-to-string) result)))))
 	  ((?p)                         ; %p - protected?
 	   (let ((protected (attr 'user-protected)))
 	     (when (string= "true" protected)
-	       (list-push "[x]" result))))
+	       (push "[x]" result))))
 	  ((?c)                     ; %c - created_at (raw UTC string)
-	   (list-push (attr 'created-at) result))
+	   (push (attr 'created-at) result))
 	  ((?C) ; %C{time-format-str} - created_at (formatted with time-format-str)
-	   (list-push (identica-local-strftime
+	   (push (identica-local-strftime
 		       (or (match-string-no-properties 2 format-str) "%H:%M:%S")
 		       (attr 'created-at))
 		      result))
@@ -1085,24 +1082,24 @@ we are interested in."
 			     face identica-uri-face
 			     uri ,url)
 		time-string)
-	       (list-push time-string result))))
+	       (push time-string result))))
 	  ((?t)                         ; %t - text
-	   (list-push                   ;(clickable-text)
+	   (push                   ;(clickable-text)
 	    (attr 'text)
 	    result))
 	  ((?')                         ; %' - truncated
 	   (let ((truncated (attr 'truncated)))
 	     (when (string= "true" truncated)
-	       (list-push "..." result))))
+	       (push "..." result))))
 	  ((?f)                         ; %f - source
-	   (list-push (attr 'source) result))
+	   (push (attr 'source) result))
 	  ((?#)                         ; %# - id
-	   (list-push (format "%d" (attr 'id)) result))
+	   (push (format "%d" (attr 'id)) result))
 	  ((?x)                         ; %x - conversation id (conteXt) - default 0
-	   (list-push (attr 'conversation-id) result))
+	   (push (attr 'conversation-id) result))
 	  (t
-	   (list-push (char-to-string c) result))))
-      (list-push (substring format-str cursor) result)
+	   (push (char-to-string c) result))))
+      (push (substring format-str cursor) result)
       (let ((formatted-status (apply 'concat (nreverse result))))
 	(add-text-properties 0 (length formatted-status)
 			     `(username ,(attr 'user-screen-name)
@@ -1437,21 +1434,21 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		     (string-match "&\\(#\\([0-9]+\\)\\|\\([A-Za-z]+\\)\\);"
 				   encoded-str cursor))
 	  (when (> found-at cursor)
-	    (list-push (substring encoded-str cursor found-at) result))
+	    (push (substring encoded-str cursor found-at) result))
 	  (let ((number-entity (match-string-no-properties 2 encoded-str))
 		(letter-entity (match-string-no-properties 3 encoded-str)))
 	    (cond (number-entity
-		   (list-push
+		   (push
 		    (char-to-string
 		     (identica-ucs-to-char
 		      (string-to-number number-entity))) result))
 		  (letter-entity
-		   (cond ((string= "gt" letter-entity) (list-push ">" result))
-			 ((string= "lt" letter-entity) (list-push "<" result))
-			 (t (list-push "?" result))))
-		  (t (list-push "?" result)))
+		   (cond ((string= "gt" letter-entity) (push ">" result))
+			 ((string= "lt" letter-entity) (push "<" result))
+			 (t (push "?" result))))
+		  (t (push "?" result)))
 	    (setq cursor (match-end 0))))
-	(list-push (substring encoded-str cursor) result)
+	(push (substring encoded-str cursor) result)
 	(apply 'concat (nreverse result)))
     ""))
 
