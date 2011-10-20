@@ -66,6 +66,16 @@
 ;; If you want to use simple authentication add your password
 ;; (setq identica-password "yourpassword")
 
+;; It is recommended to create a file ~/.authinfo with your login credentials
+;; instead of storing your password in plain text, the file should have the
+;; following contents:
+
+;; machine servername login yourusername password yourpassword
+
+;; Replace servername with your server (if Identica server use identi.ca)
+;; yourusername and yourpassword with your information. If you setup your
+;; authinfo file, you don't need to set identica-password variable anywhere
+
 ;; If you want to use OAuth authentication add the following
 ;; (setq identica-auth-mode "oauth")
 
@@ -731,8 +741,9 @@ If URL is nil, Rest of the arguments can be used to directly set user
 authentication.
 When called with no arguments, user authentication parameters are
 read from identica-mode variables `identica-username'
-`identica-password' `statusnet-server' `statusnet-port'."
-  (when (or (not identica-username) (not identica-password))
+`identica-password' `statusnet-server' `statusnet-port'.
+The username and password can also be set on ~/.authinfo, ~/.netrc or ~/.authinfo.gpg files for better security. In this case `identica-password' should not be predefined in any .emacs or init.el files, only `identica-username' should be set."
+  (when (not identica-username)
     (identica-ask-credentials))
   (let* ((href (if (stringp url)
 		   (url-generic-parse-url url)
@@ -742,6 +753,7 @@ read from identica-mode variables `identica-username'
 	 (port (if (integerp port) (int-to-string port) port))
 	 (server (or (and href (url-host href))
 		     server statusnet-server))
+	 (servername server)
 	 (server (and server
 		      (concat server (when port (concat ":" port)))))
 	 (file (if href (let ((file-url (url-filename href)))
@@ -750,9 +762,15 @@ read from identica-mode variables `identica-username'
 			   ((string-match "/$" file-url) file-url)
 			   (t (url-basepath file-url))))
 		 "Identi.ca API"))
-	 (password (or (and href (url-password href))
+	 (authinfo (auth-source-search :host servername :max 1))
+	 (auth-pass (plist-get (car authinfo) :secret))
+	 (auth-pass (if (functionp auth-pass)
+			(funcall auth-pass)
+		      auth-pass))
+	 (password (or auth-pass (and href (url-password href))
 		       passwd identica-password))
-	 (auth (concat (or (and href (url-user href))
+	 (auth-user (plist-get (car authinfo) :user))
+	 (auth (concat (or auth-user (and href (url-user href))
 			   username identica-username)
 		       (and password (concat ":" password)))))
     (when (and (not (string= "" server))
