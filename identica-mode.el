@@ -1,13 +1,13 @@
 ;;; identica-mode.el --- Major mode for Identica
 
-;; Copyright (C) 2008, 2009, 2010, 2011 Gabriel Saldana
+;; Copyright (C) 2008-2011 Gabriel Saldana
 ;; Copyright (C) 2009 Bradley M. Kuhn
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
-;; Last update: 2010-11-26
-;; Version: 1.1
+;; Last update: 2011-10-20
+;; Version: 1.2
 ;; Keywords: identica web
-;; URL: http://blog.nethazard.net/identica-mode-for-emacs/
+;; URL: http://blog.gabrielsaldana.org/identica-mode-for-emacs/
 ;; Contributors:
 ;;     Jason McBrayer <jmcbray@carcosa.net> (minor updates for working under Emacs 23)
 ;;     Alex Schröder <kensanata@gmail.com> (mode map patches)
@@ -54,7 +54,7 @@
 ;; To use the OAuth support, you need oauth.el
 ;; Downloadable from http://github.com/psanford/emacs-oauth/
 
-;; If using Oauth with Emacs earlier than 23.3 or so, you also need w3m.
+;; If using Oauth with Emacs earlier than 23.3 you'll also need w3m.
 
 ;; Installation
 
@@ -103,9 +103,8 @@
 (require 'url-http)
 (require 'json)
 (require 'image)
-(require 'oauth)
 
-(defconst identica-mode-version "1.1")
+(defconst identica-mode-version "1.2")
 
 ;;url-basepath fix for emacs22
 (unless (fboundp 'url-basepath)
@@ -121,7 +120,7 @@ must be worked around when using oauth.")
 (defgroup identica-mode nil
   "Identica Mode for microblogging"
   :tag "Microblogging"
-  :link '(url-link http://blog.nethazard.net/identica-mode-for-emacs/)
+  :link '(url-link http://blog.gabrielsaldana.org/identica-mode-for-emacs/)
   :group 'applications )
 
 (defun identica-mode-version ()
