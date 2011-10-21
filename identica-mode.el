@@ -5,7 +5,7 @@
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
 ;; Last update: 2011-10-20
-;; Version: 1.2
+;; Version: 1.2.1
 ;; Keywords: identica web
 ;; URL: http://blog.gabrielsaldana.org/identica-mode-for-emacs/
 ;; Contributors:
@@ -108,7 +108,7 @@
 (require 'image)
 (require 'identica-friends)
 
-(defconst identica-mode-version "1.2")
+(defconst identica-mode-version "1.2.1")
 
 ;;url-basepath fix for emacs22
 (unless (fboundp 'url-basepath)
@@ -776,12 +776,12 @@ The username and password can also be set on ~/.authinfo, ~/.netrc or ~/.authinf
 
 	 (auth-user (if (functionp 'auth-source-search)
 		       (plist-get (car (auth-source-search :host servername :max 1)) :user)
-		     (auth-pass auth-source-user-or-password "login" server "http")))
+		     (auth-source-user-or-password "login" server "http")))
 	 (auth-pass (if (functionp 'auth-source-search)
 			(if (functionp (plist-get (car (auth-source-search :host servername :max 1)) :secret))
 			    (funcall (plist-get (car (auth-source-search :host servername :max 1)) :secret))
 			  (plist-get (car (auth-source-search :host servername :max 1)) :secret))
-		      (auth-pass auth-source-user-or-password "password" server "http")))
+		      (auth-source-user-or-password "password" server "http")))
 	 (password (or auth-pass (and href (url-password href))
 		       passwd identica-password))
 	 (auth (concat (or auth-user (and href (url-user href))
