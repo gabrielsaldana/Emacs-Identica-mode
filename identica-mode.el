@@ -1,13 +1,13 @@
 ;;; identica-mode.el --- Major mode for Identica
 
-;; Copyright (C) 2008, 2009, 2010, 2011 Gabriel Saldana
+;; Copyright (C) 2008-2011 Gabriel Saldana
 ;; Copyright (C) 2009 Bradley M. Kuhn
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
-;; Last update: 2010-11-26
-;; Version: 1.1
+;; Last update: 2011-10-20
+;; Version: 1.2
 ;; Keywords: identica web
-;; URL: http://blog.nethazard.net/identica-mode-for-emacs/
+;; URL: http://blog.gabrielsaldana.org/identica-mode-for-emacs/
 ;; Contributors:
 ;;     Jason McBrayer <jmcbray@carcosa.net> (minor updates for working under Emacs 23)
 ;;     Alex Schröder <kensanata@gmail.com> (mode map patches)
@@ -53,7 +53,8 @@
 ;; json.el is part of Emacs23
 ;; To use the OAuth support, you need oauth.el
 ;; Downloadable from http://github.com/psanford/emacs-oauth/
-;; If using Oauth with Emacs earlier than 23.3 or so, you also need w3m.
+
+;; If using Oauth with Emacs earlier than 23.3 you'll also need w3m.
 
 ;; Installation
 
@@ -104,7 +105,7 @@
 (require 'image)
 (require 'identica-friends)
 
-(defconst identica-mode-version "1.1")
+(defconst identica-mode-version "1.2")
 
 ;;url-basepath fix for emacs22
 (unless (fboundp 'url-basepath)
@@ -120,7 +121,7 @@ must be worked around when using oauth.")
 (defgroup identica-mode nil
   "Identica Mode for microblogging"
   :tag "Microblogging"
-  :link '(url-link http://blog.nethazard.net/identica-mode-for-emacs/)
+  :link '(url-link http://blog.gabrielsaldana.org/identica-mode-for-emacs/)
   :group 'applications )
 
 (defun identica-mode-version ()
@@ -375,6 +376,12 @@ ur1ca, tighturl, tinyurl, toly, google and isgd"
 (defcustom identica-enable-highlighting nil
   "If non-nil, set the background of every selected entry to the background
 of identica-highlight-face."
+  :type 'boolean
+  :group 'identica-mode)
+
+(defcustom identica-enable-striping nil
+  "If non-nil, set the background of every second entry to the background
+of identica-stripe-face."
   :type 'boolean
   :group 'identica-mode)
 
@@ -944,6 +951,25 @@ we are interested in."
 			     (list 'face (list attribute bg))))
       (setq start next-change))))
 
+(defun merge-text-attribute (start end new-face attribute)
+  "If we just add the new face its attributes somehow get overridden by
+the attributes of the underlying face, so instead we just add the attribute
+we are interested in."
+  (while (not (eq start end))
+    (let ((bg (face-attribute new-face attribute))
+	  (prop (get-text-property start 'face))
+          (next-change
+           (or (next-single-property-change start 'face (current-buffer))
+               end)))
+      (if prop
+	  (add-text-properties start next-change
+			       (list 'face
+				     (list prop
+					   (list attribute bg))))
+        (add-text-properties start next-change
+			     (list 'face (list attribute bg))))
+      (setq start next-change))))
+
 (defun identica-render-timeline ()
   (with-current-buffer (identica-buffer)
     (let ((point (point))
@@ -1267,8 +1293,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 		    (eql id (cdr (assq 'id item))))
 		  (symbol-value data-var))))
 	(progn
-          (set data-var (sort (cons status-datum (symbol-value data-var))
-                              'identica-compare-statuses))
+	  (set data-var (sort (cons status-datum (symbol-value data-var))
+			      'identica-compare-statuses))
 	  t)
       nil)))
 
@@ -1818,7 +1844,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
       (progn
 	(when (not identica-method)
 	  (setq identica-method "friends_timeline"))
-        (identica-http-get identica-method-class identica-method parameters))))
+	(identica-http-get identica-method-class identica-method parameters))))
   (if identica-icon-mode
       (if (and identica-image-stack window-system)
 	  (let ((proc
