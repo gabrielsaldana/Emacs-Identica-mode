@@ -1,4 +1,4 @@
-;;; identica-mode.el --- Major mode for Identica
+;;; identica-mode.el --- Major mode API client for status.net open microblogging
 
 ;; Copyright (C) 2008-2011 Gabriel Saldana
 ;; Copyright (C) 2009 Bradley M. Kuhn
@@ -24,6 +24,8 @@
 ;;     Aidan Gauland <aidalgol@no8wireless.co.nz> (variable scope code cleanup)
 ;;     Joel J. Adamson <adamsonj@email.unc.edu> Added countdown minibuffer-prompt style
 ;;     Kevin Granade <kevin.granade@gmail.com> (OAuth support)
+
+;; Commentary:
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
@@ -95,6 +97,7 @@
 
 ;; Follow me on identica: http://identi.ca/gabrielsaldana
 
+;; Code:
 (require 'cl)
 (require 'xml)
 (require 'parse-time)
