@@ -5,7 +5,7 @@
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
 ;; Last update: 2011-10-20
-;; Version: 1.2
+;; Version: 1.2.1
 ;; Keywords: identica web
 ;; URL: http://blog.gabrielsaldana.org/identica-mode-for-emacs/
 ;; Contributors:
@@ -104,7 +104,7 @@
 (require 'json)
 (require 'image)
 
-(defconst identica-mode-version "1.2")
+(defconst identica-mode-version "1.2.1")
 
 ;;url-basepath fix for emacs22
 (unless (fboundp 'url-basepath)
