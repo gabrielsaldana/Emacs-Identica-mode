@@ -640,6 +640,7 @@ of identica-stripe-face."
 
 (defun identica-autoload-oauth ()
   "Autoloads oauth.el when needed"
+  (autoload 'oauth-authorize-app "oauth")
   (autoload 'oauth-hexify-string "oauth")
   (autoload 'make-oauth-access-token "oauth"))
 
