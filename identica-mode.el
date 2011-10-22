@@ -235,19 +235,19 @@ If non-nil, dents over this amount will bre removed.")
   :group 'identica-mode)
 
 (defcustom statusnet-request-url
-  "http://identi.ca/api/oauth/request_token"
+  "https://identi.ca/api/oauth/request_token"
   "Statusnet oauth request_token url"
   :type 'string
   :group 'identica-mode)
 
 (defcustom statusnet-access-url
-  "http://identi.ca/api/oauth/access_token"
+  "https://identi.ca/api/oauth/access_token"
   "Statusnet oauth access_token url"
   :type 'string
   :group 'identica-mode)
 
 (defcustom statusnet-authorize-url
-  "http://identi.ca/api/oauth/authorize"
+  "https://identi.ca/api/oauth/authorize"
   "Statusnet authorization url"
   :type 'string
   :group 'identica-mode)
