@@ -453,7 +453,7 @@ of identica-stripe-face."
 		(if (not (file-directory-p identica-tmp-dir))
 		    (make-directory identica-tmp-dir))
 		t)))))
-  (identica-get-timeline))
+  (identica-current-timeline))
 
 (defun identica-scroll-mode (&optional arg)
   (interactive)
