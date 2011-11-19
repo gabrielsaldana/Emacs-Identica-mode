@@ -1694,11 +1694,10 @@ this dictionary, only if identica-urlshortening-service is 'google.
     (with-current-buffer buffer
       (goto-char (point-min))
       (prog1
-	  (setq ur1short
-		(if (search-forward-regexp "Your .* is: .*>\\(http://ur1.ca/[0-9A-Za-z].*\\)</a>" nil t)
-		    (match-string-no-properties 1)
-		  (error "URL shortening service failed: %s" longurl)))
-	(kill-buffer buffer)))))
+          (if (search-forward-regexp "Your .* is: .*>\\(http://ur1.ca/[0-9A-Za-z].*\\)</a>" nil t)
+              (match-string-no-properties 1)
+            (error "URL shortening service failed: %s" longurl))
+	(kill-buffer buffer)) )))
 
 (defun identica-shortenurl-get (longurl)
   "Shortens url through a url shortening service"
