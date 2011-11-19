@@ -25,13 +25,13 @@
 ;;     Joel J. Adamson <adamsonj@email.unc.edu> Added countdown minibuffer-prompt style
 ;;     Kevin Granade <kevin.granade@gmail.com> (OAuth support)
 
-;; Commentary:
+;;; Commentary:
 
 ;; Identica Mode is a major mode to check friends timeline, and update your
 ;; status on Emacs.
 
 ;; identica-mode.el is a major mode for Identica.  Based on the twittering mode
-;; version 0.6 by Y. Hayamizu and Tsuyoshi CHO found at
+;; version 0.6 by Y.  Hayamizu and Tsuyoshi CHO found at
 ;; <http://hayamin.com/wiliki.cgi?twittering-mode-en&l=en>
 
 ;; This file is free software; you can redistribute it and/or modify
@@ -58,7 +58,7 @@
 
 ;; If using Oauth with Emacs earlier than 23.3 you'll also need w3m.
 
-;; Installation
+;;; Install:
 
 ;; You can use M-x customize-group identica-mode to setup all settings or simply
 ;; add the following to your .emacs or your prefered customizations file
@@ -97,7 +97,8 @@
 
 ;; Follow me on identica: http://identi.ca/gabrielsaldana
 
-;; Code:
+;;; Code:
+
 (require 'cl)
 (require 'xml)
 (require 'parse-time)
@@ -116,9 +117,9 @@
 
 ;;workaround for url-unhex-string bug that was fixed in emacs 23.3
 (defvar identica-unhex-broken nil
-  "predicate indicating broken-ness of url-unhex-string.
+  "Predicate indicating broken-ness of `url-unhex-string'.
 
-If non-nil, indicates that url-unhex-string is broken and
+If non-nil, indicates that `url-unhex-string' is broken and
 must be worked around when using oauth.")
 
 (defgroup identica-mode nil
@@ -138,7 +139,7 @@ must be worked around when using oauth.")
 
 (defvar identica-mode-map (make-sparse-keymap "Identi.ca"))
 (defvar menu-bar-identica-mode-menu nil)
-(defvar identica-timer nil "Timer object for timeline refreshing will be stored here. DO NOT SET VALUE MANUALLY.")
+(defvar identica-timer nil "Timer object for timeline refreshing will be stored here.  DO NOT SET VALUE MANUALLY.")
 (defvar identica-last-timeline-retrieved nil)
 
 (defvar identica-urlshortening-services-map
@@ -148,10 +149,10 @@ must be worked around when using oauth.")
     (ur1ca . "http://ur1.ca")
     (tighturl    . "http://2tu.us")
     (isgd . "http://is.gd/api.php?longurl="))
-  "Alist of tinyfy services")
+  "Alist of tinyfy services.")
 
 (defvar identica-new-dents-count 0
-  "Number of new tweets when `identica-new-dents-hook' is run")
+  "Number of new tweets when `identica-new-dents-hook' is run.")
 
 (defvar identica-new-dents-hook nil
   "Hook run when new twits are received.
@@ -189,27 +190,27 @@ If non-nil, dents over this amount will bre removed.")
       )))
 
 (defcustom identica-idle-time 20
-  "Idle time"
+  "Idle time."
   :type 'integer
   :group 'identica-mode)
 
 (defcustom identica-timer-interval 90
-  "Timer interval to refresh the timeline"
+  "Timer interval to refresh the timeline."
   :type 'integer
   :group 'identica-mode)
 
 (defcustom identica-username nil
-  "Your identi.ca username. If nil, you will be prompted"
+  "Your identi.ca username.  If nil, you will be prompted."
   :type '(choice (const :tag "Ask" nil) (string))
   :group 'identica-mode)
 
 (defcustom identica-password nil
-  "Your identi.ca password. If nil, you will be prompted"
+  "Your identi.ca password.  If nil, you will be prompted."
   :type '(choice (const :tag "Ask" nil) (string))
   :group 'identica-mode)
 
 (defcustom identica-auth-mode "password"
-  "Authorization mode used, options are password and oauth"
+  "Authorization mode used, options are password and oauth."
   :type 'string
   :group 'identica-mode)
 
@@ -230,25 +231,25 @@ If non-nil, dents over this amount will bre removed.")
   "1ab0876f14bd82c4eb450f720a0e84ae")
 
 (defcustom statusnet-server "identi.ca"
-  "Statusnet instance url"
+  "Statusnet instance url."
   :type 'string
   :group 'identica-mode)
 
 (defcustom statusnet-request-url
   "https://identi.ca/api/oauth/request_token"
-  "Statusnet oauth request_token url"
+  "Statusnet oauth request_token url."
   :type 'string
   :group 'identica-mode)
 
 (defcustom statusnet-access-url
   "https://identi.ca/api/oauth/access_token"
-  "Statusnet oauth access_token url"
+  "Statusnet oauth access_token url."
   :type 'string
   :group 'identica-mode)
 
 (defcustom statusnet-authorize-url
   "https://identi.ca/api/oauth/authorize"
-  "Statusnet authorization url"
+  "Statusnet authorization url."
   :type 'string
   :group 'identica-mode)
 
@@ -260,40 +261,40 @@ If non-nil, dents over this amount will bre removed.")
 (defvar oauth-access-token nil)
 
 (defcustom statusnet-port 80
-  "Port on which StatusNet instance listens"
+  "Port on which StatusNet instance listens."
   :type 'integer
   :group 'identica-mode)
 
 (defcustom identica-default-timeline "friends_timeline"
-  "Default timeline to retrieve"
+  "Default timeline to retrieve."
   :type 'string
   :options '("friends_timeline" "public_timeline" "replies")
   :group 'identica-mode)
 
 (defcustom identica-statuses-count 20
-  "Default number of statuses to retrieve"
+  "Default number of statuses to retrieve."
   :type 'integer
   :group 'identica-mode)
 
 (defcustom identica-display-success-messages nil
-  "Display messages when the timeline is successfully retrieved"
+  "Display messages when the timeline is successfully retrieved."
   :type 'boolean
   :group 'identica-mode)
 
 (defcustom identica-oldest-first nil
-  "If t, display older messages before newer ones"
+  "If t, display older messages before newer ones."
   :type 'boolean
   :group 'identica-mode)
 
 (defcustom identica-update-status-edit-confirm-cancellation nil
   "If t, ask user if they are sure when aborting editing of an
-  identica status update when using an edit-buffer"
+identica status update when using an edit-buffer"
   :type 'boolean
   :group 'identica-mode)
 
 (defcustom identica-soft-wrap-status t
   "If non-nil, don't fill status messages in the timeline as
-  paragraphs. Instead, use visual-line-mode or longlines-mode if
+paragraphs. Instead, use visual-line-mode or longlines-mode if
   available to wrap messages.  This may work better for narrow
   timeline windows."
   :type 'boolean
@@ -325,7 +326,7 @@ The available choices are:
 (defvar identica-source "identica-mode")
 
 (defcustom identica-redent-format "♻"
-  "The format/symbol to represent redents"
+  "The format/symbol to represent redents."
   :type 'string
   :group 'identica-mode)
 
@@ -335,7 +336,7 @@ The available choices are:
   :group 'identica-mode)
 
 (defcustom identica-status-format "%i %s,  %@:\n  %t // from %f%L%r\n\n"
-  "The format used to display the status updates"
+  "The format used to display the status updates."
   :type 'string
   :group 'identica-mode)
 ;; %s - screen_name
@@ -357,13 +358,15 @@ The available choices are:
 ;; %# - id
 
 (defcustom identica-urlshortening-service 'ur1ca
-  "The service to use for URL shortening. Values understood are
-ur1ca, tighturl, tinyurl, toly, google and isgd"
+  "The service to use for URL shortening.
+Values understood are ur1ca, tighturl, tinyurl, toly, google and isgd."
   :type 'symbol
   :group 'identica-mode)
 
 (defvar identica-buffer "*identica*")
 (defun identica-buffer (&optional method)
+  "Create a buffer for use by identica-mode.
+Initialize the global method with the default, or with METHOD, if present."
   (unless method
     (setq method "friends_timeline"))
   (get-buffer-create identica-buffer))
@@ -407,7 +410,8 @@ of identica-stripe-face."
 (defvar identica-proxy-user nil)
 (defvar identica-proxy-password nil)
 
-(defun identica-toggle-proxy () ""
+(defun identica-toggle-proxy ()
+  "Toggle whether identica-mode uses a proxy."
   (interactive)
   (setq identica-proxy-use
 	(not identica-proxy-use))
@@ -437,7 +441,7 @@ of identica-stripe-face."
   (expand-file-name (concat "identicamode-images-" (user-login-name))
 		    temporary-file-directory))
 
-(defvar identica-icon-mode nil "You MUST NOT CHANGE this variable directory. You should change through function'identica-icon-mode'")
+(defvar identica-icon-mode nil "You MUST NOT CHANGE this variable directory.  You should change through function'identica-icon-mode'.")
 (make-variable-buffer-local 'identica-icon-mode)
 (defun identica-icon-mode (&optional arg)
   (interactive)
@@ -640,14 +644,13 @@ of identica-stripe-face."
     (identica-stop)))
 
 (defun identica-autoload-oauth ()
-  "Autoloads oauth.el when needed"
+  "Autoloads oauth.el when needed."
   (autoload 'oauth-authorize-app "oauth")
   (autoload 'oauth-hexify-string "oauth")
   (autoload 'make-oauth-access-token "oauth"))
 
 (defun identica-mode ()
-  "Major mode for Identica
-\\{identica-mode-map}"
+  "Major mode for Identica."
   (interactive)
   (identica-autoload-oauth)
   (switch-to-buffer (identica-buffer))
@@ -677,12 +680,12 @@ of identica-stripe-face."
 ;;;
 
 (defun identica-set-proxy (&optional url username passwd server port)
-  "Sets the proxy authentication variables as required by url
-library.When called with no arguments, it reads `identica-mode' proxy
+  "Sets the proxy authentication variables as required by url library.
+When called with no arguments, it reads `identica-mode' proxy
 variables to get the authentication parameters.URL is either a string
-or parsed URL. If URL is non-nil and valid, proxy authentication
-values are read from it.the rest of the arguments can be used to
-directly set proxy authentication.This function essentially adds
+or parsed URL.  If URL is non-nil and valid, proxy authentication
+values are read from it.  The rest of the arguments can be used to
+directly set proxy authentication.  This function essentially adds
 authentication parameters from one of the above methods to the double
 alist `url-http-proxy-basic-auth-storage' and sets `url-using-proxy'."
   (let* ((href (if (stringp url)
@@ -724,20 +727,19 @@ alist `url-http-proxy-basic-auth-storage' and sets `url-using-proxy'."
 			(cdr-safe proxy-double-alist))))))))
 
 (defun identica-change-user ()
-  (interactive)
-  "Interactive function to instantly change user authentication by
-directly reading parameters from user. This function only sets the
-identica-mode variables `identica-username' and
-`identica-password'.
+  "Interactive function to instantly change user authentication.
+Directly reads parameters from user.  This function only sets the
+identica-mode variables `identica-username' and `identica-password'.
 It is the `identica-set-auth' function that eventually sets the
 url library variables according to the above variables which does the
-authentication. This will be done automatically in normal use cases
+authentication.  This will be done automatically in normal use cases
 enabling dynamic change of user authentication."
+  (interactive)
   (identica-ask-credentials)
   (identica-get-timeline))
 
 (defun identica-ask-credentials ()
-  "Asks for your username and password"
+  "Asks for your username and password."
   (setq identica-username
 	(read-string (concat "Username [for " statusnet-server
 			     ":" (int-to-string statusnet-port) "]: ")
@@ -748,13 +750,15 @@ enabling dynamic change of user authentication."
 (defun identica-set-auth (&optional url username passwd server port)
   "Sets the authentication parameters as required by url library.
 If URL is non-nil and valid, it reads user authentication
-parameters from url.
-If URL is nil, Rest of the arguments can be used to directly set user
-authentication.
+parameters from url.  If URL is nil, Rest of the arguments can be
+used to directly set user authentication.
 When called with no arguments, user authentication parameters are
 read from identica-mode variables `identica-username'
 `identica-password' `statusnet-server' `statusnet-port'.
-The username and password can also be set on ~/.authinfo, ~/.netrc or ~/.authinfo.gpg files for better security. In this case `identica-password' should not be predefined in any .emacs or init.el files, only `identica-username' should be set."
+The username and password can also be set on ~/.authinfo, ~/.netrc or
+~/.authinfo.gpg files for better security.
+In this case `identica-password' should not be predefined in any
+.emacs or init.el files, only `identica-username' should be set."
   (when (not identica-username)
     (identica-ask-credentials))
   (let* ((href (if (stringp url)
@@ -845,11 +849,11 @@ Shamelessly stolen from yammer.el"
 METHOD-CLASS and METHOD are parameters for getting dents messages and
 other information from server as specified in api documentation.
 Third optional arguments specify the additional parameters required by
-the above METHOD. It is specified as an alist with parameter name and
-its corresponding value
-SENTINEL represents the callback function to be called after the http
-response is completely retrieved. SENTINEL-ARGUMENTS is the list of
-arguments (if any) of the SENTINEL procedure."
+the above METHOD.  It is specified as an alist with parameter name and
+its corresponding value SENTINEL represents the callback function to
+be called after the http response is completely retrieved.
+SENTINEL-ARGUMENTS is the list of arguments (if any) of the SENTINEL
+procedure."
   (or sentinel (setq sentinel 'identica-http-get-default-sentinel))
   (let ((url (concat "http://" statusnet-server "/api/"
 		     (when (not (string-equal method-class "none"))
@@ -1145,8 +1149,8 @@ we are interested in."
 
 (defun identica-url-retrieve
   (url sentinel method-class method parameters sentinel-arguments &optional unhex-workaround)
-  "Call url-retrieve or oauth-url-retrieve dsepending on the mode,
-and apply url-unhex-string workaround if necessary."
+  "Call url-retrieve or oauth-url-retrieve dsepending on the mode.
+Apply url-unhex-string workaround if necessary."
   (if (and (equal identica-auth-mode "oauth") oauth-access-token)
       (if unhex-workaround
 	  (flet ((oauth-extract-url-params
@@ -1168,7 +1172,7 @@ bug in url-unhex-string present in emacsen previous to 23.3."
 
 (defun identica-http-post
   (method-class method &optional parameters sentinel sentinel-arguments)
-  "Send HTTP POST request to statusnet server
+  "Send HTTP POST request to statusnet server.
 METHOD-CLASS must be one of Identica API method classes(statuses, users or direct_messages).
 METHOD must be one of Identica API method which belongs to METHOD-CLASS.
 PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"6\")) => <URI>?mode=view&page=6"
@@ -1206,7 +1210,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
   (let ((error-object (assoc-workaround :error status)))
     (cond  ((and
              error-object
-	     (y-or-n-p (format "Network error:%s %s Retry?"
+	     (y-or-n-p (format "Network error:%s %s Retry? "
 			       (cadr error-object)
 			       (caddr error-object))))
 	    (identica-http-post method-class method parameters nil success-message))
@@ -1217,8 +1221,8 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 
 (defun identica-get-response-header (&optional buffer)
   "Exract HTTP response header from HTTP response.
-`buffer' may be a buffer or the name of an existing buffer.
- If `buffer' is omitted, current-buffer is parsed."
+BUFFER may be a buffer or the name of an existing buffer.
+ If BUFFER is omitted, 'current-buffer' is parsed."
   (or buffer
       (setq buffer (current-buffer)))
   (set-buffer buffer)
@@ -1245,7 +1249,6 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
          (xml-parse-region start (point-max)))))
 
 (defun identica-clean-weird-chars (&optional buffer)
-  ;;(if (null buffer) (setq buffer (identica-http-buffer)))
   (with-current-buffer (identica-http-buffer)
     (goto-char (point-min))
     (while (re-search-forward "\
@@ -1259,9 +1262,8 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 (buffer-string)))
 
 (defun identica-clean-response-body ()
-  "Removes weird strings (e.g., 1afc, a or 0) from within the
-response body.  Known Statusnet issue.  Mostly harmless except if
-in tags."
+  "Remove weird strings (e.g., 1afc, a or 0) from the response body.
+Known Statusnet issue.  Mostly harmless except if in tags."
   (goto-char (point-min))
   (while (re-search-forward "\r?\n[0-9a-z]+\r?\n" nil t)
     (replace-match "")))
@@ -1272,8 +1274,8 @@ For use as a predicate for sort."
   (< (assoc-default 'id b) (assoc-default 'id a)))
 
 (defun identica-cache-status-datum (status-datum &optional data-var)
-  "Cache status datum into data-var(default identica-timeline-data)
-If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
+  "Cache status datum into data-var(default `identica-timeline-data')
+If STATUS-DATUM is already in DATA-VAR, return nil.  If not, return t."
   (when (null data-var)
     (setf data-var 'identica-timeline-data))
   (let ((id (cdr (assq 'id status-datum))))
@@ -1556,8 +1558,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
       (message "Type C-c C-c to post status update (C-c C-k to cancel)."))))
 
 (defcustom identica-minibuffer-length-prompt-style nil
-  "The preferred style of counting characters in the minibuffer
-  prompt; \"Down\" counts down from statusnet-server-textlimit; \"Up\" counts
+  "The preferred style of counting characters in the minibuffer.
+prompt; \"Down\" counts down from `statusnet-server-textlimit'; \"Up\" counts
   up from 0"
   :type '(choice (const :tag "Down" nil)
 		 (const :tag "Up" t))
@@ -1662,14 +1664,13 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 
 Google's shortening service, goo.gl, returns shortened URLs as a
 JSON dictionary. This function retrieves only the URL value from
-this dictionary, only if identica-urlshortening-service is 'google.
-"
+this dictionary, only if identica-urlshortening-service is 'google."
   (if (eq identica-urlshortening-service 'google)
       (cdr (assoc 'short_url (json-read-from-string result)))
     result))
 
 (defun identica-ur1ca-get (api longurl)
-  "Shortens url through ur1.ca free service 'as in freedom'"
+  "Shortens url through ur1.ca free service 'as in freedom'."
   (let* ((url-request-method "POST")
 	 (url-request-extra-headers
 	  '(("Content-Type" . "application/x-www-form-urlencoded")))
@@ -1684,11 +1685,11 @@ this dictionary, only if identica-urlshortening-service is 'google.
 	(kill-buffer buffer)) )))
 
 (defun identica-shortenurl-get (longurl)
-  "Shortens url through a url shortening service"
+  "Shortens url through a url shortening service."
   (let ((api (cdr (assoc identica-urlshortening-service
 			 identica-urlshortening-services-map))))
     (unless api
-      (error "`identica-urlshortening-service' was invalid. try one of %s"
+      (error "`identica-urlshortening-service' was invalid.  try one of %s"
 	     (mapconcat (lambda (x)
 			  (symbol-name (car x)))
 			identica-urlshortening-services-map ", ")
@@ -1743,7 +1744,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
 	    (setq buffer-read-only t)))))))
 
 (defun identica-expand-shorturl (url)
-  "Return the redirected url, or the original url if not found"
+  "Return the redirected URL, or the original url if not found."
   (let ((temp-buf (get-buffer-create "*HTTP headers*")))
     (set-buffer temp-buf)
     (erase-buffer)
@@ -1776,7 +1777,7 @@ this dictionary, only if identica-urlshortening-service is 'google.
   )
 
 (defun identica-get-location-from-header (url process)
-  "Parse HTTP header"
+  "Parse HTTP header."
   (let ((buffer)
 	(headers)
         (location))
@@ -2045,9 +2046,10 @@ this dictionary, only if identica-urlshortening-service is 'google.
       (progn (goto-char (buffer-end 1)) (message "End of status.")))))
 
 (defun identica-toggle-highlight (&optional arg)
-  "With arg (or prefix, if interactive), set highlighted entries list to contain only
-the id of entry at point, With no arg or prefix, add current entry id to list if not present,
-or remove current entry id from list if it is present."
+  "Toggle the highlighting of entry at 'point'.
+With no arg or prefix, toggle the highlighting of the entry at 'point'.
+With arg (or prefix, if interactive), highlight the current entry and
+un-highlight all other entries."
   (interactive "P")
   (let ((id (get-text-property (point) 'id)))
     (setq identica-highlighted-entries
@@ -2058,7 +2060,7 @@ or remove current entry id from list if it is present."
   (identica-render-timeline))
 
 (defun memq-face (face property)
-  "Check whether face is present in property."
+  "Check whether FACE is present in PROPERTY."
   (if (listp property)
       (memq face property)
     (eq property face)))
@@ -2290,4 +2292,5 @@ static char * statusnet_off_xpm[] = {
 (provide 'identica-mode)
 (add-hook 'identica-load-hook 'identica-autoload-oauth)
 (run-hooks 'identica-load-hook)
-;;; identica.el ends here
+
+;;; identica-mode.el ends here
