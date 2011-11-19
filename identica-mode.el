@@ -1063,6 +1063,8 @@ we are interested in."
 	       (push (concat " [" location "]") result)) ))
 	  ((?u)                         ; %u - url
 	   (push (attr 'user-url) result))
+          ((?U)                         ; %U - profile url
+           (push (cadr (split-string (attr 'user-profile-url) "https*://")) result))
 	  ((?j)                         ; %j - user.id
 	   (push (format "%d" (attr 'user-id)) result))
 	  ((?r)                         ; %r - in_reply_to_status_id
@@ -1425,6 +1427,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil.  If not, return t."
 	    user-id user-name user-screen-name user-location
 	    user-description
 	    user-profile-image-url
+	    user-profile-url
 	    user-url
 	    user-protected)))))
 
