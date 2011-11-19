@@ -1133,6 +1133,10 @@ we are interested in."
 	       (push "..." result))))
 	  ((?f)                         ; %f - source
 	   (push (attr 'source) result))
+          ((?F)                         ; %F - ostatus-aware source
+           (push (if (string= (attr 'source) "ostatus")
+                     (cadr (split-string (attr 'user-profile-url) "https*://"))
+                   (attr 'source)) result))
 	  ((?#)                         ; %# - id
 	   (push (format "%d" (attr 'id)) result))
 	  ((?x)                         ; %x - conversation id (conteXt) - default 0
