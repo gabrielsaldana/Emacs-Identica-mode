@@ -940,26 +940,8 @@ we adjust point within the right frame."
 		 (identica-set-mode-string "pending"))))))))
 
 (defun merge-text-attribute (start end new-face attribute)
-  "If we just add the new face its attributes somehow get overridden by
-the attributes of the underlying face, so instead we just add the attribute
-we are interested in."
-  (while (not (eq start end))
-    (let ((bg (face-attribute new-face attribute))
-	  (prop (get-text-property start 'face))
-          (next-change
-           (or (next-single-property-change start 'face (current-buffer))
-               end)))
-      (if prop
-	  (add-text-properties start next-change
-			       (list 'face
-				     (list prop
-					   (list attribute bg))))
-        (add-text-properties start next-change
-			     (list 'face (list attribute bg))))
-      (setq start next-change))))
-
-(defun merge-text-attribute (start end new-face attribute)
-  "If we just add the new face its attributes somehow get overridden by
+  "Merge the ATTRIBUTE of NEW-FACE into the text between START and END.
+If we just add the new face its attributes somehow get overridden by
 the attributes of the underlying face, so instead we just add the attribute
 we are interested in."
   (while (not (eq start end))
