@@ -896,7 +896,7 @@ we adjust point within the right frame."
     (run-hooks 'identica-new-dents-hook)
     (setq identica-new-dents-count 0))
   (when identica-display-success-messages
-    (message (or success-message "Success: Get"))))
+    (message "Success: Get")))
 
 (defun identica-http-get-default-sentinel
   (&optional status method-class method parameters success-message)
@@ -1249,7 +1249,7 @@ BUFFER may be a buffer or the name of an existing buffer.
          (xml-parse-region start (point-max)))))
 
 (defun identica-clean-weird-chars (&optional buffer)
-  (with-current-buffer (identica-http-buffer)
+  (with-current-buffer identica-http-buffer
     (goto-char (point-min))
     (while (re-search-forward "\
 
@@ -1299,6 +1299,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil.  If not, return t."
 	   in-reply-to-screen-name
 	   (user-data (cddr (assq 'user status-data)))
 	   user-id user-name
+	   conversation-id
 	   user-screen-name
 	   user-location
 	   user-description
