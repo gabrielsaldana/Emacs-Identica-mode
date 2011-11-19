@@ -1300,6 +1300,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 	   user-location
 	   user-description
 	   user-profile-image-url
+	   user-profile-url
 	   user-url
 	   user-protected
 	   regex-index)
@@ -1648,7 +1649,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil. If not, return t."
 (defun identica-update-status-from-region (beg end)
   (interactive "r")
   (when (> (- end beg) statusnet-server-textlimit) (setq end (+ beg statusnet-server-textlimit)))
-  (when (< (- end beg) -statusnet-server-textlimit) (setq beg (+ end statusnet-server-textlimit)))
+  (when (< (- end beg) statusnet-server-textlimit) (setq beg (+ end statusnet-server-textlimit)))
   (identica-update-status-if-not-blank "statuses" "update" (buffer-substring beg end)))
 
 (defun identica-update-status-with-media (attachment &optional init-str method-class method parameters reply-to-id)
@@ -1986,10 +1987,10 @@ this dictionary, only if identica-urlshortening-service is 'google.
   "Simple functions to join/leave a group we are visiting."
   (setq identica-method-class "statusnet/groups")
   (string-match "\\([^\\]*\\)\\(/.*\\)" identica-method)
-  (setq group-method (replace-match
-		      (if leaving "leave"
-			"join") nil nil identica-method 1))
-  (identica-http-post identica-method-class group-method nil))
+  (let ((group-method (replace-match
+                       (if leaving "leave"
+                         "join") nil nil identica-method 1)))
+    (identica-http-post identica-method-class group-method nil)))
 
 (defun identica-group-leave ()
   (identica-group-join t))
