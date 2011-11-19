@@ -570,6 +570,7 @@ of identica-stripe-face."
 (defun identica-mode-init-variables ()
   ;; (make-variable-buffer-local 'variable)
   ;; (setq variable nil)
+  (make-local-variable 'identica-active-mode)
   (font-lock-mode -1)
   (defface identica-username-face
     `((t nil)) "" :group 'faces)
@@ -2262,8 +2263,7 @@ static char * statusnet_off_xpm[] = {
 	       `(display ,identica-inactive-indicator-image ,@props))
       "INACTIVE")))
 
-(make-local-variable 'identica-active-mode)
-(setq identica-active-mode t)
+(defvar identica-active-mode t)
 
 (defun identica-toggle-activate-buffer ()
   (interactive)
