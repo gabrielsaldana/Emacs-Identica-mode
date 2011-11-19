@@ -1765,30 +1765,27 @@ this dictionary, only if identica-urlshortening-service is 'google.
     (set-buffer temp-buf)
     (erase-buffer)
     (goto-char 0)
-    (setq url (replace-regexp-in-string "http://" "" url))
-    (setq host (substring url 0 (string-match "/" url)))
-    (if (string-match "/" url)
-	(setq file (substring url (string-match "/" url)))
-      (setq file "/"))
-    (setq tcp-connection
-	  (open-network-stream
-	   "Identica URLExpand"
-	   temp-buf
-	   host
-	   80))
-    (set-marker (process-mark tcp-connection) (point-min))
-    (set-process-sentinel tcp-connection 'identica-http-headers-sentinel)
-    (setq request (concat "GET http://" url " HTTP/1.1\r\n"
+    (let*
+        ((url (replace-regexp-in-string "http://" "" url))
+         (host (substring url 0 (string-match "/" url)))
+         (file (if (string-match "/" url)
+                   (substring url (string-match "/" url))
+                 "/"))
+         (tcp-connection (open-network-stream "Identica URLExpand"
+                                              temp-buf host 80))
+         (request (concat "GET http://" url " HTTP/1.1\r\n"
 			  "Host:" host "\r\n"
 			  "User-Agent: " (identica-user-agent) "\r\n"
 			  "Authorization: None\r\n"
-			  "Accept-Charset: utf-8;q=0.7,*;q=0.7\r\n\r\n"))
-    (process-send-string tcp-connection request)
-    (sit-for 2)
-    (let ((location (identica-get-location-from-header (concat "http://" host file) tcp-connection)))
-      (delete-process tcp-connection)
-      (kill-buffer temp-buf)
-      location)))
+			  "Accept-Charset: utf-8;q=0.7,*;q=0.7\r\n\r\n")))
+      (set-marker (process-mark tcp-connection) (point-min))
+      (set-process-sentinel tcp-connection 'identica-http-headers-sentinel)
+      (process-send-string tcp-connection request)
+      (sit-for 2)
+      (let ((location (identica-get-location-from-header (concat "http://" host file) tcp-connection)))
+        (delete-process tcp-connection)
+        (kill-buffer temp-buf)
+        location))))
 
 (defun identica-http-headers-sentinel (process string)
   "Process the results from the efine network connection."
