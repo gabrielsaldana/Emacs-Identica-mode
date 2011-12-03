@@ -1248,7 +1248,7 @@ BUFFER may be a buffer or the name of an existing buffer.
   (set-buffer-multibyte t)
   (let ((start (save-excursion
 		 (goto-char (point-min))
-		 (and (re-search-forward "<\?xml" (point-max) t)
+		 (and (re-search-forward "<\\?xml" (point-max) t)
 		      (match-beginning 0)))))
     (identica-clean-response-body)
     (and start
