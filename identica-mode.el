@@ -107,7 +107,6 @@
 (require 'url-http)
 (require 'json)
 (require 'image)
-(require 'identica-friends)
 
 (defconst identica-mode-version "1.2.1")
 

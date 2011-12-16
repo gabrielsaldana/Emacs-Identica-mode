@@ -28,7 +28,7 @@
 ;; If you want to check who are following you, type:
 ;; M-x identica-show-followers
 ;;
-;; I divided the code into sections. This sections are tabbed asside 
+;; I divided the code into sections. This sections are tabbed asside
 ;; and commented by an only one ";". Also are overlined and underlined
 ;; so, they are very visible.
 ;;
@@ -60,6 +60,7 @@
 ;;; Code:
 
 (require 'xml)
+(require 'identica-mode)
 
 					; ____________________
 					;
@@ -123,7 +124,7 @@ Be aware of no function or actual buffers exists. Reboot all identica-friends fu
 
 
 					; ____________________
-					; 
+					;
 					; Faces and font-lock
 					; ____________________
 
@@ -272,7 +273,7 @@ Use `identica-show-friends' to call this buffer."
 
 
 					; ____________________
-					; 
+					;
 					; Auxiliary Functions
 					; ____________________
 
@@ -295,7 +296,7 @@ This will be returned as a list wich components are in these order:
     ;; Position at the beginning of the user.
     (search-backward-regexp "^--------------------$" nil t)
     (goto-char (match-beginning 0))
-    
+
     (setq usr (cons (identica-friends-get-location) usr))
     (setq usr (cons (identica-friends-get-desc) usr))
 
@@ -325,7 +326,7 @@ If there are no user, return nil."
       (match-string-no-properties 1)
       )
     )
-  ) 
+  )
 
 (defun identica-friends-get-desc ()
   "Get the current user(friend or follower) nick.
@@ -336,7 +337,7 @@ If there are no user, return nil."
       (match-string-no-properties 1)
       )
     )
-  ) 
+  )
 
 (defun identica-friends-get-location ()
   "Get the current user(friend or follower) nick.
@@ -347,7 +348,7 @@ If there are no user, return nil."
       (match-string-no-properties 1)
       )
     )
-  ) 
+  )
 
 (defun identica-show-user-sentinel
   (&optional status method-class method parameters success-message type-of-user)
@@ -424,13 +425,13 @@ or `identica-get-follower-data':
 
 ;; *****
 ;; ** Comment about `identica-get-follower-data' and `identica-get-friend-data':
-;; 
+;;
 ;;   These parsers must be changed to a most suitable way of finding the members.
-;;   Maybe using the "member" function or any simmilar makes a more reliable way of finding the attributes 
+;;   Maybe using the "member" function or any simmilar makes a more reliable way of finding the attributes
 ;; than going to the nth element of the list.
 ;;
 ;;   This is because if we change the structure of the XML, or just alternate some items(for example: instead
-;; using the description before the location, in the future the description comes after the location) this 
+;; using the description before the location, in the future the description comes after the location) this
 ;; functions won't work properly. Also, they aren't readable and easy to change.
 ;;
 ;; *****
@@ -530,7 +531,7 @@ This function return nil when there are any friend in the buffer."
     (if (search-forward-regexp "Nick: " nil t)
 	(match-beginning 0)
       (progn
-	;; Not found! Maybe we are at the end? 
+	;; Not found! Maybe we are at the end?
 	;; Go to the beginning of the buffer and search again, if fails, this user has no friends!
 	(goto-char (point-min))
 	(if (search-forward-regexp "Nick: " nil t)
@@ -549,7 +550,7 @@ This function return nil when there are any friend in the buffer."
     (if (search-backward-regexp "Nick: " nil t)
 	(match-beginning 0)
       (progn
-	;; Not found! Maybe we are at the end? 
+	;; Not found! Maybe we are at the end?
 	;; Go to the beginning of the buffer and search again, if fails, this user has no friends!
 	(goto-char (point-max))
 	(if (search-backward-regexp "Nick: " nil t)
@@ -580,7 +581,7 @@ This function return nil when there are any friend in the buffer."
 
 
 
-                                        ; 
+                                        ;
                                         ; For debugging purpose
                                         ;
 
