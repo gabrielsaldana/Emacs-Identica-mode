@@ -141,7 +141,7 @@ must be worked around when using oauth.")
 (defvar menu-bar-identica-mode-menu nil)
 (defvar identica-timer nil "Timer object for timeline refreshing will be stored here.  DO NOT SET VALUE MANUALLY.")
 (defvar identica-last-timeline-retrieved nil)
-
+(defvar identica-active-mode t)
 (defvar identica-urlshortening-services-map
   '((tinyurl . "http://tinyurl.com/api-create.php?url=")
     (toly    . "http://to.ly/api.php?longurl=")
@@ -574,7 +574,8 @@ of identica-stripe-face."
 (defun identica-mode-init-variables ()
   ;; (make-variable-buffer-local 'variable)
   ;; (setq variable nil)
-  (make-local-variable 'identica-active-mode)
+  (make-variable-buffer-local 'identica-active-mode)
+  (set-default 'identica-active-mode t)
   (font-lock-mode -1)
   (defface identica-username-face
     `((t nil)) "" :group 'faces)
@@ -1812,7 +1813,7 @@ this dictionary, only if identica-urlshortening-service is 'google."
 	  (run-at-time "0 sec"
 		       identica-timer-interval
 		       #'identica-timer-action action)))
-  (setq identica-active-mode t)
+  (set 'identica-active-mode t)
   (identica-update-mode-line))
 
 (defun identica-stop ()
@@ -1826,7 +1827,7 @@ this dictionary, only if identica-urlshortening-service is 'google."
   (and identica-timer
        (cancel-timer identica-timer))
   (setq identica-timer nil)
-  (setq identica-active-mode nil)
+  (set 'identica-active-mode nil)
   (identica-update-mode-line))
 
 (defun identica-get-timeline (&optional parameters)
@@ -2272,8 +2273,6 @@ static char * statusnet_off_xpm[] = {
 	(apply 'propertize "INACTIVE"
 	       `(display ,identica-inactive-indicator-image ,@props))
       "INACTIVE")))
-
-(defvar identica-active-mode t)
 
 (defun identica-toggle-activate-buffer ()
   (interactive)
