@@ -2169,7 +2169,7 @@ un-highlight all other entries."
 	     (site (xml-get-children (car body) 'site))
 	     (textlimit (xml-get-children (car site) 'textlimit))
 	     (textlimit-value (caddar textlimit)))
-	(when textlimit-value
+	(when (> (string-to-number textlimit-value) 0)
 	  (setq statusnet-server-textlimit (string-to-number textlimit-value))))))
   (identica-start))
 
