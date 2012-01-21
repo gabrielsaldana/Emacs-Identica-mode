@@ -370,6 +370,36 @@ Initialize the global method with the default, or with METHOD, if present."
     (setq method "friends_timeline"))
   (get-buffer-create identica-buffer))
 
+(defstruct (statusnet-oauth-data
+	    (:conc-name sn-oauth-))
+  "The oauth configuration associated with a statusnet account."
+  consumer-key ; string
+  consumer-secret ; string
+  request-url ; string
+  access-url ; string
+  authorize-url ; string
+  access-token ; string
+)
+
+(defstruct (statusnet-account
+	    (:conc-name sn-account-))
+  "Container for account information."
+  server ; string
+  port ; integer
+  username ; string
+  auth-mode ; string, either "password" or "oauth"
+  password ; string
+  textlimit ; integer
+  oauth-data ; statusnet-account-oauth-data
+  last-timeline-retrieved ; string
+)
+
+(defvar statusnet-accounts nil
+  "A list of login credentials for statusnet instances.")
+
+(defvar sn-current-account nil
+  "A pointer to the statusnet account being processed.")
+
 (defvar identica-http-buffer nil
   "Pointer to the current http response buffer.")
 
