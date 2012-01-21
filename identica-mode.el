@@ -139,8 +139,7 @@ must be worked around when using oauth.")
 (defvar identica-mode-map (make-sparse-keymap "Identi.ca"))
 (defvar menu-bar-identica-mode-menu nil)
 (defvar identica-timer nil "Timer object for timeline refreshing will be stored here.  DO NOT SET VALUE MANUALLY.")
-(defvar identica-last-timeline-retrieved nil)
-(defvar identica-active-mode t)
+
 (defvar identica-urlshortening-services-map
   '((tinyurl . "http://tinyurl.com/api-create.php?url=")
     (toly    . "http://to.ly/api.php?longurl=")
@@ -537,7 +536,7 @@ of identica-stripe-face."
   (interactive)
   (let ((id (get-text-property (point) 'id))
         (usern (get-text-property (point) 'username)))
-    (if (string= usern identica-username)
+    (if (string= usern (sn-account-username sn-current-account))
         (when (y-or-n-p "Delete this notice? ")
           (identica-http-post "statuses/destroy" (number-to-string id))
           (identica-get-timeline))
@@ -780,9 +779,11 @@ alist `url-http-proxy-basic-auth-storage' and sets `url-using-proxy'."
 			(cdr-safe proxy-double-alist))))))))
 
 (defun identica-change-user ()
+  (interactive)
   "Interactive function to instantly change user authentication.
 Directly reads parameters from user.  This function only sets the
-identica-mode variables `identica-username' and `identica-password'.
+identica-mode variables `(sn-account-username sn-current-account)' and
+`(sn-account-password sn-current-account)'.
 It is the `identica-set-auth' function that eventually sets the
 url library variables according to the above variables which does the
 authentication.  This will be done automatically in normal use cases
@@ -793,12 +794,12 @@ enabling dynamic change of user authentication."
 
 (defun identica-ask-credentials ()
   "Asks for your username and password."
-  (setq identica-username
-	(read-string (concat "Username [for " statusnet-server
-			     ":" (int-to-string statusnet-port) "]: ")
-		     nil nil identica-username)
-	identica-password
-	(read-passwd "Password: " nil identica-password)))
+  (setf (sn-account-username sn-current-account)
+	(read-string (concat "Username [for " (sn-account-server sn-current-account)
+			     ":" (int-to-string (sn-account-port sn-current-account)) "]: ")
+		     nil nil (sn-account-username sn-current-account))
+	(sn-account-password sn-current-account)
+	(read-passwd "Password: " nil (sn-account-password sn-current-account))))
 
 (defun identica-set-auth (&optional url username passwd server port)
   "Sets the authentication parameters as required by url library.
@@ -806,22 +807,24 @@ If URL is non-nil and valid, it reads user authentication
 parameters from url.  If URL is nil, Rest of the arguments can be
 used to directly set user authentication.
 When called with no arguments, user authentication parameters are
-read from identica-mode variables `identica-username'
-`identica-password' `statusnet-server' `statusnet-port'.
-The username and password can also be set on ~/.authinfo, ~/.netrc or
-~/.authinfo.gpg files for better security.
-In this case `identica-password' should not be predefined in any
-.emacs or init.el files, only `identica-username' should be set."
-  (when (not identica-username)
+read from identica-mode variables `(sn-account-username sn-current-account)'
+`(sn-account-password sn-current-account)' `(sn-account-server sn-current-account)'
+ `(sn-account-port sn-current-account)'.
+The username and password can also be set on ~/.authinfo,
+~/.netrc or ~/.authinfo.gpg files for better security.
+In this case `(sn-account-password sn-current-account)' should
+not be predefined in any .emacs or init.el files, only
+`(sn-account-username sn-current-account)' should be set."
+  (unless (sn-account-username sn-current-account)
     (identica-ask-credentials))
   (let* ((href (if (stringp url)
 		   (url-generic-parse-url url)
 		 url))
 	 (port (or (and href (url-port href))
-		   port statusnet-port))
+		   port (sn-account-port sn-current-account)))
 	 (port (if (integerp port) (int-to-string port) port))
 	 (server (or (and href (url-host href))
-		     server statusnet-server))
+		     server (sn-account-server sn-current-account)))
 	 (servername server)
 	 (server (and server
 		      (concat server (when port (concat ":" port)))))
@@ -841,9 +844,9 @@ In this case `identica-password' should not be predefined in any
 			  (plist-get (car (auth-source-search :host servername :max 1)) :secret))
 		      (auth-source-user-or-password "password" server "http")))
 	 (password (or auth-pass (and href (url-password href))
-		       passwd identica-password))
+		       passwd (sn-account-password sn-current-account)))
 	 (auth (concat (or auth-user (and href (url-user href))
-			   username identica-username)
+			   username (sn-account-username sn-current-account))
 		       (and password (concat ":" password)))))
     (when (and (not (string= "" server))
 	       (not (string= "" auth)))
@@ -863,38 +866,40 @@ In this case `identica-password' should not be predefined in any
 (defun identica-initialize-oauth ()
   "Get authentication token unless we have one stashed already.
 Shamelessly stolen from yammer.el"
-  (let ((filename (concat "~/." statusnet-server "-" identica-username "-oauth-token")))
+  (let ((filename (concat "~/." (sn-account-server sn-current-account) "-"
+			  (sn-account-username sn-current-account) "-oauth-token")))
     (when (file-exists-p filename)
       (save-excursion
 	(find-file filename)
 	(let ((str (buffer-substring (point-min) (point-max))))
 	  (if (string-match "\\([^:]*\\):\\(.*\\)"
 			    (buffer-substring (point-min) (point-max)))
-	      (setq oauth-access-token
+	      (setf (sn-oauth-access-token (sn-account-oauth-data sn-current-account))
 		    (make-oauth-access-token
-		     :consumer-key identica-mode-oauth-consumer-key
-		     :consumer-secret identica-mode-oauth-consumer-secret
+		     :consumer-key (sn-oauth-consumer-key (sn-account-oauth-data sn-current-account))
+		     :consumer-secret (sn-oauth-consumer-secret (sn-account-oauth-data sn-current-account))
 		     :auth-t (make-oauth-t
 			      :token (match-string 1 str)
 			      :token-secret (match-string 2 str))))))
 	(save-buffer)
 	(kill-this-buffer)))
-    (unless oauth-access-token
-      (setq oauth-access-token
-	    (oauth-authorize-app identica-mode-oauth-consumer-key
-				 identica-mode-oauth-consumer-secret
-				 statusnet-request-url statusnet-access-url
-				 statusnet-authorize-url))
+    (unless (sn-oauth-access-token (sn-account-oauth-data sn-current-account))
+      (setf (sn-oauth-access-token (sn-account-oauth-data sn-current-account))
+	    (oauth-authorize-app (sn-oauth-consumer-key (sn-account-oauth-data sn-current-account))
+				 (sn-oauth-consumer-secret (sn-account-oauth-data sn-current-account))
+				 (sn-oauth-request-url (sn-account-oauth-data sn-current-account))
+				 (sn-oauth-access-url (sn-account-oauth-data sn-current-account))
+				 (sn-oauth-authorize-url (sn-account-oauth-data sn-current-account))))
       (save-excursion
 	(find-file filename)
 	(end-of-buffer)
-	(let ((token (oauth-access-token-auth-t oauth-access-token)))
+	(let ((token (oauth-access-token-auth-t (sn-oauth-access-token (sn-account-oauth-data sn-current-account)))))
 	  (insert (format "%s:%s\n"
 			  (oauth-t-token token)
 			  (oauth-t-token-secret token))))
 	(save-buffer)
 	(kill-this-buffer))))
-  oauth-access-token)
+  (sn-oauth-access-token (sn-account-oauth-data sn-current-account)))
 
 (defun identica-http-get (method-class method &optional parameters
 				       sentinel sentinel-arguments)
@@ -908,7 +913,7 @@ be called after the http response is completely retrieved.
 SENTINEL-ARGUMENTS is the list of arguments (if any) of the SENTINEL
 procedure."
   (or sentinel (setq sentinel 'identica-http-get-default-sentinel))
-  (let ((url (concat "http://" statusnet-server "/api/"
+  (let ((url (concat "http://" (sn-account-server sn-current-account) "/api/"
 		     (when (not (string-equal method-class "none"))
 		       (concat method-class "/" ))
 		     method ".xml"
@@ -925,8 +930,8 @@ procedure."
 	(url-package-version identica-mode-version)
 	(url-show-status nil))
     (identica-set-proxy)
-    (if (equal identica-auth-mode "oauth")
-	(or oauth-access-token
+    (if (equal (sn-account-auth-mode sn-current-account) "oauth")
+	(or (sn-oauth-access-token (sn-account-oauth-data sn-current-account))
 	    (identica-initialize-oauth))
       (identica-set-auth url))
     (when (get-buffer-process identica-http-buffer)
@@ -973,7 +978,7 @@ we adjust point within the right frame."
 	       ;; or the user queried is not found , query is _finished_
 	       ;; unsuccessful and we want to restore identica-method
 	       ;; to loose track of this unsuccessful attempt
-	       (setq identica-method identica-last-timeline-retrieved))))
+	       (setq identica-method (sn-account-last-timeline-retrieved sn-current-account)))))
 	  ((< (- (point-max) (or (re-search-forward ">\r?\n\r*$" nil t) 0)) 2)
 	   ;;Checking the whether the message is complete by
 	   ;;searching for > that closes the last tag, followed by
@@ -1061,7 +1066,7 @@ we are interested in."
       (debug-print (current-buffer))
       (goto-char (+ point (if identica-scroll-mode (- (point-max) end) 0)))
       (identica-set-mode-string nil)
-      (setq identica-last-timeline-retrieved identica-method)
+      (setf (sn-account-last-timeline-retrieved sn-current-account) identica-method)
       (if transient-mark-mode (deactivate-mark)))))
 
 (defun identica-format-status (status format-str)
@@ -1210,7 +1215,8 @@ we are interested in."
   (url sentinel method-class method parameters sentinel-arguments &optional unhex-workaround)
   "Call url-retrieve or oauth-url-retrieve dsepending on the mode.
 Apply url-unhex-string workaround if necessary."
-  (if (and (equal identica-auth-mode "oauth") oauth-access-token)
+  (if (and (equal (sn-account-auth-mode sn-current-account) "oauth")
+	   (sn-oauth-access-token (sn-account-oauth-data sn-current-account)))
       (if unhex-workaround
 	  (flet ((oauth-extract-url-params
 		  (req)
@@ -1222,7 +1228,7 @@ bug in url-unhex-string present in emacsen previous to 23.3."
 				`(,(car pair) . ,(w3m-url-decode-string (cadr pair))))
 			      (url-parse-query-string (substring url (match-end 0))))))))
 	    (identica-url-retrieve url sentinel method-class method parameters sentinel-arguments))
-	(oauth-url-retrieve oauth-access-token url sentinel
+	(oauth-url-retrieve (sn-oauth-access-token (sn-account-oauth-data sn-current-account)) url sentinel
 			    (append (list method-class method parameters)
 				    sentinel-arguments)))
     (url-retrieve url sentinel
@@ -1237,7 +1243,7 @@ METHOD must be one of Identica API method which belongs to METHOD-CLASS.
 PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"6\")) => <URI>?mode=view&page=6"
   (or sentinel (setq sentinel 'identica-http-post-default-sentinel))
   (let ((url-request-method "POST")
-	(url (concat "http://"statusnet-server "/api/" method-class "/" method ".xml"
+	(url (concat "http://"(sn-account-server sn-current-account) "/api/" method-class "/" method ".xml"
 		     (when parameters
 		       (concat "?"
 			       (mapconcat
@@ -1254,8 +1260,8 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
 	(url-request-extra-headers '(("Content-Length" . "0")))
 	(url-show-status nil))
     (identica-set-proxy)
-    (if (equal identica-auth-mode "oauth")
-	(or oauth-access-token
+    (if (equal (sn-account-auth-mode sn-current-account) "oauth")
+	(or (sn-oauth-access-token (sn-account-oauth-data sn-current-account))
 	    (identica-initialize-oauth))
       (identica-set-auth url))
     (when (get-buffer-process identica-http-buffer)
@@ -1436,15 +1442,15 @@ If STATUS-DATUM is already in DATA-VAR, return nil.  If not, return t."
 		   highlight
 		   face identica-uri-face
 		   uri ,(if screen-name
-			    (concat "https://" statusnet-server "/" screen-name)
+			    (concat "https://" (sn-account-server sn-current-account) "/" screen-name)
 			  (if group-name
-			      (concat "https://" statusnet-server "/group/" group-name)
-			    (concat "https://" statusnet-server "/tag/" tag-name)))
+			      (concat "https://" (sn-account-server sn-current-account) "/group/" group-name)
+			    (concat "https://" (sn-account-server sn-current-account) "/tag/" tag-name)))
 		   uri-in-text ,(if screen-name
-				    (concat "https://" statusnet-server "/" screen-name)
+				    (concat "https://" (sn-account-server sn-current-account) "/" screen-name)
 				  (if group-name
-				      (concat "https://" statusnet-server "/group/" group-name)
-				    (concat "https://" statusnet-server "/tag/" tag-name)))
+				      (concat "https://" (sn-account-server sn-current-account) "/group/" group-name)
+				    (concat "https://" (sn-account-server sn-current-account) "/tag/" tag-name)))
                    tag ,tag-name
                    group ,group-name)
 	       `(mouse-face highlight
@@ -1471,7 +1477,8 @@ If STATUS-DATUM is already in DATA-VAR, return nil.  If not, return t."
       (setq identica-timeline-last-update created-at)
 
       ;; highlight replies
-      (when (or (string-equal identica-username in-reply-to-screen-name) (string-match (concat "@" identica-username "\\([^[:word:]_-]\\)") text))
+      (when (or (string-equal (sn-account-username sn-current-account) in-reply-to-screen-name)
+		(string-match (concat "@" (sn-account-username sn-current-account) "\\([^[:word:]_-]\\)") text))
 	(add-text-properties 0 (length text)
 			     `(face identica-reply-face) text))
       (mapcar
@@ -1500,7 +1507,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil.  If not, return t."
 	    ret)))
 
 (defun identica-percent-encode (str &optional coding-system)
-  (if (equal identica-auth-mode "oauth")
+  (if (equal (sn-account-auth-mode sn-current-account) "oauth")
       (oauth-hexify-string str)
     (when (or (null coding-system)
 	      (not (coding-system-p coding-system)))
@@ -1606,10 +1613,12 @@ If STATUS-DATUM is already in DATA-VAR, return nil.  If not, return t."
 	  (make-local-variable 'identica-update-status-edit-reply-to-id)
 	  (if (> (length parameters) 0)
 	      (setq mode-line-format
-		    (cons (format "%s(%s) (%%i/%s) " msgtype parameters statusnet-server-textlimit)
+		    (cons (format "%s(%s) (%%i/%s) " msgtype parameters
+				  (sn-account-textlimit sn-current-account))
 			  mode-line-format))
 	    t (setq mode-line-format
-		    (cons (format "%s (%%i/%s) " msgtype statusnet-server-textlimit) mode-line-format)))))
+		    (cons (format "%s (%%i/%s) " msgtype (sn-account-textlimit sn-current-account))
+			  mode-line-format)))))
       (setq identica-update-status-edit-method-class method-class)
       (setq identica-update-status-edit-method method)
       (setq identica-update-status-edit-parameters parameters)
@@ -1620,7 +1629,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil.  If not, return t."
 
 (defcustom identica-minibuffer-length-prompt-style nil
   "The preferred style of counting characters in the minibuffer.
-prompt; \"Down\" counts down from `statusnet-server-textlimit'; \"Up\" counts
+prompt; \"Down\" counts down from (sn-account-textlimit sn-current-account); \"Up\" counts
   up from 0"
   :type '(choice (const :tag "Down" nil)
 		 (const :tag "Up" t))
@@ -1632,7 +1641,7 @@ prompt; \"Down\" counts down from `statusnet-server-textlimit'; \"Up\" counts
     (let* ((status-len (- (buffer-size) (minibuffer-prompt-width)))
 	   (mes (format "%d" (if identica-minibuffer-length-prompt-style
 				 status-len
-			       (- statusnet-server-textlimit status-len)))))
+			       (- (sn-account-textlimit sn-current-account) status-len)))))
       (if (<= 23 emacs-major-version)
 	  (minibuffer-message mes) ; Emacs23 or later
 	(minibuffer-message (concat " (" mes ")"))))))
@@ -1667,9 +1676,9 @@ prompt; \"Down\" counts down from `statusnet-server-textlimit'; \"Up\" counts
 	   (unwind-protect
 	       (while not-posted-p
 		 (setq status (read-from-minibuffer (concat msgtype ": ") status nil nil nil nil t))
-		 (while (< (+ statusnet-server-textlimit 1) (length status))
+		 (while (< (+ (sn-account-textlimit sn-current-account) 1) (length status))
 		   (setq status (read-from-minibuffer (format (concat msgtype "(%d): ")
-							      (- statusnet-server-textlimit (length status)))
+							      (- (sn-account-textlimit sn-current-account) (length status)))
 						      status nil nil nil nil t)))
 		 (setq not-posted-p
 		       (not (identica-update-status-if-not-blank method-class method status parameters reply-to-id))))
@@ -1685,10 +1694,14 @@ prompt; \"Down\" counts down from `statusnet-server-textlimit'; \"Up\" counts
     (longlines-encode-region (point-min) (point-max))
     (let* ((status (buffer-substring-no-properties (point-min) (point-max)))
            (status-len (length status)))
-      (if (< statusnet-server-textlimit status-len)
-          (message (format "Beyond %s chars.  Remove %d chars." statusnet-server-textlimit (- status-len statusnet-server-textlimit)))
+      (if (< (sn-account-textlimit sn-current-account) status-len)
+          (message (format "Beyond %s chars.  Remove %d chars."
+			   (sn-account-textlimit sn-current-account)
+			   (- status-len (sn-account-textlimit sn-current-account))))
         (if (identica-update-status-if-not-blank identica-update-status-edit-method-class
-						 identica-update-status-edit-method status identica-update-status-edit-parameters identica-update-status-edit-reply-to-id)
+						 identica-update-status-edit-method status
+						 identica-update-status-edit-parameters
+						 identica-update-status-edit-reply-to-id)
             (progn
               (erase-buffer)
               (bury-buffer))
@@ -1712,8 +1725,10 @@ prompt; \"Down\" counts down from `statusnet-server-textlimit'; \"Up\" counts
 
 (defun identica-update-status-from-region (beg end)
   (interactive "r")
-  (when (> (- end beg) statusnet-server-textlimit) (setq end (+ beg statusnet-server-textlimit)))
-  (when (< (- end beg) statusnet-server-textlimit) (setq beg (+ end statusnet-server-textlimit)))
+  (when (> (- end beg) (sn-account-textlimit sn-current-account))
+    (setq end (+ beg (sn-account-textlimit sn-current-account))))
+  (when (< (- end beg) (sn-account-textlimit sn-current-account))
+    (setq beg (+ end (sn-account-textlimit sn-current-account))))
   (identica-update-status-if-not-blank "statuses" "update" (buffer-substring beg end)))
 
 (defun identica-update-status-with-media (attachment &optional init-str method-class method parameters reply-to-id)
@@ -1874,7 +1889,7 @@ this dictionary, only if identica-urlshortening-service is 'google."
   (when (get-buffer-process identica-http-buffer)
     (delete-process identica-http-buffer)
     (kill-buffer identica-http-buffer))
-  (setq identica-method identica-last-timeline-retrieved)
+  (setq identica-method (sn-account-last-timeline-retrieved sn-current-account))
   (identica-set-mode-string nil)
   (and identica-timer
        (cancel-timer identica-timer))
@@ -1884,7 +1899,7 @@ this dictionary, only if identica-urlshortening-service is 'google."
 
 (defun identica-get-timeline (&optional parameters)
   (unless parameters (setq parameters `(("count" . ,(int-to-string identica-statuses-count)))))
-  (when (not (eq identica-last-timeline-retrieved identica-method))
+  (when (not (eq (sn-account-last-timeline-retrieved sn-current-account) identica-method))
     (setq identica-timeline-last-update nil
 	  identica-timeline-data nil))
   (let ((buf (get-buffer identica-buffer)))
@@ -1978,10 +1993,14 @@ this dictionary, only if identica-urlshortening-service is 'google."
   (interactive "P")
   (if (> identica-new-dents-count 0)
       (identica-render-pending-dents)
-    (identica-get-timeline (if count
-                               (cons `("count" . ,(int-to-string (if (listp count) identica-statuses-count count)))
-                                     `(("max_id" . ,(int-to-string (- (assoc-default 'id (car (last identica-timeline-data))) 1)))))
-                             nil))))
+    (identica-get-timeline
+     (if count (cons `("count" .
+		       ,(int-to-string
+			 (if (listp count) identica-statuses-count count)))
+		     `(("max_id" . 
+			,(int-to-string
+			  (- (assoc-default 'id (car (last identica-timeline-data))) 1)))))
+       nil))))
 
 (defun identica-update-status-interactive ()
   (interactive)
@@ -1994,9 +2013,9 @@ this dictionary, only if identica-urlshortening-service is 'google."
 (defun identica-erase-old-statuses ()
   (interactive)
   (setq identica-timeline-data nil)
-  (when (not identica-last-timeline-retrieved)
-    (setq identica-last-timeline-retrieved identica-method))
-  (identica-http-get "statuses" identica-last-timeline-retrieved))
+  (when (not (sn-account-last-timeline-retrieved sn-current-account))
+    (setf (sn-account-last-timeline-retrieved sn-current-account) identica-method))
+  (identica-http-get "statuses" (sn-account-last-timeline-retrieved sn-current-account)))
 
 (defun identica-click ()
   (interactive)
@@ -2094,8 +2113,8 @@ this dictionary, only if identica-urlshortening-service is 'google."
       (identica-update-status identica-update-status-method (concat "@" username " ") id))))
 
 (defun identica-get-password ()
-  (or identica-password
-      (setq identica-password (read-passwd "password: "))))
+  (or (sn-account-password sn-current-account)
+      (setf (sn-account-password sn-current-account) (read-passwd "password: "))))
 
 (defun identica-goto-next-status ()
   "Go to next status."
@@ -2202,11 +2221,11 @@ un-highlight all other entries."
 
 (defun identica-get-status-url (id)
   "Generate status URL."
-  (format "https://%s/notice/%s" statusnet-server id))
+  (format "https://%s/notice/%s" (sn-account-server sn-current-account) id))
 
 (defun identica-get-context-url (id)
   "Generate status URL."
-  (format "https://%s/conversation/%s" statusnet-server id))
+  (format "https://%s/conversation/%s" (sn-account-server sn-current-account) id))
 
 (defun identica-retrieve-configuration ()
   "Retrieve the configuration for the current statusnet server."
@@ -2223,12 +2242,12 @@ un-highlight all other entries."
 	     (textlimit (xml-get-children (car site) 'textlimit))
 	     (textlimit-value (caddar textlimit)))
 	(when (> (string-to-number textlimit-value) 0)
-	  (setq statusnet-server-textlimit (string-to-number textlimit-value))))))
+	  (setf (sn-account-textlimit sn-current-account) (string-to-number textlimit-value))))))
   (identica-start))
 
 (defun identica-get-config-url ()
   "Generate configuration URL."
-  (format "http://%s/api/statusnet/config.xml" statusnet-server))
+  (format "http://%s/api/statusnet/config.xml" (sn-account-server sn-current-account)))
 
 ;; Icons
 ;;; ACTIVE/INACTIVE
