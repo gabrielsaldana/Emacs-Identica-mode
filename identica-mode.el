@@ -630,7 +630,30 @@ of identica-stripe-face."
     `((t nil)) "" :group 'faces)
   (set-face-attribute 'identica-uri-face nil :underline t)
   (add-to-list 'minor-mode-alist '(identica-icon-mode " id-icon"))
-  (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll")))
+  (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll"))
+
+  ;; Create an account object based on the various custom variables.
+  ;; Insert it into the statusnet accounts list.
+  (setq statusnet-accounts
+	(cons (make-statusnet-account
+	       :server statusnet-server
+	       :port statusnet-port
+	       :username identica-username
+	       :auth-mode identica-auth-mode
+	       :password identica-password
+	       :textlimit statusnet-server-textlimit
+	       :oauth-data (if (string= identica-auth-mode "oauth")
+			       (make-statusnet-oauth-data
+				:consumer-key identica-mode-oauth-consumer-key
+				:consumer-secret identica-mode-oauth-consumer-secret
+				:request-url statusnet-request-url
+				:access-url statusnet-access-url
+				:authorize-url statusnet-authorize-url
+				:access-token nil)
+			     nil)
+	       :last-timeline-retrieved nil)
+	      statusnet-accounts))
+  (setq sn-current-account (car statusnet-accounts)))
 
 (defmacro case-string (str &rest clauses)
   `(cond
