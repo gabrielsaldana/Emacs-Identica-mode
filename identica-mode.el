@@ -1897,6 +1897,17 @@ this dictionary, only if identica-urlshortening-service is 'google."
   (set 'identica-active-mode nil)
   (identica-update-mode-line))
 
+(defun identica-switch-account ()
+  "Update the current account and reload the default timeline."
+  (interactive)
+  (let ((current-account (member* sn-current-account statusnet-accounts)))
+    (setq sn-current-account
+	  (if (cdr current-account)
+	      (cadr current-account)
+	    (car statusnet-accounts))
+	  identica-timeline-data nil)
+    (identica-current-timeline)))
+
 (defun identica-get-timeline (&optional parameters)
   (unless parameters (setq parameters `(("count" . ,(int-to-string identica-statuses-count)))))
   (when (not (eq (sn-account-last-timeline-retrieved sn-current-account) identica-method))
