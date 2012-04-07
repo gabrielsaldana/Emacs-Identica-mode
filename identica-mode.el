@@ -2000,17 +2000,20 @@ this dictionary, only if identica-urlshortening-service is 'google."
   (identica-get-timeline))
 
 (defun identica-current-timeline (&optional count)
-  "Load newer notices, with an argument load older notices, and with a numeric argument load that number of older notices."
+  "Load newer notices, with an argument load older notices, and with a numeric argument load that number of notices."
   (interactive "P")
   (if (> identica-new-dents-count 0)
       (identica-render-pending-dents)
     (identica-get-timeline
-     (if count (cons `("count" .
-		       ,(int-to-string
-			 (if (listp count) identica-statuses-count count)))
-		     `(("max_id" . 
-			,(int-to-string
-			  (- (assoc-default 'id (car (last identica-timeline-data))) 1)))))
+     (if count
+	 (cons `("count" .
+		 ,(int-to-string
+		   (if (listp count) identica-statuses-count count)))
+	       (if (listp count)
+		   `(("max_id" .
+		      ,(int-to-string
+			(- (assoc-default 'id (car (last identica-timeline-data))) 1))))
+		 ()))
        nil))))
 
 (defun identica-update-status-interactive ()
