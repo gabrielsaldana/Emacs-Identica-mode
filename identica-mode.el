@@ -2119,12 +2119,25 @@ this dictionary, only if identica-urlshortening-service is 'google."
       (identica-update-status identica-update-status-method
 			      (concat identica-redent-format " @" username ": " text) id))))
 
-(defun identica-reply-to-user ()
-  (interactive)
+(defun identica-reply-to-user (all)
+  "Open a minibuffer initialized to type a reply to the notice at point.
+With no argument, populate with the username of the author of the notice.
+With an argument, populate with the usernames of the author and any usernames mentioned in the notice."
+  (interactive "P")
   (let ((username (get-text-property (point) 'username))
-	(id (get-text-property (point) 'id)))
-    (when username
-      (identica-update-status identica-update-status-method (concat "@" username " ") id))))
+        (notice-text (get-text-property (point) 'text))
+	(id (get-text-property (point) 'id))
+        (usernames ""))
+    (when all
+      (setq usernames
+            (mapconcat (lambda (string)
+                         (when (and (char-equal (aref string 0) ?@)
+                                    (memq-face identica-uri-face
+                                               (get-text-property 2 'face string)))
+                           (concat string " ")))
+                       (split-string notice-text) "")))
+    (when username (setq usernames (concat "@" username " " usernames)))
+    (identica-update-status identica-update-status-method usernames id)))
 
 (defun identica-get-password ()
   (or (sn-account-password sn-current-account)
