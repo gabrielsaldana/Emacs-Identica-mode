@@ -2159,14 +2159,15 @@ un-highlight all other entries."
       (memq face property)
     (eq property face)))
 
-(defun identica-get-next-username-face-pos (pos)
-  (interactive)
+(defun identica-get-next-username-face-pos (pos &optional object)
+  "Returns the position of the next username after POS, or nil when end of string or buffer is reached."
+  (interactive "P")
   (let ((prop))
     (catch 'not-found
       (while (and pos (not (memq-face identica-username-face prop)))
-	(setq pos (next-single-property-change pos 'face))
+	(setq pos (next-single-property-change pos 'face object))
 	(when (eq pos nil) (throw 'not-found nil))
-	(setq prop (get-text-property pos 'face)))
+	(setq prop (get-text-property pos 'face object)))
       pos)))
 
 (defun identica-goto-previous-status ()
@@ -2178,14 +2179,15 @@ un-highlight all other entries."
 	(goto-char pos)
       (message "Start of status."))))
 
-(defun identica-get-previous-username-face-pos (pos)
+(defun identica-get-previous-username-face-pos (pos &optional object)
+  "Returns the position of the previous username before POS, or nil when start of string or buffer is reached."
   (interactive)
   (let ((prop))
     (catch 'not-found
       (while (and pos (not (memq-face identica-username-face prop)))
-	(setq pos (previous-single-property-change pos 'face))
+	(setq pos (previous-single-property-change pos 'face object))
 	(when (eq pos nil) (throw 'not-found nil))
-	(setq prop (get-text-property pos 'face)))
+	(setq prop (get-text-property pos 'face object)))
       pos)))
 
 (defun identica-goto-next-status-of-user ()
