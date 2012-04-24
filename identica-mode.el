@@ -564,6 +564,7 @@ of identica-stripe-face."
       (define-key km "\C-c\C-e" 'identica-erase-old-statuses)
       (define-key km "\C-m" 'identica-enter)
       (define-key km "R" 'identica-reply-to-user)
+      (define-key km "A" 'identica-reply-to-all)
       (define-key km "\t" 'identica-next-link)
       (define-key km [backtab] 'identica-prev-link)
       (define-key km [mouse-1] 'identica-click)
@@ -2138,6 +2139,10 @@ With an argument, populate with the usernames of the author and any usernames me
                        (split-string notice-text) "")))
     (when username (setq usernames (concat "@" username " " usernames)))
     (identica-update-status identica-update-status-method usernames id)))
+
+(defun identica-reply-to-all ()
+  (interactive)
+  (identica-reply-to-user t))
 
 (defun identica-get-password ()
   (or (sn-account-password sn-current-account)
