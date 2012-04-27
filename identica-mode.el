@@ -1927,6 +1927,10 @@ this dictionary, only if identica-urlshortening-service is 'google."
         (identica-http-get (sn-account-server sn-current-account)
                            (sn-account-auth-mode sn-current-account)
                            identica-method-class identica-method parameters))))
+  (identica-get-icons))
+
+(defun identica-get-icons ()
+  "Retrieve icons if icon-mode is active."
   (if identica-icon-mode
       (if (and identica-image-stack window-system)
 	  (let ((proc
