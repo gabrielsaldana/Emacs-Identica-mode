@@ -317,6 +317,7 @@ The available choices are:
 ;; Initialize with default timeline
 (defvar identica-method identica-default-timeline)
 (defvar identica-method-class "statuses")
+(defvar identica-remote-server nil)
 
 (defvar identica-scroll-mode nil)
 (make-variable-buffer-local 'identica-scroll-mode)
@@ -1913,7 +1914,8 @@ this dictionary, only if identica-urlshortening-service is 'google."
 	  identica-timeline-data nil)
     (identica-current-timeline)))
 
-(defun identica-get-timeline (&optional parameters)
+(defun identica-get-timeline (&optional server parameters)
+  (setq identica-remote-server server)
   (unless parameters (setq parameters `(("count" . ,(int-to-string identica-statuses-count)))))
   (when (not (eq (sn-account-last-timeline-retrieved sn-current-account) identica-method))
     (setq identica-timeline-last-update nil
@@ -1924,8 +1926,9 @@ this dictionary, only if identica-urlshortening-service is 'google."
       (progn
 	(when (not identica-method)
 	  (setq identica-method "friends_timeline"))
-        (identica-http-get (sn-account-server sn-current-account)
-                           (sn-account-auth-mode sn-current-account)
+        (identica-http-get (or server (sn-account-server sn-current-account))
+                           (if server "none"
+                             (sn-account-auth-mode sn-current-account))
                            identica-method-class identica-method parameters))))
   (identica-get-icons))
 
@@ -2010,12 +2013,27 @@ this dictionary, only if identica-urlshortening-service is 'google."
     (setq identica-method (concat "conversation/" context-id)))
   (identica-get-timeline))
 
+(defun identica-remote-user-timeline ()
+  (interactive)
+  (let* ((profile (get-text-property (point) 'profile-url))
+         (username (get-text-property (point) 'username))
+         (server-url (if (string-match (concat username "/?$") profile)
+                         (replace-match "" nil t profile)
+                       profile))
+         (server (if (string-match "^https?://" server-url)
+                     (replace-match "" nil t server-url)
+                   server-url)))
+    (setq identica-method-class "statuses")
+    (setq identica-method (concat "user_timeline/" username))
+    (identica-get-timeline server)))
+
 (defun identica-current-timeline (&optional count)
   "Load newer notices, with an argument load older notices, and with a numeric argument load that number of notices."
   (interactive "P")
   (if (> identica-new-dents-count 0)
       (identica-render-pending-dents)
     (identica-get-timeline
+     identica-remote-server
      (if count
 	 (cons `("count" .
 		 ,(int-to-string
