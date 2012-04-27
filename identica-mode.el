@@ -939,8 +939,8 @@ procedure."
       (delete-process identica-http-buffer)
       (kill-buffer identica-http-buffer))
     (setq identica-http-buffer
-	  (identica-url-retrieve url sentinel method-class
-				 method parameters sentinel-arguments))
+          (identica-url-retrieve url sentinel method-class
+                                 method parameters sentinel-arguments auth-mode))
     (set-buffer identica-buffer)
     (set-buffer identica-buffer)
     (identica-set-mode-string t)))
@@ -1215,10 +1215,10 @@ we are interested in."
 	formatted-status))))
 
 (defun identica-url-retrieve
-  (url sentinel method-class method parameters sentinel-arguments &optional unhex-workaround)
+  (url sentinel method-class method parameters sentinel-arguments &optional auth-mode unhex-workaround)
   "Call url-retrieve or oauth-url-retrieve dsepending on the mode.
 Apply url-unhex-string workaround if necessary."
-  (if (and (equal (sn-account-auth-mode sn-current-account) "oauth")
+  (if (and (equal auth-mode "oauth")
 	   (sn-oauth-access-token (sn-account-oauth-data sn-current-account)))
       (if unhex-workaround
 	  (flet ((oauth-extract-url-params
@@ -1230,7 +1230,7 @@ bug in url-unhex-string present in emacsen previous to 23.3."
 		      (mapcar (lambda (pair)
 				`(,(car pair) . ,(w3m-url-decode-string (cadr pair))))
 			      (url-parse-query-string (substring url (match-end 0))))))))
-	    (identica-url-retrieve url sentinel method-class method parameters sentinel-arguments))
+	    (identica-url-retrieve url sentinel method-class method parameters sentinel-arguments auth-mode))
 	(oauth-url-retrieve (sn-oauth-access-token (sn-account-oauth-data sn-current-account)) url sentinel
 			    (append (list method-class method parameters)
 				    sentinel-arguments)))
@@ -1271,7 +1271,7 @@ PARAMETERS is alist of URI parameters. ex) ((\"mode\" . \"view\") (\"page\" . \"
       (delete-process identica-http-buffer)
       (kill-buffer identica-http-buffer))
     (identica-url-retrieve url sentinel method-class method parameters
-			   sentinel-arguments identica-unhex-broken)))
+			   sentinel-arguments (sn-account-auth-mode sn-current-account) identica-unhex-broken)))
 
 (defun identica-http-post-default-sentinel
   (&optional status method-class method parameters success-message)
