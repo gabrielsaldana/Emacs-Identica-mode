@@ -902,11 +902,11 @@ Shamelessly stolen from yammer.el"
 	(kill-this-buffer))))
   (sn-oauth-access-token (sn-account-oauth-data sn-current-account)))
 
-(defun identica-http-get (method-class method &optional parameters
-				       sentinel sentinel-arguments)
+(defun identica-http-get
+  (server auth-mode method-class method &optional parameters sentinel sentinel-arguments)
   "Basic function which communicates with server.
 METHOD-CLASS and METHOD are parameters for getting dents messages and
-other information from server as specified in api documentation.
+other information from SERVER as specified in api documentation.
 Third optional arguments specify the additional parameters required by
 the above METHOD.  It is specified as an alist with parameter name and
 its corresponding value SENTINEL represents the callback function to
@@ -914,7 +914,7 @@ be called after the http response is completely retrieved.
 SENTINEL-ARGUMENTS is the list of arguments (if any) of the SENTINEL
 procedure."
   (or sentinel (setq sentinel 'identica-http-get-default-sentinel))
-  (let ((url (concat "http://" (sn-account-server sn-current-account) "/api/"
+  (let ((url (concat "http://" server "/api/"
 		     (when (not (string-equal method-class "none"))
 		       (concat method-class "/" ))
 		     method ".xml"
@@ -931,7 +931,7 @@ procedure."
 	(url-package-version identica-mode-version)
 	(url-show-status nil))
     (identica-set-proxy)
-    (if (equal (sn-account-auth-mode sn-current-account) "oauth")
+      (if (equal auth-mode "oauth")
 	(or (sn-oauth-access-token (sn-account-oauth-data sn-current-account))
 	    (identica-initialize-oauth))
       (identica-set-auth url))
@@ -973,7 +973,9 @@ we adjust point within the right frame."
 		    ((y-or-n-p
 		      (format "Identica-Mode: Network error:%s Retry? "
 			      status))
-		     (identica-http-get method-class method parameters)
+		     (identica-http-get (sn-account-server sn-current-account)
+                                        (sn-account-auth-mode sn-current-account)
+                                        method-class method parameters)
 		     nil))
 	       ;; when the network process is deleted by another query
 	       ;; or the user queried is not found , query is _finished_
@@ -1920,7 +1922,9 @@ this dictionary, only if identica-urlshortening-service is 'google."
       (progn
 	(when (not identica-method)
 	  (setq identica-method "friends_timeline"))
-	(identica-http-get identica-method-class identica-method parameters))))
+        (identica-http-get (sn-account-server sn-current-account)
+                           (sn-account-auth-mode sn-current-account)
+                           identica-method-class identica-method parameters))))
   (if identica-icon-mode
       (if (and identica-image-stack window-system)
 	  (let ((proc
@@ -2030,7 +2034,8 @@ this dictionary, only if identica-urlshortening-service is 'google."
   (setq identica-timeline-data nil)
   (when (not (sn-account-last-timeline-retrieved sn-current-account))
     (setf (sn-account-last-timeline-retrieved sn-current-account) identica-method))
-  (identica-http-get "statuses" (sn-account-last-timeline-retrieved sn-current-account)))
+  (identica-http-get (sn-account-server sn-current-account) (sn-account-auth-mode sn-current-account)
+                     "statuses" (sn-account-last-timeline-retrieved sn-current-account)))
 
 (defun identica-click ()
   (interactive)
@@ -2263,8 +2268,8 @@ un-highlight all other entries."
 
 (defun identica-retrieve-configuration ()
   "Retrieve the configuration for the current statusnet server."
-  (identica-http-get "statusnet" "config" nil
-		     'identica-http-get-config-sentinel))
+  (identica-http-get (sn-account-server sn-current-account) (sn-account-auth-mode sn-current-account)
+                     "statusnet" "config" nil 'identica-http-get-config-sentinel))
 
 (defun identica-http-get-config-sentinel
   (&optional status method-class method parameters success-message)
