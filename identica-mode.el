@@ -2012,7 +2012,7 @@ this dictionary, only if identica-urlshortening-service is 'google."
   (let ((context-id (get-text-property (point) 'conversation-id)))
     (setq identica-method-class "statusnet")
     (setq identica-method (concat "conversation/" context-id)))
-  (identica-get-timeline))
+  (identica-get-timeline identica-remote-server))
 
 (defun identica-remote-user-timeline ()
   (interactive)
