@@ -680,11 +680,16 @@ of identica-stripe-face."
 
 (defun identica-set-mode-string (loading)
   (with-current-buffer (identica-buffer)
-    (setq mode-name
-	  (if loading (concat
-		       (if (stringp loading) loading "loading")
-		       " " identica-method "...") identica-method))
-    (debug-print mode-name)))
+    (let ((timeline-url
+	   (concat (or identica-remote-server
+		       (sn-account-server sn-current-account))
+		   "/" identica-method)))
+      (setq mode-name
+	    (if loading (concat
+			 (if (stringp loading) loading "loading")
+			 " " timeline-url "...")
+	      timeline-url))
+      (debug-print mode-name))))
 
 (defvar identica-mode-hook nil
   "Identica-mode hook.")
