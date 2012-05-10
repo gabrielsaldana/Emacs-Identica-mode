@@ -13,7 +13,7 @@
 ;;     Alex Schröder <kensanata@gmail.com> (mode map patches)
 ;;     Christian Cheng (fixed long standing xml parsing bug)
 ;;     Carlos A. Perilla from denting-mode
-;;     Alberto Garcia <agarcia@igalia.com> (integrated patch from twittering-mode for retrieving multiplemethods)
+;     Alberto Garcia <agarcia@igalia.com> (integrated patch from twittering-mode for retrieving multiplemethods)
 ;;     Bradley M. Kuhn <bkuhn@ebb.org> (editing status from edit-buffer rather than minibuffer)
 ;;     Jason McBrayer <jmcbray@carcosa.net> (replace group tags with hashtags on redents, longlines use)
 ;;     Sean Neakums (patches of bugs flagged by byte-compiler)
@@ -633,6 +633,10 @@ of identica-stripe-face."
   (set-face-attribute 'identica-uri-face nil :underline t)
   (add-to-list 'minor-mode-alist '(identica-icon-mode " id-icon"))
   (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll"))
+
+  ;; make face properties nonsticky
+  (nconc text-property-default-nonsticky
+	 '((face . t)(mouse-face . t)(uri . t)(source . t)(uri-in-text . t)))
 
   ;; Create an account object based on the various custom variables.
   ;; Insert it into the statusnet accounts list.
