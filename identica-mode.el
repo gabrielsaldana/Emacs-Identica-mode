@@ -1065,7 +1065,7 @@ we are interested in."
                   (when (not wrapped)
                     (fill-region-as-paragraph
                      (save-excursion (beginning-of-line -1) (point)) (point)))
-                  (insert "\n")
+                  (insert-and-inherit "\n")
                   (if (and identica-enable-highlighting
                            (memq (assoc-default 'id status) identica-highlighted-entries))
                       (merge-text-attribute before-status (point)
