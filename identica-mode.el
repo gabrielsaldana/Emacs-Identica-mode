@@ -1062,13 +1062,18 @@ we are interested in."
                     (fill-region-as-paragraph
                      (save-excursion (beginning-of-line -1) (point)) (point)))
                   (insert-and-inherit "\n")
-                  (if (and identica-enable-highlighting
-                           (memq (assoc-default 'id status) identica-highlighted-entries))
-                      (merge-text-attribute before-status (point)
-                                            'identica-highlight-face :background)
-                    (when stripe-entry
-                      (merge-text-attribute before-status (point)
-                                            'identica-stripe-face :background)))
+                  ;; Apply highlight overlays to status
+		  (when (or (string-equal (sn-account-username sn-current-account)
+					  (assoc-default 'in-reply-to-screen-name status))
+                            (string-match
+			     (concat "@" (sn-account-username sn-current-account)
+				     "\\([^[:word:]_-]\\|$\\)") (assoc-default 'text status)))
+		    (merge-text-attribute before-status (point) 'identica-reply-face :background))
+                  (when (and identica-enable-highlighting
+			     (memq (assoc-default 'id status) identica-highlighted-entries))
+		    (merge-text-attribute before-status (point) 'identica-highlight-face :background))
+                  (when stripe-entry
+		    (merge-text-attribute before-status (point) 'identica-stripe-face :background))
                   (when identica-oldest-first (goto-char (point-min))))))
             identica-timeline-data)
       (when (and identica-image-stack window-system) (clear-image-cache))
@@ -1488,11 +1493,6 @@ If STATUS-DATUM is already in DATA-VAR, return nil.  If not, return t."
       ;; save last update time
       (setq identica-timeline-last-update created-at)
 
-      ;; highlight replies
-      (when (or (string-equal (sn-account-username sn-current-account) in-reply-to-screen-name)
-		(string-match (concat "@" (sn-account-username sn-current-account) "\\([^[:word:]_-]\\)") text))
-	(add-text-properties 0 (length text)
-			     `(face identica-reply-face) text))
       (mapcar
        (lambda (sym)
 	 `(,sym . ,(symbol-value sym)))
