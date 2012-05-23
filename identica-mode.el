@@ -610,22 +610,18 @@ of identica-stripe-face."
   (font-lock-mode -1)
   (defface identica-username-face
     `((t nil)) "" :group 'faces)
-  (copy-face 'font-lock-string-face 'identica-username-face)
   (set-face-attribute 'identica-username-face nil :underline t)
+
   (defface identica-reply-face
     `((t nil)) "" :group 'faces)
-  (copy-face 'font-lock-string-face 'identica-reply-face)
-  (set-face-attribute 'identica-reply-face nil :foreground "white")
   (set-face-attribute 'identica-reply-face nil :background "DarkSlateGray")
 
   (defface identica-stripe-face
     `((t nil)) "" :group 'faces)
-  (copy-face 'font-lock-string-face 'identica-stripe-face)
   (set-face-attribute 'identica-stripe-face nil :background "LightSlateGray")
 
   (defface identica-highlight-face
     `((t nil)) "" :group 'faces)
-  (copy-face 'font-lock-string-face 'identica-highlight-face)
   (set-face-attribute 'identica-highlight-face nil :background "SlateGray")
 
   (defface identica-uri-face
