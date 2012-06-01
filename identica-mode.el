@@ -2163,17 +2163,21 @@ With an argument, populate with the usernames of the author and any usernames me
   (let ((username (get-text-property (point) 'username))
         (notice-text (get-text-property (point) 'text))
 	(id (get-text-property (point) 'id))
-        (usernames ""))
+        (usernames nil)
+	(usernames-string ""))
     (when all
       (setq usernames
-            (mapconcat (lambda (string)
-                         (when (and (char-equal (aref string 0) ?@)
-                                    (memq-face identica-uri-face
-                                               (get-text-property 2 'face string)))
-                           (concat string " ")))
-                       (split-string notice-text) "")))
-    (when username (setq usernames (concat "@" username " " usernames)))
-    (identica-update-status identica-update-status-method usernames id)))
+	    (mapcar (lambda (string)
+		      (when (and (char-equal (aref string 0) ?@)
+				 (memq-face identica-uri-face
+					    (get-text-property 2 'face string)))
+			(concat string " ")))
+		    (split-string notice-text)))
+      (when username (setq usernames (cons (concat "@" username " ") usernames)))
+      (setq usernames (delete-dups usernames))
+      (setq usernames (delete (concat "@" (sn-account-username sn-current-account) " ") usernames))
+      (setq usernames-string (apply 'concat usernames)))
+    (identica-update-status identica-update-status-method usernames-string id)))
 
 (defun identica-reply-to-all ()
   (interactive)
