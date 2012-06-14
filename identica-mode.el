@@ -610,22 +610,18 @@ of identica-stripe-face."
   (font-lock-mode -1)
   (defface identica-username-face
     `((t nil)) "" :group 'faces)
-  (copy-face 'font-lock-string-face 'identica-username-face)
   (set-face-attribute 'identica-username-face nil :underline t)
+
   (defface identica-reply-face
     `((t nil)) "" :group 'faces)
-  (copy-face 'font-lock-string-face 'identica-reply-face)
-  (set-face-attribute 'identica-reply-face nil :foreground "white")
   (set-face-attribute 'identica-reply-face nil :background "DarkSlateGray")
 
   (defface identica-stripe-face
     `((t nil)) "" :group 'faces)
-  (copy-face 'font-lock-string-face 'identica-stripe-face)
   (set-face-attribute 'identica-stripe-face nil :background "LightSlateGray")
 
   (defface identica-highlight-face
     `((t nil)) "" :group 'faces)
-  (copy-face 'font-lock-string-face 'identica-highlight-face)
   (set-face-attribute 'identica-highlight-face nil :background "SlateGray")
 
   (defface identica-uri-face
@@ -1066,13 +1062,18 @@ we are interested in."
                     (fill-region-as-paragraph
                      (save-excursion (beginning-of-line -1) (point)) (point)))
                   (insert-and-inherit "\n")
-                  (if (and identica-enable-highlighting
-                           (memq (assoc-default 'id status) identica-highlighted-entries))
-                      (merge-text-attribute before-status (point)
-                                            'identica-highlight-face :background)
-                    (when stripe-entry
-                      (merge-text-attribute before-status (point)
-                                            'identica-stripe-face :background)))
+                  ;; Apply highlight overlays to status
+		  (when (or (string-equal (sn-account-username sn-current-account)
+					  (assoc-default 'in-reply-to-screen-name status))
+                            (string-match
+			     (concat "@" (sn-account-username sn-current-account)
+				     "\\([^[:word:]_-]\\|$\\)") (assoc-default 'text status)))
+		    (merge-text-attribute before-status (point) 'identica-reply-face :background))
+                  (when (and identica-enable-highlighting
+			     (memq (assoc-default 'id status) identica-highlighted-entries))
+		    (merge-text-attribute before-status (point) 'identica-highlight-face :background))
+                  (when stripe-entry
+		    (merge-text-attribute before-status (point) 'identica-stripe-face :background))
                   (when identica-oldest-first (goto-char (point-min))))))
             identica-timeline-data)
       (when (and identica-image-stack window-system) (clear-image-cache))
@@ -1492,11 +1493,6 @@ If STATUS-DATUM is already in DATA-VAR, return nil.  If not, return t."
       ;; save last update time
       (setq identica-timeline-last-update created-at)
 
-      ;; highlight replies
-      (when (or (string-equal (sn-account-username sn-current-account) in-reply-to-screen-name)
-		(string-match (concat "@" (sn-account-username sn-current-account) "\\([^[:word:]_-]\\)") text))
-	(add-text-properties 0 (length text)
-			     `(face identica-reply-face) text))
       (mapcar
        (lambda (sym)
 	 `(,sym . ,(symbol-value sym)))
@@ -2171,17 +2167,21 @@ With an argument, populate with the usernames of the author and any usernames me
   (let ((username (get-text-property (point) 'username))
         (notice-text (get-text-property (point) 'text))
 	(id (get-text-property (point) 'id))
-        (usernames ""))
+        (usernames nil)
+	(usernames-string ""))
     (when all
       (setq usernames
-            (mapconcat (lambda (string)
-                         (when (and (char-equal (aref string 0) ?@)
-                                    (memq-face identica-uri-face
-                                               (get-text-property 2 'face string)))
-                           (concat string " ")))
-                       (split-string notice-text) "")))
-    (when username (setq usernames (concat "@" username " " usernames)))
-    (identica-update-status identica-update-status-method usernames id)))
+	    (mapcar (lambda (string)
+		      (when (and (char-equal (aref string 0) ?@)
+				 (memq-face identica-uri-face
+					    (get-text-property 2 'face string)))
+			(concat string " ")))
+		    (split-string notice-text))))
+    (when username (setq usernames (cons (concat "@" username " ") usernames)))
+    (setq usernames (delete-dups usernames))
+    (setq usernames (delete (concat "@" (sn-account-username sn-current-account) " ") usernames))
+    (setq usernames-string (apply 'concat usernames))
+    (identica-update-status identica-update-status-method usernames-string id)))
 
 (defun identica-reply-to-all ()
   (interactive)
