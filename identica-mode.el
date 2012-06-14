@@ -144,9 +144,9 @@ must be worked around when using oauth.")
   '((tinyurl . "http://tinyurl.com/api-create.php?url=")
     (toly    . "http://to.ly/api.php?longurl=")
     (google . "http://ggl-shortener.appspot.com/?url=")
-    (ur1ca . "http://ur1.ca")
-    (tighturl    . "http://2tu.us")
-    (isgd . "http://is.gd/api.php?longurl="))
+    (ur1ca . "http://ur1.ca/?longurl=")
+    (tighturl . "http://2tu.us/?save=y&url=")
+    (isgd . "http://is.gd/create.php?format=simple&url="))
   "Alist of tinyfy services.")
 
 (defvar identica-new-dents-count 0
@@ -1766,14 +1766,18 @@ this dictionary, only if identica-urlshortening-service is 'google."
   (let* ((url-request-method "POST")
 	 (url-request-extra-headers
 	  '(("Content-Type" . "application/x-www-form-urlencoded")))
-	 (url-request-data (concat "longurl=" (url-hexify-string longurl)))
-	 (buffer (url-retrieve-synchronously api)))
+	 (url-request-data (url-hexify-string longurl))
+	 (buffer (url-retrieve-synchronously (concat api (url-hexify-string longurl)))))
     (with-current-buffer buffer
       (goto-char (point-min))
       (prog1
-          (if (search-forward-regexp "Your .* is: .*>\\(http://ur1.ca/[0-9A-Za-z].*\\)</a>" nil t)
-              (match-string-no-properties 1)
-            (error "URL shortening service failed: %s" longurl))
+	  (if (eq api "ur1ca")
+	      (if (search-forward-regexp "Your .* is: .*>\\(http://ur1.ca/[0-9A-Za-z].*\\)</a>" nil t)
+		  (match-string-no-properties 1)
+		(error "URL shortening service failed: %s" longurl))
+	    (if (search-forward-regexp "\\(http://[0-9A-Za-z/].*\\)" nil t)
+		(match-string-no-properties 1)
+	      (error "URL shortening service failed: %s" longurl)))
 	(kill-buffer buffer)) )))
 
 (defun identica-shortenurl-get (longurl)
@@ -1787,7 +1791,7 @@ this dictionary, only if identica-urlshortening-service is 'google."
 			identica-urlshortening-services-map ", ")
 	     "."))
     (if longurl
-	(if (or (eq identica-urlshortening-service 'ur1ca) (eq identica-urlshortening-service 'tighturl))
+	(if (not (eq identica-urlshortening-service 'google))
 	    (identica-ur1ca-get api longurl)
 	  (let ((buffer (url-retrieve-synchronously (concat api longurl))))
 	    (with-current-buffer buffer
