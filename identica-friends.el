@@ -195,6 +195,10 @@ Be aware of no function or actual buffers exists. Reboot all identica-friends fu
     (define-key map "q" 'identica-friends-good-bye)
     (define-key map "n" 'identica-friends-next-user)
     (define-key map "p" 'identica-friends-prev-user)
+    (define-key map [down] 'identica-friends-next-user)
+    (define-key map [up] 'identica-friends-prev-user)
+    (define-key map [left] 'identica-friends-prev-user)
+    (define-key map [right] 'identica-friends-next-user)
     map)
   "Keymap for `identica-friends-mode'."
   )
@@ -260,7 +264,8 @@ Use `identica-show-friends' to call this buffer."
   (interactive)
   (identica-http-get (sn-account-server sn-current-account)
 		     (sn-account-auth-mode sn-current-account)
-		     "statuses" "followers" nil 'identica-friends-show-user-sentinel '("follower"))
+		     "statuses" "followers" nil 'identica-friends-show-user-sentinel '("follower"))    
+  (goto-char (point-min))
   (run-hooks 'identica-friends-show-followers-hooks)
   )
 
@@ -279,6 +284,7 @@ Use `identica-show-friends' to call this buffer."
   (identica-http-get (sn-account-server sn-current-account) ;; server
 		     (sn-account-auth-mode sn-current-account);; auth-mode
 		     "statuses" "friends" nil 'identica-friends-show-user-sentinel '("friend"))
+  (goto-char (point-min))
   (run-hooks 'identica-friends-show-friends-hooks)
   )
 
