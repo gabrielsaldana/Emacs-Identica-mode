@@ -432,11 +432,11 @@ or `identica-friends-get-follower-data':
 
 "
   (let ((inhibit-read-only t))
-    (insert "\nNick: " (nth 2 usr-data))
-    (insert "\nName: " (nth 1 usr-data))
-    (insert "\nDescription: " (nth 4 usr-data))
-    (insert "\nLocation: " (nth 3 usr-data))
-    (insert "\n--------------------\n")
+    (insert-and-inherit "\nNick: " (decode-coding-string (nth 2 usr-data) 'utf-8))
+    (insert-and-inherit "\nName: " (decode-coding-string (nth 1 usr-data) 'utf-8))
+    (insert-and-inherit "\nDescription: " (decode-coding-string (nth 4 usr-data) 'utf-8))
+    (insert-and-inherit "\nLocation: " (decode-coding-string (nth 3 usr-data) 'utf-8))
+    (insert-and-inherit "\n--------------------\n")
     )
   )
 
