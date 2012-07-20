@@ -258,7 +258,9 @@ Use `identica-show-friends' to call this buffer."
 
 (defun identica-show-followers()
   (interactive)
-  (identica-http-get "statuses" "followers" nil 'identica-friends-show-user-sentinel '("follower"))
+  (identica-http-get (sn-account-server sn-current-account)
+		     (sn-account-auth-mode sn-current-account)
+		     "statuses" "followers" nil 'identica-friends-show-user-sentinel '("follower"))
   (run-hooks 'identica-friends-show-followers-hooks)
   )
 
@@ -274,7 +276,9 @@ Use `identica-show-friends' to call this buffer."
 ;  (setq identica-method-class "statuses")
 ;  (setq identica-method "friends")
 ;  (identica-http-get identica-method-class identica-method identica-show-friend-sentinel)
-  (identica-http-get "statuses" "friends" nil 'identica-friends-show-user-sentinel '("friend"))
+  (identica-http-get (sn-account-server sn-current-account) ;; server
+		     (sn-account-auth-mode sn-current-account);; auth-mode
+		     "statuses" "friends" nil 'identica-friends-show-user-sentinel '("friend"))
   (run-hooks 'identica-friends-show-friends-hooks)
   )
 
@@ -360,7 +364,7 @@ If there are no user, return nil."
 (defun identica-friends-show-user-sentinel
   (&optional status method-class method parameters success-message type-of-user)
   "Sentinel executed after recieving all the information from identi.ca.
-This sentinel needs to know if the type-of-user(or type of list) is one of these:
+This sentinel needs to know if the TYPE-OF-USER(or type of list) is one of these:
 - \"friend\"
 - \"follower\".
 
