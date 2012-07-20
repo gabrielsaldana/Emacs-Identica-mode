@@ -2006,15 +2006,21 @@ this dictionary, only if identica-urlshortening-service is 'google."
     (setq identica-method (concat "timeline/" tag)))
   (identica-get-timeline))
 
-(defun identica-user-timeline ()
+(defun identica-user-timeline (&optional from-user)
+  "Retrieve user timeline given its username.
+
+FROM-USER can be an empty string (\"\") meaning that you want to retrieve your own timeline.
+If nil, will ask for username in minibuffer."
   (interactive)
-  (let ((from-user (read-from-minibuffer "User [Empty for mine]: "
-                                         nil nil nil nil nil t)))
-    (setq identica-method-class "statuses")
-    (if (string-equal from-user "")
-        (setq identica-method "user_timeline")
-      (setq identica-method (concat "user_timeline/" from-user))))
-  (identica-get-timeline))
+  (unless from-user
+    (setq from-user (read-from-minibuffer "User [Empty for mine]: "
+					  nil nil nil nil nil t)))
+  (setq identica-method-class "statuses")
+  (if (string-equal from-user "")
+      (setq identica-method "user_timeline")
+    (setq identica-method (concat "user_timeline/" from-user)))
+  (identica-get-timeline)
+  )
 
 (defun identica-conversation-timeline ()
   (interactive)

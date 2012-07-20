@@ -198,7 +198,8 @@ Be aware of no function or actual buffers exists. Reboot all identica-friends fu
     (define-key map [down] 'identica-friends-next-user)
     (define-key map [up] 'identica-friends-prev-user)
     (define-key map [left] 'identica-friends-prev-user)
-    (define-key map [right] 'identica-friends-next-user)
+    (define-key map [right] 'identica-friends-next-user)    
+    (define-key map [return] 'identica-friends-goto-user-timeline-at-point)
     map)
   "Keymap for `identica-friends-mode'."
   )
@@ -254,6 +255,16 @@ Use `identica-show-friends' to call this buffer."
     )
   (run-hooks 'identica-friends-prev-user-hooks)
   )
+
+(defun identica-friends-goto-user-timeline-at-point ()
+  "Search for the username and go to his timeline."
+  (interactive)
+  (let ((username (identica-friends-find-username))
+	)
+    (identica-user-timeline username)
+    (switch-to-buffer identica-buffer)
+    )	
+  )
 					;
 					; Main function:
                                         ; Followers Commands
@@ -265,7 +276,6 @@ Use `identica-show-friends' to call this buffer."
   (identica-http-get (sn-account-server sn-current-account)
 		     (sn-account-auth-mode sn-current-account)
 		     "statuses" "followers" nil 'identica-friends-show-user-sentinel '("follower"))    
-  (goto-char (point-min))
   (run-hooks 'identica-friends-show-followers-hooks)
   )
 
@@ -284,7 +294,6 @@ Use `identica-show-friends' to call this buffer."
   (identica-http-get (sn-account-server sn-current-account) ;; server
 		     (sn-account-auth-mode sn-current-account);; auth-mode
 		     "statuses" "friends" nil 'identica-friends-show-user-sentinel '("friend"))
-  (goto-char (point-min))
   (run-hooks 'identica-friends-show-friends-hooks)
   )
 
@@ -294,6 +303,18 @@ Use `identica-show-friends' to call this buffer."
 					; Auxiliary Functions
 					; ____________________
 
+
+(defun identica-friends-find-username ()
+  "Find the username in the nearby at current position.
+
+I suppose that the cursor is on the nickname and not anywhere."
+  (save-excursion
+    (if (search-forward-regexp "Nick: \\(.*\\)" nil t)
+	(match-string-no-properties 1)
+      nil
+      )
+    )
+  )
 
 (defun identica-friends-buffer ()
   "Show a new buffer with all the friends. "
@@ -380,7 +401,7 @@ First, its parse the XML file recieved by identi.ca. While parsing, it show the 
   ;; cnngimenez: This I used for debug HTTP
   ;;  (identica-friends-copiar-http-buffer)
   ;; Search for the begining of the xml...
-  (goto-char 0)
+  (goto-char (point-min))
   (search-forward "<?xml")
   (setq start-xml (match-beginning 0))
   ;; Parse xml into a list
@@ -389,6 +410,8 @@ First, its parse the XML file recieved by identi.ca. While parsing, it show the 
   (identica-friends-buffer)
   ;; Find elements on that list and write it
   (identica-friends-parse-xml-user-lists type-of-user lst-xml)
+  
+  (goto-char (point-min))
   )
 
 
