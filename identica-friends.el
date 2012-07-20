@@ -32,6 +32,11 @@
 ;; and commented by an only one ";". Also are overlined and underlined
 ;; so, they are very visible.
 ;;
+;; Convention:
+;; All functions and variables in this modules has the prefix 
+;; "identica-friends" so you can identify easyly. 
+;; The main functions may not have this prefix so users don't get
+;; confused.
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -96,13 +101,13 @@ Be aware of no function or actual buffers exists. Reboot all identica-friends fu
   )
 
 
-(defcustom identica-show-friends-hooks
+(defcustom identica-friends-show-friends-hooks
   'nil
   "These functions are called as soon as the `identica-show-friends' functions finnish."
   :type '(hook)
   )
 
-(defcustom identica-show-followers-hooks
+(defcustom identica-friends-show-followers-hooks
   'nil
   "These functions are called as soon as the `identica-show-followers' functions finnish."
   :type '(hook)
@@ -246,29 +251,31 @@ Use `identica-show-friends' to call this buffer."
   (run-hooks 'identica-friends-prev-user-hooks)
   )
 					;
+					; Main function:
                                         ; Followers Commands
 					;
 
 
 (defun identica-show-followers()
   (interactive)
-  (identica-http-get "statuses" "followers" nil 'identica-show-user-sentinel '("follower"))
-  (run-hooks 'identica-show-followers-hooks)
+  (identica-http-get "statuses" "followers" nil 'identica-friends-show-user-sentinel '("follower"))
+  (run-hooks 'identica-friends-show-followers-hooks)
   )
 
 
                                         ;
+					; Main function:
                                         ; Friends Commands
                                         ;
 
 
-(defun identica-show-friends ()
+(defun identica-show-friends ()  
   (interactive)
 ;  (setq identica-method-class "statuses")
 ;  (setq identica-method "friends")
 ;  (identica-http-get identica-method-class identica-method identica-show-friend-sentinel)
-  (identica-http-get "statuses" "friends" nil 'identica-show-user-sentinel '("friend"))
-  (run-hooks 'identica-show-friends-hooks)
+  (identica-http-get "statuses" "friends" nil 'identica-friends-show-user-sentinel '("friend"))
+  (run-hooks 'identica-friends-show-friends-hooks)
   )
 
 
@@ -350,7 +357,7 @@ If there are no user, return nil."
     )
   )
 
-(defun identica-show-user-sentinel
+(defun identica-friends-show-user-sentinel
   (&optional status method-class method parameters success-message type-of-user)
   "Sentinel executed after recieving all the information from identi.ca.
 This sentinel needs to know if the type-of-user(or type of list) is one of these:
@@ -361,7 +368,7 @@ First, its parse the XML file recieved by identi.ca. While parsing, it show the 
 
 "
   ;; cnngimenez: This I used for debug HTTP
-  ;;  (identica-copiar-http-buffer)
+  ;;  (identica-friends-copiar-http-buffer)
   ;; Search for the begining of the xml...
   (goto-char 0)
   (search-forward "<?xml")
@@ -371,12 +378,12 @@ First, its parse the XML file recieved by identi.ca. While parsing, it show the 
   ;; Change buffer...
   (identica-friends-buffer)
   ;; Find elements on that list and write it
-  (identica-parse-xml-user-lists type-of-user lst-xml)
+  (identica-friends-parse-xml-user-lists type-of-user lst-xml)
   )
 
 
 
-(defun identica-parse-xml-user-lists (type-of-user xml-lst)
+(defun identica-friends-parse-xml-user-lists (type-of-user xml-lst)
   "Parse the xml-lst list and, after that, write every user into the current buffer.
 The way it is parsed depends on the type-of-user we are talking about:
 - \"friend\"
@@ -395,10 +402,10 @@ The way it is parsed depends on the type-of-user we are talking about:
   ;; for each user in the xml list, parse it, and write it...
   (dolist (usr xml-lst)
     (unless (stringp usr)
-      (identica-write-user
+      (identica-friends-write-user
        (if (string= type-of-user "friends")
-           (identica-get-friend-data usr) ;; Is a friend, parse xml as a friends.xml
-         (identica-get-follower-data usr) ;; is a follower, parse as followers.xml
+           (identica-friends-get-friend-data usr) ;; Is a friend, parse xml as a friends.xml
+         (identica-friends-get-follower-data usr) ;; is a follower, parse as followers.xml
          )
        )
       )
@@ -406,10 +413,10 @@ The way it is parsed depends on the type-of-user we are talking about:
   )
 
 
-(defun identica-write-user (usr-data)
+(defun identica-friends-write-user (usr-data)
   "Write an user taking the info from a list.
-The list must be of the form given by the functions `identica-get-friend-data'
-or `identica-get-follower-data':
+The list must be of the form given by the functions `identica-friends-get-friend-data'
+or `identica-friends-get-follower-data':
 
  (id . name . screen_name . location . description )
 
@@ -424,7 +431,7 @@ or `identica-get-follower-data':
   )
 
 ;; *****
-;; ** Comment about `identica-get-follower-data' and `identica-get-friend-data':
+;; ** Comment about `identica-friends-get-follower-data' and `identica-friends-get-friend-data':
 ;;
 ;;   These parsers must be changed to a most suitable way of finding the members.
 ;;   Maybe using the "member" function or any simmilar makes a more reliable way of finding the attributes
@@ -436,9 +443,9 @@ or `identica-get-follower-data':
 ;;
 ;; *****
 
-(defun identica-get-follower-data (usr-lst)
+(defun identica-friends-get-follower-data (usr-lst)
   "Parse the list and make a more easy-to-read list. The final list will have the following form suitable
-for writing in a buffer with the function `identica-write-user'.
+for writing in a buffer with the function `identica-friends-write-user'.
   (id . name . screen_name . location . description )."
 
   (setq lst '())
@@ -476,11 +483,11 @@ for writing in a buffer with the function `identica-write-user'.
   )
 
 
-(defun identica-get-friend-data (usr-lst)
+(defun identica-friends-get-friend-data (usr-lst)
   "Parse the list and make a list more easy to read. The list has the following form:
   (id . name . screen_name . location . description ).
 
-This form is suitable for the function `identica-write-user'.
+This form is suitable for the function `identica-friends-write-user'.
 "
 
   (setq lst '())
@@ -587,15 +594,15 @@ This function return nil when there are any friend in the buffer."
 
 
 
-(defvar identica-http-debug "*identica-http*"
+(defvar identica-friends-http-debug "*identica-http*"
   "Buffer to the http requests")
 
-(defun identica-copiar-http-buffer ()
+(defun identica-friends-copiar-http-buffer ()
   "Copia el buffer http a otro nuevo para ver el resultado de la comunicación."
   (with-current-buffer identica-http-buffer
     (setq str (buffer-string))
     )
-  (with-current-buffer (get-buffer-create identica-http-debug)
+  (with-current-buffer (get-buffer-create identica-friends-http-debug)
     (delete-region (point-min) (point-max))
     (insert str)
     )
