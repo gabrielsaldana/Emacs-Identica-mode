@@ -297,6 +297,17 @@ Use `identica-show-friends' to call this buffer."
   (run-hooks 'identica-friends-show-friends-hooks)
   )
 
+(defun identica-show-groups ()  
+  (interactive)
+;;  (setq identica-method-class "statuses")
+;;  (setq identica-method "friends")
+;;  (identica-http-get identica-method-class identica-method identica-show-friend-sentinel)
+  (identica-http-get (sn-account-server sn-current-account) ;; server
+		     (sn-account-auth-mode sn-current-account);; auth-mode
+		     "statusnet" "groups/list" nil 'identica-friends-show-user-sentinel '("group"))
+  (run-hooks 'identica-friends-show-friends-hooks)
+  )
+
 
 					; ____________________
 					;
@@ -389,17 +400,18 @@ If there are no user, return nil."
   )
 
 (defun identica-friends-show-user-sentinel
-  (&optional status method-class method parameters success-message type-of-user)
+  (&optional status method-class method parameters type-of-user)
   "Sentinel executed after recieving all the information from identi.ca.
 This sentinel needs to know if the TYPE-OF-USER(or type of list) is one of these:
 - \"friend\"
-- \"follower\".
+- \"follower\"
+- \"group\"
 
 First, its parse the XML file recieved by identi.ca. While parsing, it show the user data into a buffer.
 
 "
   ;; cnngimenez: This I used for debug HTTP
-  ;;  (identica-friends-copiar-http-buffer)
+  (identica-friends-copiar-http-buffer)
   ;; Search for the begining of the xml...
   (goto-char (point-min))
   (search-forward "<?xml")
@@ -421,6 +433,7 @@ First, its parse the XML file recieved by identi.ca. While parsing, it show the 
 The way it is parsed depends on the type-of-user we are talking about:
 - \"friend\"
 - \"follower\"
+- \"group\"
 "
   ;; Get first element
   (setq xml-lst (car xml-lst))
@@ -435,15 +448,20 @@ The way it is parsed depends on the type-of-user we are talking about:
   ;; for each user in the xml list, parse it, and write it...
   (dolist (usr xml-lst)
     (unless (stringp usr)
-      (identica-friends-write-user
-       (if (string= type-of-user "friends")
-           (identica-friends-get-friend-data usr) ;; Is a friend, parse xml as a friends.xml
-         (identica-friends-get-follower-data usr) ;; is a follower, parse as followers.xml
-         )
+       (cond ((string= type-of-user "friends")
+	      (identica-friends-write-user
+	       (identica-friends-get-friend-data usr))) ;; Is a friend, parse xml as a friends.xml
+	     ((string= type-of-user "follower")
+	      (identica-friends-write-user
+	       (identica-friends-get-follower-data usr)));; is a follower, parse as followers.xml
+	     ((string= type-of-user "group")
+	      (identica-friends-write-group
+	       (identica-friends-get-group-data usr)))
+	     )
        )
-      )
     )
   )
+
 
 
 (defun identica-friends-write-user (usr-data)
@@ -459,6 +477,22 @@ or `identica-friends-get-follower-data':
     (insert-and-inherit "\nName: " (decode-coding-string (nth 1 usr-data) 'utf-8))
     (insert-and-inherit "\nDescription: " (decode-coding-string (nth 4 usr-data) 'utf-8))
     (insert-and-inherit "\nLocation: " (decode-coding-string (nth 3 usr-data) 'utf-8))
+    (insert-and-inherit "\n--------------------\n")
+    )
+  )
+
+(defun identica-friends-write-group (group-data)
+  "Write a group taking the info from a list.
+The list must be of the form given by the functions `identica-friends-get-group-data':
+
+ (id url nickname fullname membership blocked member_count logo homepage description location modified)"
+  (let ((inhibit-read-only t))
+    (insert-and-inherit "\nNick: " (decode-coding-string (nth 2 group-data) 'utf-8))
+    (insert-and-inherit "\nName: " (decode-coding-string (nth 3 group-data) 'utf-8))
+    (insert-and-inherit "\nURL: " (decode-coding-string (nth 1 group-data) 'utf-8))    
+    (insert-and-inherit "\nDescription: " (decode-coding-string (nth 9 group-data) 'utf-8))
+    (insert-and-inherit "\nLocation: " (decode-coding-string (nth 10 group-data) 'utf-8))
+    (insert-and-inherit "\nHomepage: " (decode-coding-string (nth 8 group-data) 'utf-8))
     (insert-and-inherit "\n--------------------\n")
     )
   )
@@ -560,6 +594,83 @@ This form is suitable for the function `identica-friends-write-user'.
   ;; Replace nils into strings...
   (replace-nils lst "")
   )
+
+(defun identica-friends-get-group-data (usr-lst)
+  "Parse the list and make a more easy-to-read list. The final list will have the following form suitable
+for writing in a buffer with the function `identica-friends-write-user'.
+
+ (id url nickname fullname membership blocked member_count logo homepage description location modified)."
+
+  (setq lst '())
+
+  ;; Put the id
+  (push
+   (nth 2 (nth 3 usr-lst))
+   lst
+   )
+
+  ;; Put the url
+  (push
+   (nth 2 (nth 5 usr-lst))
+   lst
+   )
+
+  ;; Put the nickname
+  (push
+   (nth 2 (nth 7 usr-lst))
+   lst)
+
+  ;; Put the fullname
+  (push
+   (nth 2 (nth 9 usr-lst))
+   lst)
+
+  ;; Put the membership
+  (push
+   (nth 2 (nth 11 usr-lst))
+   lst)
+
+  ;; Put the blocked
+  (push
+   (nth 2 (nth 13 usr-lst))
+   lst)
+
+  ;; Put the member-count
+  (push
+   (nth 2 (nth 15 usr-lst))
+   lst)
+
+  ;; Put the logo(original logo!)
+  (push
+   (nth 2 (nth 17 usr-lst))
+   lst)
+
+  ;; Put the homepage
+  (push
+   (nth 2 (nth 25 usr-lst))
+   lst)
+
+  ;; Put the description
+  (push
+   (nth 2 (nth 27 usr-lst))
+   lst)
+
+  ;; Put the location
+  (push
+   (nth 2 (nth 29 usr-lst))
+   lst)
+
+  ;; Put the modified
+  (push
+   (nth 2 (nth 33 usr-lst))
+   lst)
+
+  (setq lst (reverse lst))
+
+  ;; Replace nils into strings...
+  (replace-nils lst "")
+  )
+
 
 (defun identica-friends-find-next-user-position ()
   "Find the position in the *identica-friend-buffer* of the next user. If there are no next user(we are at the end of the list)
