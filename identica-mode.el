@@ -353,6 +353,7 @@ The available choices are:
 ;; %@ - X seconds ago
 ;; %t - text
 ;; %' - truncated
+;; %h - favorited
 ;; %f - source
 ;; %# - id
 
@@ -627,6 +628,11 @@ of identica-stripe-face."
   (defface identica-uri-face
     `((t nil)) "" :group 'faces)
   (set-face-attribute 'identica-uri-face nil :underline t)
+
+  (defface identica-heart-face
+    `((t nil)) "" :group 'faces)
+  (set-face-attribute 'identica-heart-face nil :foreground "firebrick1" :height 2.0)  
+
   (add-to-list 'minor-mode-alist '(identica-icon-mode " id-icon"))
   (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll"))
 
@@ -1215,6 +1221,10 @@ we are interested in."
 	   (push (format "%d" (attr 'id)) result))
 	  ((?x)                         ; %x - conversation id (conteXt) - default 0
 	   (push (attr 'conversation-id) result))
+	  ((?h)
+	   (let ((likes (attr 'favorited)))
+	     (when (string= "true" likes)
+	       (push (propertize "❤" 'face 'identica-heart-face) result))))
 	  (t
 	   (push (char-to-string c) result))))
       (push (substring format-str cursor) result)
@@ -1376,7 +1386,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil.  If not, return t."
   (flet ((assq-get (item seq)
 		   (car (cddr (assq item seq)))))
     (let* ((status-data (cddr status))
-	   id text source created-at truncated
+	   id text source created-at truncated favorited
 	   in-reply-to-status-id
 	   in-reply-to-screen-name
 	   (user-data (cddr (assq 'user status-data)))
@@ -1393,11 +1403,12 @@ If STATUS-DATUM is already in DATA-VAR, return nil.  If not, return t."
 
       (setq id (string-to-number (assq-get 'id status-data)))
       (setq text (identica-decode-html-entities
-		  (assq-get 'text status-data)))
+		  (assq-get 'text status-data)))      
       (setq source (identica-decode-html-entities
 		    (assq-get 'source status-data)))
       (setq created-at (assq-get 'created_at status-data))
       (setq truncated (assq-get 'truncated status-data))
+      (setq favorited (assq-get 'favorited status-data))
       (setq in-reply-to-status-id
 	    (identica-decode-html-entities
 	     (assq-get 'in_reply_to_status_id status-data)))
@@ -1496,7 +1507,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil.  If not, return t."
       (mapcar
        (lambda (sym)
 	 `(,sym . ,(symbol-value sym)))
-       '(id text source created-at truncated
+       '(id text source created-at truncated favorited
 	    in-reply-to-status-id
 	    in-reply-to-screen-name
 	    conversation-id
