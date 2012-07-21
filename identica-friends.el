@@ -83,6 +83,12 @@ recall identica-friends functions.
 Be aware of no function or actual buffers exists. Reboot all identica-friends functions."
   )
 
+(defvar identica-friends-buffer-type nil
+  "If the buffer contains a list of users, the this is setted into 'users. 
+If the buffer contains a list of groups, this is setted into 'groups.
+Nil means, no buffer or just the programmer forgot to set it! :-S ."
+  )
+
 					; ----
 					; Hooks Variables
 					; ----
@@ -199,7 +205,7 @@ Be aware of no function or actual buffers exists. Reboot all identica-friends fu
     (define-key map [up] 'identica-friends-prev-user)
     (define-key map [left] 'identica-friends-prev-user)
     (define-key map [right] 'identica-friends-next-user)    
-    (define-key map [return] 'identica-friends-goto-user-timeline-at-point)
+    (define-key map [return] 'identica-friends-goto-timeline-at-point)
     map)
   "Keymap for `identica-friends-mode'."
   )
@@ -256,12 +262,38 @@ Use `identica-show-friends' to call this buffer."
   (run-hooks 'identica-friends-prev-user-hooks)
   )
 
+(defun identica-friends-goto-timeline-at-point ()
+  "Check whenever we are in user-list or group-list. If we are listing user, call `identica-friends-goto-user-timeline-at-point', 
+if not call `identica-friends-goto-group-timeline-at-point'."
+  (interactive)
+  (cond 
+   ((eq identica-friends-buffer-type 'users)
+    (identica-friends-goto-user-timeline-at-point)
+    )
+   ((eq identica-friends-buffer-type 'groups)
+    (identica-friends-goto-group-timeline-at-point)
+    )
+   )
+  )
+   
 (defun identica-friends-goto-user-timeline-at-point ()
   "Search for the username and go to his timeline."
   (interactive)
   (let ((username (identica-friends-find-username))
 	)
     (identica-user-timeline username)
+    (switch-to-buffer identica-buffer)
+    )	
+  )
+
+(defun identica-friends-goto-group-timeline-at-point ()
+  "Search for the group name and go to his timeline."
+  (interactive)
+  ;; Look that `identica-friends-find-username' can be used for getting anything that starts with the "Nick: " string,
+  ;; so is usefull here as well!
+  (let ((groupname (identica-friends-find-username))
+	)
+    (identica-group-timeline groupname)
     (switch-to-buffer identica-buffer)
     )	
   )
@@ -273,6 +305,7 @@ Use `identica-show-friends' to call this buffer."
 
 (defun identica-show-followers()
   (interactive)
+  (setq identica-friends-buffer-type 'users)
   (identica-http-get (sn-account-server sn-current-account)
 		     (sn-account-auth-mode sn-current-account)
 		     "statuses" "followers" nil 'identica-friends-show-user-sentinel '("follower"))    
@@ -291,6 +324,7 @@ Use `identica-show-friends' to call this buffer."
 ;  (setq identica-method-class "statuses")
 ;  (setq identica-method "friends")
 ;  (identica-http-get identica-method-class identica-method identica-show-friend-sentinel)
+  (setq identica-friends-buffer-type 'users)
   (identica-http-get (sn-account-server sn-current-account) ;; server
 		     (sn-account-auth-mode sn-current-account);; auth-mode
 		     "statuses" "friends" nil 'identica-friends-show-user-sentinel '("friend"))
@@ -302,10 +336,11 @@ Use `identica-show-friends' to call this buffer."
 ;;  (setq identica-method-class "statuses")
 ;;  (setq identica-method "friends")
 ;;  (identica-http-get identica-method-class identica-method identica-show-friend-sentinel)
+  (setq identica-friends-buffer-type 'groups)
   (identica-http-get (sn-account-server sn-current-account) ;; server
 		     (sn-account-auth-mode sn-current-account);; auth-mode
 		     "statusnet" "groups/list" nil 'identica-friends-show-user-sentinel '("group"))
-  (run-hooks 'identica-friends-show-friends-hooks)
+  ;;(run-hooks 'identica-friends-show-groups-hooks)
   )
 
 
@@ -448,7 +483,7 @@ The way it is parsed depends on the type-of-user we are talking about:
   ;; for each user in the xml list, parse it, and write it...
   (dolist (usr xml-lst)
     (unless (stringp usr)
-       (cond ((string= type-of-user "friends")
+       (cond ((string= type-of-user "friend")
 	      (identica-friends-write-user
 	       (identica-friends-get-friend-data usr))) ;; Is a friend, parse xml as a friends.xml
 	     ((string= type-of-user "follower")
