@@ -631,7 +631,7 @@ of identica-stripe-face."
 
   (defface identica-heart-face
     `((t nil)) "" :group 'faces)
-  (set-face-attribute 'identica-heart-face nil :foreground "firebrick1" :height 2.0)  
+  (set-face-attribute 'identica-heart-face nil :foreground "firebrick1" :height 2.0)
 
   (add-to-list 'minor-mode-alist '(identica-icon-mode " id-icon"))
   (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll"))
@@ -1403,7 +1403,7 @@ If STATUS-DATUM is already in DATA-VAR, return nil.  If not, return t."
 
       (setq id (string-to-number (assq-get 'id status-data)))
       (setq text (identica-decode-html-entities
-		  (assq-get 'text status-data)))      
+		  (assq-get 'text status-data)))
       (setq source (identica-decode-html-entities
 		    (assq-get 'source status-data)))
       (setq created-at (assq-get 'created_at status-data))
