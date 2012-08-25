@@ -102,7 +102,7 @@
 (require 'cl)
 (require 'xml)
 (require 'parse-time)
-(require 'longlines)
+;;(require 'longlines)
 (require 'url)
 (require 'url-http)
 (require 'json)
@@ -1714,7 +1714,8 @@ prompt; \"Down\" counts down from (sn-account-textlimit sn-current-account); \"U
 (defun identica-update-status-from-edit-buffer-send ()
   (interactive)
   (with-current-buffer "*identica-status-update-edit*"
-    (longlines-encode-region (point-min) (point-max))
+    (if longlines-mode
+	(longlines-encode-region (point-min) (point-max)))
     (let* ((status (buffer-substring-no-properties (point-min) (point-max)))
            (status-len (length status)))
       (if (< (sn-account-textlimit sn-current-account) status-len)
