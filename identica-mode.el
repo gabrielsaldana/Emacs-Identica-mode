@@ -182,8 +182,8 @@ If non-nil, dents over this amount will bre removed.")
       ["User timeline" identica-user-timeline t]
       ["Tag timeline" identica-tag-timeline t]
       ["--" nil nil]
-      ["Group timeline" identica-group-timeline t]
-      ["Join to this group" identica-group-join t]
+      ;; ["Group timeline" identica-group-timeline t]
+      ;; ["Join to this group" identica-group-join t]
       ["Leave this group" identica-group-leave t]
       )))
 
