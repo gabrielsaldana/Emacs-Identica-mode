@@ -1043,8 +1043,8 @@ we are interested in."
   (with-current-buffer (identica-buffer)
     (let ((point (point))
 	  (end (point-max))
-          (wrapped (cond (longlines-mode 'longlines-mode)
-                         (visual-line-mode 'visual-line-mode)
+          (wrapped (cond (visual-line-mode 'visual-line-mode)
+			 (longlines-mode 'longlines-mode)
                          (t nil)))
 	  (stripe-entry nil))
 
