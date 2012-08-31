@@ -637,8 +637,10 @@ of identica-stripe-face."
   (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll"))
 
   ;; make face properties nonsticky
-  (nconc text-property-default-nonsticky
-	 '((face . t)(mouse-face . t)(uri . t)(source . t)(uri-in-text . t)))
+  (unless (boundp 'identica-text-property-nonsticky-adjustment)
+    (setq identica-text-property-nonsticky-adjustment t)
+    (nconc text-property-default-nonsticky
+	   '((face . t)(mouse-face . t)(uri . t)(source . t)(uri-in-text . t))))
 
   (identica-create-account))
 
