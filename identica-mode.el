@@ -1683,6 +1683,7 @@ prompt; \"Down\" counts down from (sn-account-textlimit sn-current-account); \"U
   (remove-hook 'post-command-hook 'identica-show-minibuffer-length t))
 
 (defun identica-update-status (update-input-method &optional init-str reply-to-id method-class method parameters)
+  (identica-create-account)
   (when (null init-str) (setq init-str ""))
   (let ((msgtype "")
 	(status init-str)
