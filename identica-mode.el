@@ -640,28 +640,34 @@ of identica-stripe-face."
   (nconc text-property-default-nonsticky
 	 '((face . t)(mouse-face . t)(uri . t)(source . t)(uri-in-text . t)))
 
-  ;; Create an account object based on the various custom variables.
-  ;; Insert it into the statusnet accounts list.
-  (setq statusnet-accounts
-	(cons (make-statusnet-account
-	       :server statusnet-server
-	       :port statusnet-port
-	       :username identica-username
-	       :auth-mode identica-auth-mode
-	       :password identica-password
-	       :textlimit statusnet-server-textlimit
-	       :oauth-data (if (string= identica-auth-mode "oauth")
-			       (make-statusnet-oauth-data
-				:consumer-key identica-mode-oauth-consumer-key
-				:consumer-secret identica-mode-oauth-consumer-secret
-				:request-url statusnet-request-url
-				:access-url statusnet-access-url
-				:authorize-url statusnet-authorize-url
-				:access-token nil)
-			     nil)
-	       :last-timeline-retrieved nil)
-	      statusnet-accounts))
-  (setq sn-current-account (car statusnet-accounts)))
+  (identica-create-account))
+
+(defun identica-create-account ()
+  "Create an account object based on the various custom variables.
+  Insert it into the statusnet accounts list.
+This needs to be called from any globally-accessable entry point."
+  (unless (boundp 'statusnet-account-created)
+    (setq statusnet-account-created t)
+    (setq statusnet-accounts
+	  (cons (make-statusnet-account
+		 :server statusnet-server
+		 :port statusnet-port
+		 :username identica-username
+		 :auth-mode identica-auth-mode
+		 :password identica-password
+		 :textlimit statusnet-server-textlimit
+		 :oauth-data (if (string= identica-auth-mode "oauth")
+				 (make-statusnet-oauth-data
+				  :consumer-key identica-mode-oauth-consumer-key
+				  :consumer-secret identica-mode-oauth-consumer-secret
+				  :request-url statusnet-request-url
+				  :access-url statusnet-access-url
+				  :authorize-url statusnet-authorize-url
+				  :access-token nil)
+			       nil)
+		 :last-timeline-retrieved nil)
+		statusnet-accounts))
+    (setq sn-current-account (car statusnet-accounts))))
 
 (defmacro case-string (str &rest clauses)
   `(cond
