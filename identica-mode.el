@@ -724,7 +724,8 @@ This needs to be called from any globally-accessable entry point."
   (autoload 'make-oauth-access-token "oauth"))
 
 (defun identica-mode ()
-  "Major mode for Identica."
+  "Major mode for Identica.
+  \\{identica-mode-map}"
   (interactive)
   (identica-autoload-oauth)
   (switch-to-buffer (identica-buffer))
