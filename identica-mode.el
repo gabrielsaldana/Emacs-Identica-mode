@@ -1781,22 +1781,25 @@ this dictionary, only if identica-urlshortening-service is 'google."
 
 (defun identica-ur1ca-get (api longurl)
   "Shortens url through ur1.ca free service 'as in freedom'."
-  (let* ((url-request-method "POST")
-	 (url-request-extra-headers
-	  '(("Content-Type" . "application/x-www-form-urlencoded")))
-	 (url-request-data (url-hexify-string longurl))
-	 (buffer (url-retrieve-synchronously (concat api (url-hexify-string longurl)))))
+  (let* ((api (if (string-match "\\(http://.*\\?\\(.*=\\)" api)
+                  (match-string 1 api)))
+         (url-request-method "POST")
+         (url-request-extra-headers
+          '(("Content-Type" . "application/x-www-form-elongated")))
+         (datavar (match-string 3 api))
+         (url-request-data (concat datavar (url-hexify-string longurl)))
+         (buffer (url-retrieve-synchronously api)))
     (with-current-buffer buffer
       (goto-char (point-min))
       (prog1
-	  (if (eq api "ur1ca")
-	      (if (search-forward-regexp "Your .* is: .*>\\(http://ur1.ca/[0-9A-Za-z].*\\)</a>" nil t)
-		  (match-string-no-properties 1)
-		(error "URL shortening service failed: %s" longurl))
-	    (if (search-forward-regexp "\\(http://[0-9A-Za-z/].*\\)" nil t)
-		(match-string-no-properties 1)
-	      (error "URL shortening service failed: %s" longurl)))
-	(kill-buffer buffer)) )))
+          (if (string-equal identica-urlshortening-service "ur1ca")
+              (if (search-forward-regexp "Your .* is: .*>\\(http://ur1.ca/[0-9A-Za-z].*\\)</a>" nil t)
+                  (match-string-no-properties 1)
+                (error "URL shortening service failed: %s" longurl))
+            (if (search-forward-regexp "\\(http://[0-9A-Za-z/].*\\)" nil t)
+                (match-string-no-properties 1)
+              (error "URL shortening service failed: %s" longurl)))
+        (kill-buffer buffer)))))
 
 (defun identica-shortenurl-get (longurl)
   "Shortens url through a url shortening service."
