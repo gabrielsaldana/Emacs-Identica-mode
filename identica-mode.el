@@ -965,7 +965,6 @@ procedure."
           (identica-url-retrieve url sentinel method-class
                                  method parameters sentinel-arguments auth-mode))
     (set-buffer identica-buffer)
-    (set-buffer identica-buffer)
     (identica-set-mode-string t)))
 
 (defun identica-render-pending-dents ()
