@@ -2057,7 +2057,8 @@ If nil, will ask for username in minibuffer."
   (interactive)
   (let* ((profile (get-text-property (point) 'profile-url))
          (username (get-text-property (point) 'username))
-         (server-url (if (string-match (concat username "/?$") profile)
+         ;Strip potential trailing slashes and username references from profile url to get the server url
+         (server-url (if (string-match (concat "/?\\(" username "\\)?/?$") profile)
                          (replace-match "" nil t profile)
                        profile))
          (server (if (string-match "^https?://" server-url)
