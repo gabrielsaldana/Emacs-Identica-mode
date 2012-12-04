@@ -1346,7 +1346,11 @@ BUFFER may be a buffer or the name of an existing buffer.
 		      (match-beginning 0)))))
     (identica-clean-response-body)
     (and start
-         (xml-parse-region start (point-max)))))
+         (prog1
+             (xml-parse-region start (point-max))
+           (if identica-debug-mode
+               t
+             (kill-buffer buffer))))))
 
 (defun identica-clean-weird-chars (&optional buffer)
   (with-current-buffer identica-http-buffer
