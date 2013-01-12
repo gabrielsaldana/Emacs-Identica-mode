@@ -1784,14 +1784,14 @@ this dictionary, only if identica-urlshortening-service is 'google."
 
 (defun identica-ur1ca-get (api longurl)
   "Shortens url through ur1.ca free service 'as in freedom'."
-  (let* ((api (if (string-match "\\(http://.*\\)\\?\\(.*=\\)" api)
+  (let* ((apiurl (if (string-match "\\(http://.*\\)\\?\\(.*=\\)" api)
                   (match-string 1 api)))
          (url-request-method "POST")
          (url-request-extra-headers
-          '(("Content-Type" . "application/x-www-form-elongated")))
-         (datavar (match-string 3 api))
+          '(("Content-Type" . "application/x-www-form-urlencoded")))
+         (datavar (match-string 2 api))
          (url-request-data (concat datavar (url-hexify-string longurl)))
-         (buffer (url-retrieve-synchronously api)))
+         (buffer (url-retrieve-synchronously apiurl)))
     (with-current-buffer buffer
       (goto-char (point-min))
       (prog1
