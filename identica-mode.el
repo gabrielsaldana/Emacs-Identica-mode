@@ -13,7 +13,7 @@
 ;;     Alex Schröder <kensanata@gmail.com> (mode map patches)
 ;;     Christian Cheng (fixed long standing xml parsing bug)
 ;;     Carlos A. Perilla from denting-mode
-                                        ;     Alberto Garcia <agarcia@igalia.com> (integrated patch from twittering-mode for retrieving multiplemethods)
+;;     Alberto Garcia <agarcia@igalia.com> (integrated patch from twittering-mode for retrieving multiplemethods)
 ;;     Bradley M. Kuhn <bkuhn@ebb.org> (editing status from edit-buffer rather than minibuffer)
 ;;     Jason McBrayer <jmcbray@carcosa.net> (replace group tags with hashtags on redents, longlines use)
 ;;     Sean Neakums (patches of bugs flagged by byte-compiler)
@@ -45,7 +45,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
+;; along with GNU Emacs; see the file COPYING.	If not, write to
 ;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth floor,
 ;; Boston, MA 02110-1301, USA.
 
