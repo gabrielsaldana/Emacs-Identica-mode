@@ -5,7 +5,7 @@
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
 ;; Last update: 2011-10-20
-;; Version: 1.2.1
+;; Version: 1.3
 ;; Keywords: identica web
 ;; URL: http://blog.gabrielsaldana.org/identica-mode-for-emacs/
 ;; Contributors:
