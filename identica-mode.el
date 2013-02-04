@@ -102,13 +102,12 @@
 (require 'cl)
 (require 'xml)
 (require 'parse-time)
-;;(require 'longlines)
 (require 'url)
 (require 'url-http)
 (require 'json)
 (require 'image)
 
-(defconst identica-mode-version "1.2.1")
+(defconst identica-mode-version "1.3")
 
 ;;url-basepath fix for emacs22
 (unless (fboundp 'url-basepath)
