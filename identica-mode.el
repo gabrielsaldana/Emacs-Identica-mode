@@ -426,6 +426,21 @@ of identica-stripe-face."
 (defvar identica-stripe-face 'identica-stripe-face)
 (defvar identica-highlight-face 'identica-highlight-face)
 
+(defcustom identica-reply-bg-color "DarkSlateGray"
+  "The background color on which replies are displayed."
+  :type 'string
+  :group 'identica-mode)
+
+(defcustom identica-stripe-bg-color "SlateGray"
+  "The background color on which striped entries are displayed."
+  :type 'string
+  :group 'identica-mode)
+
+(defcustom identica-highlight-bg-color "DarkSlateGray"
+  "The background color on which highlighted entries are displayed."
+  :type 'string
+  :group 'identica-mode)
+
 ;;; Proxy
 (defvar identica-proxy-use nil)
 (defvar identica-proxy-server nil)
@@ -604,27 +619,16 @@ of identica-stripe-face."
   (font-lock-mode -1)
   (defface identica-username-face
     `((t nil)) "" :group 'faces)
-  (set-face-attribute 'identica-username-face nil :underline t)
-
   (defface identica-reply-face
     `((t nil)) "" :group 'faces)
-  (set-face-attribute 'identica-reply-face nil :background "DarkSlateGray")
-
   (defface identica-stripe-face
     `((t nil)) "" :group 'faces)
-  (set-face-attribute 'identica-stripe-face nil :background "LightSlateGray")
-
   (defface identica-highlight-face
     `((t nil)) "" :group 'faces)
-  (set-face-attribute 'identica-highlight-face nil :background "SlateGray")
-
   (defface identica-uri-face
     `((t nil)) "" :group 'faces)
-  (set-face-attribute 'identica-uri-face nil :underline t)
-
   (defface identica-heart-face
     `((t nil)) "" :group 'faces)
-  (set-face-attribute 'identica-heart-face nil :foreground "firebrick1" :height 2.0)
 
   (add-to-list 'minor-mode-alist '(identica-icon-mode " id-icon"))
   (add-to-list 'minor-mode-alist '(identica-scroll-mode " id-scroll"))
@@ -1041,6 +1045,18 @@ we are interested in."
 
 (defun identica-render-timeline ()
   (with-current-buffer (identica-buffer)
+    (set-face-attribute 'identica-username-face nil
+			:underline t)
+    (set-face-attribute 'identica-reply-face nil
+			:background identica-reply-bg-color)
+    (set-face-attribute 'identica-stripe-face nil
+			:background identica-stripe-bg-color)
+    (set-face-attribute 'identica-highlight-face nil
+			:background identica-highlight-bg-color)
+    (set-face-attribute 'identica-uri-face nil
+			:underline t)
+    (set-face-attribute 'identica-heart-face nil
+			:foreground "firebrick1" :height 2.0)
     (let ((point (point))
           (end (point-max))
           (wrapped (cond (visual-line-mode 'visual-line-mode)
