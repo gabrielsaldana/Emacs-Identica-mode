@@ -5,7 +5,7 @@
 
 ;; Author: Gabriel Saldana <gsaldana@gmail.com>
 ;; Last update: 2011-10-20
-;; Version: 1.3
+;; Version: 1.3.1
 ;; Keywords: identica web
 ;; URL: http://blog.gabrielsaldana.org/identica-mode-for-emacs/
 ;; Contributors:
@@ -107,7 +107,7 @@
 (require 'json)
 (require 'image)
 
-(defconst identica-mode-version "1.3")
+(defconst identica-mode-version "1.3.1")
 
 ;;url-basepath fix for emacs22
 (unless (fboundp 'url-basepath)
@@ -1046,17 +1046,17 @@ we are interested in."
 (defun identica-render-timeline ()
   (with-current-buffer (identica-buffer)
     (set-face-attribute 'identica-username-face nil
-			:underline t)
+                        :underline t)
     (set-face-attribute 'identica-reply-face nil
-			:background identica-reply-bg-color)
+                        :background identica-reply-bg-color)
     (set-face-attribute 'identica-stripe-face nil
-			:background identica-stripe-bg-color)
+                        :background identica-stripe-bg-color)
     (set-face-attribute 'identica-highlight-face nil
-			:background identica-highlight-bg-color)
+                        :background identica-highlight-bg-color)
     (set-face-attribute 'identica-uri-face nil
-			:underline t)
+                        :underline t)
     (set-face-attribute 'identica-heart-face nil
-			:foreground "firebrick1" :height 2.0)
+                        :foreground "firebrick1" :height 2.0)
     (let ((point (point))
           (end (point-max))
           (wrapped (cond (visual-line-mode 'visual-line-mode)
