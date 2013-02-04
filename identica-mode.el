@@ -1029,8 +1029,7 @@ we are interested in."
     (let ((bg (face-attribute new-face attribute))
           (prop (get-text-property start 'face))
           (next-change
-           (or (next-single-property-change start 'face (current-buffer))
-               end)))
+           (next-single-property-change start 'face (current-buffer) end)))
       (if prop
           (add-text-properties start next-change
                                (list 'face
