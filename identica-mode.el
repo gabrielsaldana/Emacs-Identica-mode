@@ -420,12 +420,6 @@ of identica-stripe-face."
   :type 'boolean
   :group 'identica-mode)
 
-(defcustom identica-enable-striping nil
-  "If non-nil, set the background of every second entry to the background
-of identica-stripe-face."
-  :type 'boolean
-  :group 'identica-mode)
-
 (defvar identica-username-face 'identica-username-face)
 (defvar identica-uri-face 'identica-uri-face)
 (defvar identica-reply-face 'identica-reply-face)
